@@ -4,11 +4,11 @@
 
 **文件：Lab01-01.exe**
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514013642212.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235994.png)
 
 **文件：Lab01-01.dll**
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514013627424.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235471.png)
 
 可以发现：
 
@@ -20,9 +20,9 @@
 
 进一步使用 [Detect It Easy](https://github.com/horsicq/DIE-engine/releases) 查看两者所包含的字符串：
 
-![exe 文件字符串](E:\ProgData\ImgCache\image-20220514012909517.png)
+![exe 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235125.png)
 
-![dll 文件字符串](E:\ProgData\ImgCache\image-20220514012958997.png)
+![dll 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235603.png)
 
 可以发现：
 
@@ -37,25 +37,25 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 将文件 *Lab01-02.exe* 上传，可获得以下信息：
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514014033849.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235228.png)
 
 可以看到没有 `.text` 等节，反而出现了 `UPX` 节，且调用的函数十分少，查看字符串也并没有新的发现，可以确定文件被加壳了。
 
 进一步使用 Exeinfo PE 分析：
 
-![壳信息](E:\ProgData\ImgCache\image-20220514014423265.png)
+![壳信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235281.png)
 
 可以看到使用 [UPX](https://github.com/upx/upx/releases) 加壳，可以使用 `upx -d` 来脱壳。
 
 再次上传分析：
 
-![脱壳后 PE 信息](E:\ProgData\ImgCache\image-20220514015117249.png)
+![脱壳后 PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235667.png)
 
 节表正常出现了，且多了些调用的函数：`InternetOpenUrl`、`CreateThread` 等，并且还通过 `CreateService` 创建了服务。
 
 进一步查看字符串：
 
-![字符串](E:\ProgData\ImgCache\image-20220514015340603.png)
+![字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235142.png)
 
 可以发现含有一个网址和服务名称。
 
@@ -67,11 +67,11 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 将文件 *Lab01-03.exe* 上传，可获得以下信息：
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514015946528.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236031.png)
 
 只有一个导入表，只调用了 `GetProcAddress` 和 `LoadLibrary`，加壳文件通常只有这两个导入函数，节表名也很乱，通过 Detect It Easy 查询表示这是一个被 FSG 打包的程序。
 
-![壳信息](E:\ProgData\ImgCache\image-20220514020339522.png)
+![壳信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236373.png)
 
 总体分析：
 
@@ -81,9 +81,9 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 将文件 *Lab01-03.exe* 上传，可获得以下信息：
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514020820311.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236353.png)
 
-![导入函数](E:\ProgData\ImgCache\image-20220514021406179.png)
+![导入函数](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236586.png)
 
 可以发现：
 
@@ -96,7 +96,7 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 进一步查看字符串：
 
-![字符串](E:\ProgData\ImgCache\image-20220514021830678.png)
+![字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236690.png)
 
 可以发现，该程序可能从指定的网址下载了程序，结合之前操作系统目录来看，可以通过查找 `\system32\wupdmgrd.exe` 来查看感染的迹象。
 
@@ -104,13 +104,13 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 查看资源节的 PE 信息：
 
-![资源节信息](E:\ProgData\ImgCache\image-20220514022412790.png)
+![资源节信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236966.png)
 
 可以看到，出现了明显是 PE 文件的文件头，可以确定资源节就是一个可执行程序。通过 Resource Hacker 打开，将资源节保存为二进制文件。
 
 再次上传分析：
 
-![PE 信息](E:\ProgData\ImgCache\image-20220514022917628.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236299.png)
 
 可以看到，原来程序中的字符串包含的 `URLDownloadToFile` 函数实际上是在这里调用的，并且还通过 `WinExec` 执行了程序，可能执行了下载的文件。
 
