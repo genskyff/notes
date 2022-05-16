@@ -14,24 +14,24 @@
 
 -   两者的创建时间几乎一致，可以确定都属于一个代码包；
 -   各节区信息、导入表都较为正常，都没有被加壳的迹象；
--   exe 文件调用了 `CopyFile`、`CreateFile`、`FindFirstFile` 等函数，可能会对文件进行创建、搜索、复制等操作；
--   dll 文件没有导出表，不太正常，同时还调用了 `CreateProcess` 函数，还使用了网络功能；
--   dll 文件调用了 `Sleep` 函数，可能会后台休眠操作。
+-   EXE 文件调用了 `CopyFile`、`CreateFile`、`FindFirstFile` 等函数，可能会对文件进行创建、搜索、复制等操作；
+-   DLL 文件没有导出表，不太正常，还调用了 `CreateProcess` 函数，并使用了网络功能；
+-   DLL 文件调用了 `Sleep` 函数，可能会后台休眠操作。
 
 进一步使用 [Detect It Easy](https://github.com/horsicq/DIE-engine/releases) 查看两者所包含的字符串：
 
-![exe 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235125.png)
+![EXE 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235125.png)
 
-![dll 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235603.png)
+![DLL 文件字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235603.png)
 
 可以发现：
 
--   exe 文件含有 `kerne132.dll` 字样，可能使用该文件来混淆系统文件，可以通过该文件来查看是否有感染的迹象；
--   dll 文件含有 IP 地址，且调用了网络功能，可能会与这个地址进行通信。
+-   EXE 文件含有 `kerne132.dll` 字样，可能使用该文件来混淆系统文件，可以通过查看系统是否含有该文件来判断感染迹象；
+-   DLL 文件含有 IP 地址，且使用了网络功能，可能会与这个地址进行通信。
 
 总体分析：
 
-exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装 dll 文件，dll 是真正的后门文件，会后台休眠，并定期与目标 IP 地址进行通信。
+EXE 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装 DLL 文件，DLL 是真正的后门文件，会后台休眠，并定期与目标 IP 地址进行通信。
 
 # Lab 1-2
 
@@ -51,7 +51,7 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 ![脱壳后 PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140235667.png)
 
-节表正常出现了，且多了些调用的函数：`InternetOpenUrl`、`CreateThread` 等，并且还通过 `CreateService` 创建了服务。
+节表正常出现了，且多了些调用的函数，如 `InternetOpenUrl`、`CreateThread` 等，并且还通过 `CreateService` 创建了服务。
 
 进一步查看字符串：
 
@@ -98,7 +98,7 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 ![字符串](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236690.png)
 
-可以发现，该程序可能从指定的网址下载了程序，结合之前操作系统目录来看，可以通过查找 `\system32\wupdmgrd.exe` 来查看感染的迹象。
+可以发现，该程序可能从指定的网址下载了程序，结合之前操作系统目录来看，可以通过查找 `\system32\wupdmgrd.exe` 来判断感染迹象。
 
 目前的问题是，该文件没有调用任何与网络相关的函数，但是在 VirusTotal 的分析中，发现该文件的资源节是 Bin 类型的，也就是二进制文件，合理猜测该程序把一部分执行的代码放在了资源节中。
 
@@ -112,8 +112,8 @@ exe 文件会搜索是否存在指定文件 如 `kerne132.dll`，否则就安装
 
 ![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205140236299.png)
 
-可以看到，原来程序中的字符串包含的 `URLDownloadToFile` 函数实际上是在这里调用的，并且还通过 `WinExec` 执行了程序，可能执行了下载的文件。
+可以看到，原程序字符串中所包含的 `URLDownloadToFile` 函数实际上是在这里调用的，并且还通过 `WinExec` 执行了程序，可能执行了下载的文件。
 
 总体分析：
 
-该文件没有加壳，但一些利用代码藏在了资源节里，该程序访问了某网址下载程序并执行，并且在系统目录进行了文件的创建，该文件是一种下载器类恶意程序。
+该文件没有加壳，但一些利用代码藏在了资源节里，该程序访问了某网址下载程序并执行，并且在系统目录进行了文件的创建，该文件是一种下载器。
