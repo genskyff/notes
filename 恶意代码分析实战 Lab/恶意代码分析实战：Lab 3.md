@@ -76,7 +76,7 @@ net start IPRIP
 
 查看 VirusTotal 的报告：
 
-![image-20220516200504530](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205162241535.png)
+![PE 信息](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202205162241535.png)
 
 初步判断没有加壳，再查看字符串：
 
