@@ -193,7 +193,7 @@ echo str_replace("http","https",$this->commentUrl())
 
 ## 插件
 
-Typecho 和 WordPress 一样也有功能丰富插件，在安装好主题以后，我装了 [SmartSpam](http://www.yovisun.com/archive/typecho-plugin-smartspam.html) 用来过滤一些垃圾评论，还装了 [Mailer](https://github.com/AlanDecode/Typecho-Plugin-Mailer) 用来收发邮件评论。
+Typecho 和 WordPress 一样也有功能丰富插件，在安装好主题以后，我装了 [SmartSpam](http://www.yovisun.com/archive/typecho-plugin-smartspam.html) 用来过滤一些垃圾评论，[Mailer](https://github.com/AlanDecode/Typecho-Plugin-Mailer) 用来收发邮件评论，[Sticky](https://github.com/typecho-fans/plugins/releases/download/plugins-S_to_Z/Sticky.zip) 用来置顶文章。
 
 ## 数据库密码修改
 
