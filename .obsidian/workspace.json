@@ -1,0 +1,152 @@
+{
+  "main": {
+    "id": "44d0e3798e2f8772",
+    "type": "split",
+    "children": [
+      {
+        "id": "0730c6e993a8b544",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "76b7f5c5e1f0620b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "x86 逆向分析/x86 逆向基础 (5)：函数.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e5bab7d3de31d577",
+    "type": "split",
+    "children": [
+      {
+        "id": "de5fafc8d851f02b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9210c629070e856c",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "37cfba6a7dc88f6c",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "095b93f52f6c9082",
+            "type": "leaf",
+            "state": {
+              "type": "starred",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "54a4635f4eac5051",
+    "type": "split",
+    "children": [
+      {
+        "id": "c99ea8115d6dc7dc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "30a813387e4cd821",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "x86 逆向分析/x86 逆向基础 (5)：函数.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "b34a7a8584d05038",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "x86 逆向分析/x86 逆向基础 (5)：函数.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "e625d0f02f871479",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "39b9e86c31f825b0",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "x86 逆向分析/x86 逆向基础 (5)：函数.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "76b7f5c5e1f0620b",
+  "lastOpenFiles": [
+    "Rust 学习笔记/Rust 学习笔记 (6)：智能指针与并发.md",
+    "Rust 学习笔记/Rust 学习笔记 (7)：模式匹配与高级特性.md",
+    "x86 逆向分析/x86 逆向常用汇编指令总结.md",
+    "x86 逆向分析/x86 逆向基础 (5)：函数.md",
+    "x86 逆向分析/x86 逆向基础 (3)：数学运算.md",
+    "搭建用于恶意代码分析的虚拟环境.md",
+    "使用 Oh My Posh 来个性化终端.md",
+    "Typecho 博客搭建小记.md",
+    "细谈字符编码与字体.md",
+    "浅谈 Windows PE.md"
+  ]
+}
