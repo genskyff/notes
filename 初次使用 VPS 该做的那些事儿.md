@@ -20,6 +20,7 @@ apt update && apt -y full-upgrade && shutdown -r now
 - 时间同步服务 `ntp`
 - 解压缩工具 `unzip`
 - 窗口管理工具 `screen`
+- 系统信息工具 `neofetch`
 - 进程监控与管理工具 `htop`
 - 网络工具 `net-tools`、`socat`、`netcat`
 - 编译工具 `build-essential`
@@ -30,7 +31,7 @@ apt update && apt -y full-upgrade && shutdown -r now
 执行以下命令全部安装：
 
 ```bash
-apt -y install vim wget curl git ntp unzip screen htop net-tools socat netcat build-essential libunwind8 virt-what
+apt -y install vim wget curl git ntp unzip screen neofetch htop net-tools socat netcat build-essential libunwind8 virt-what
 ```
 
 # 3 登录设置
@@ -122,15 +123,17 @@ su - admin
 生成密钥：
 
 ```bash
-ssh-keygen -t rsa
+ssh-keygen -t ed25519
 ```
 
-这时会在 `~/.ssh` 目录下生成 `id_rsa` 和 `id_rsa.pub` 两个文件，分别是**私钥**和**公钥**，公钥是放在服务器上的，私钥是放在自己主机上的，私钥需要通过 FTP 等方式下载到自己的主机上，**推荐使用自己主机上的 SSH 工具来生成密钥文件（如 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH 的尴尬局面**。
+这时会在 `~/.ssh` 目录下生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，分别是**私钥**和**公钥**，公钥是放在服务器上的，私钥是放在自己主机上的。
+
+>   **推荐使用自己主机上的 SSH 工具来生成密钥文件（如 SSH-Keygen 或 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH 的尴尬局面**。
 
 在服务器上安装公钥：
 
 ```bash
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
 ```
 
 修改 `~/.ssh` 目录和 `~/.ssh/authorized_keys` 文件的权限：
@@ -270,10 +273,10 @@ bash -c 'echo "#!/bin/bash
 
 # 6 其它常用操作
 
-## 使用脚本查看系统的总体信息、硬盘及网络性能
+## 查看系统的总体信息、硬盘及网络性能
 
 ```bash
-wget -qO- bench.sh | bash
+neofetch && wget -qO- bench.sh | bash
 ```
 
 ## 查看与管理系统进程
