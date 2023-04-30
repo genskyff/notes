@@ -43,13 +43,9 @@ iwr -useb get.scoop.sh | iex
 scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/oh-my-posh.json
 ```
 
-当看到绿色字体的提示时，就说明安装成功了。
-
-![安装成功提示](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280546339.png)
-
 ## Meslo NF 字体
 
-由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGM NF 字体。
+由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体。
 
 通过 scoop 来安装，依次执行命令：
 
@@ -60,7 +56,7 @@ scoop install nerd-fonts/Meslo-NF
 
 安装完字体后需要在 Windows Terminal 中设置，打开后进入设置，在 `默认值-外观` 选项卡中设置字体，这样对所有终端都生效。
 
-![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280546221.png)
+![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301910766.png)
 
 ## Terminal-Icons
 
@@ -118,9 +114,9 @@ Import-Module posh-git
 
 # 4 配置 VSCode
 
-在 VSCode 中也能打开 PowerShell 终端，但是没有配置终端字体，因此需要设置 VSCode 的终端字体为 MesloLGM NF 才能正常显示。
+在 VSCode 中也能打开 PowerShell 终端，但是没有配置终端字体，因此需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
 
-![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547892.png)
+![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
 
 ![终端效果](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547535.png)
 
