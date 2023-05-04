@@ -863,7 +863,7 @@ git push origin my-dev
 
 ### 清理工作
 
-当远程 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
+当远程的 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的 `my-dev` 分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
 
 ```shell
 git branch -D my-dev
