@@ -1,3 +1,7 @@
+>   主要参考：
+>
+>   -   [Pro Git](https://git-scm.com/book/zh/v2)
+
 # 1 安装与配置
 
 ## 安装
