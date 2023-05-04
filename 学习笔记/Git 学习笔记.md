@@ -43,7 +43,7 @@ git config --global user.email "email@example.com"
 
 当需要输入信息时会调用。可以使用指定文本编辑器，否则 Git 会使用默认的文本编辑器。
 
-设置 VSCode 为默认编辑器：
+设置 `VSCode` 为默认文本编辑器：
 
 ```shell
 git config --global core.editor "code --wait"
@@ -51,11 +51,10 @@ git config --global core.editor "code --wait"
 
 ### 查看配置信息
 
-使用 `git config --list ` 命令来列出所有配置：
+列出所有配置信息：
 
 ```
-user.name=name
-user.email=user@example.com
+git config --list
 ```
 
 通过输入 `git config [key]` 来查看某一项配置：
