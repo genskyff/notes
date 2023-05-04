@@ -8,29 +8,29 @@
 
 ### Linux
 
-```bash
+```shell
 apt update && apt -y install git
 ```
 
 ## 配置
 
-使用 `git config` 来配置或读取相应的工作环境变量。
+使用 `git config` 命令来配置和读取环境变量：
 
--   `/etc/gitconfig` 文件：系统中对所有用户都适用的配置，需使用 `--system` 选项。
+-   `/etc/gitconfig` 文件：系统中对所有用户都适用的配置，需使用 `--system` 选项；
 
--   `~/.gitconfig` 文件：用户目录下的配置文件只适用于该用户，需使用 `--global` 选项。
+-   `~/.gitconfig` 文件：用户目录下的配置文件只适用于该用户，需使用 `--global` 选项；
 
 -   当前项目的 Git 目录中的配置文件（即工作区中的 `.git/config` 文件）：这里的配置仅仅针对当前项目有效，默认或使用 `--local` 选项。
 
-每一个级别的配置都会覆盖上层的相同配置，如 `.git/config` 会覆盖 `~/.gitconfig` 中的同名变量。
+每一个级别的配置都会覆盖上层相同的配置，如 `.git/config` 会覆盖 `~/.gitconfig` 中的同名变量。
 
-在 Windows 中，Git 会查找用户目录下的 `.gitconfig` 文件（`global` 级别），即 `$HOME` 变量指定的目录，同时还会查找 Git 安装目录下的 `etc/gitconfig` 文件（`system` 级别）。
+在 Windows 中，Git 会查找用户目录下的 `.gitconfig` 文件（`global` 级别），即 `$HOME` 环境变量指定的目录，同时还会查找 Git 安装目录下的 `etc/gitconfig` 文件（`system` 级别）。
 
 ### 用户信息
 
 配置个人的用户名称和电子邮件地址：
 
-```bash
+```shell
 git config --global user.name "name"
 git config --global user.email "email@example.com"
 ```
@@ -39,34 +39,34 @@ git config --global user.email "email@example.com"
 
 若要在某个特定的项目中使用其他名字或者邮箱，只要去掉 `--global` 选项重新配置即可，新的设定保存在当前项目的 `.git/config` 文件里。
 
-### 编辑器
+### 文本编辑器
 
-当 Git 需要输入信息时会调用。可以使用指定编辑器，否则 Git 会使用默认的文本编辑器。
+当需要输入信息时会调用。可以使用指定文本编辑器，否则 Git 会使用默认的文本编辑器。
 
 设置 VSCode 为默认编辑器：
 
-```bash
+```shell
 git config --global core.editor "code --wait"
 ```
 
 ### 查看配置信息
 
-使用 `git config --list ` 命令来列出所有 Git 能找到的配置：
+使用 `git config --list ` 命令来列出所有配置：
 
 ```
 user.name=name
-user.email=user@example
+user.email=user@example.com
 ```
 
-通过输入 `git config [key]` 来检查 Git 的某一项配置：
+通过输入 `git config [key]` 来查看某一项配置：
 
-```bash
+```shell
 git config user.name
 ```
 
 查看所有配置及对应文件：
 
-```bash
+```shell
 git config --list --show-origin
 ```
 
@@ -74,7 +74,7 @@ git config --list --show-origin
 
 查看哪个配置文件最后设置了该值：
 
-```bash
+```shell
 git config --show-origin user.name
 ```
 
@@ -82,7 +82,7 @@ git config --show-origin user.name
 
 ## 版本库
 
-又称仓库，这个目录是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，以便任何时刻都可以追踪历史，或者在将来某个时刻可以还原。
+即 `.git` 目录，又称仓库，这个目录是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，以便任何时刻都可以追踪历史，或者在将来某个时刻可以还原。
 
 ## 工作区
 
@@ -102,7 +102,7 @@ Git 有三种状态：
 
 -   已提交：表示数据已经安全的保存在数据库中。
 
-若自上次提交后，做了修改但还没有放到暂存区，就是已修改状态；若做了修改并已放入暂存区，就属于已暂存状态；若 Git 仓库目录中保存着特定版本的文件，就属于已提交状态。
+若自上次提交后，做了修改但还没有放到暂存区，就是已修改状态；若做了修改并已放入暂存区，就属于已暂存状态；若版本库中保存着特定版本的文件，就属于已提交状态。
 
 ## 文件状态
 
@@ -114,57 +114,55 @@ Git 有三种状态：
 
 使用 `git clone` 命令获得一份已经存在了的 Git 仓库的拷贝：
 
-```bash
-git clone https://github.com/git/git.git mygit
+```shell
+git clone [url]
 ```
 
-在克隆远程仓库的时候，也可以自定义本地仓库的名字。
+## 新建仓库
 
-## 新建本地仓库
+进入工作目录，将其初始化为一个 Git 仓库：
 
-进入工作目录，将其初始化为一个 Git 版本库：
-
-```bash
+```shell
 git init
 ```
 
-初始化成功后该目录下会多出一个隐藏的 `.git` 目录，这是 Git 用来跟踪管理版本库的，不需要手动修改。
+初始化成功后该目录下会多出一个隐藏的 `.git` 目录，这是 Git 用来跟踪管理仓库的，不需要手动修改。
 
-## 把文件添加到版本库
+## 把文件添加到仓库
 
 第一步，把文件添加到工作目录，然后使用 `git add` 命令跟踪新文件：
 
-```bash
+```shell
 git add [file]
 ```
 
 使用该命令时除了可以开始跟踪新文件，还可以把已跟踪的文件添加到暂存区。该命令使用文件或目录的路径作为参数；如果参数是目录的路径，该命令将递归地跟踪或添加该目录下的所有文件。
 
-若要将目录下所有的文件全部添加：
+若要将目录下所有文件全部添加：
 
-```bash
+```shell
 git add .
 ```
 
-第二步，将文件提交到版本库，`-m` 选项用于提交信息：
+第二步，将文件提交到仓库，`-m` 选项用于提交信息：
 
-```bash
+```shell
 git commit -m "add a new file"
 ```
 
-Git 添加文件需要 `add`、`commit` 两个步骤，这是由于 `add` 可以多次添加不同的文件，而 `commit` 可以一次提交很多文件。
+添加文件需要 `add`、`commit` 两个步骤，这是由于 `add` 可以多次添加不同的文件，而 `commit` 可以一次提交多个文件。
 
-```bash
+```shell
 git add file1.txt
 git add file2.txt file3.txt
 git commit -m "add 3 files"
 ```
 
-给 `git commit` 加上 `-a` 选项，Git 会自动把所有**已跟踪**的文件暂存起来一并提交，从而跳过 `git add` 步骤。
+给 `git commit` 命令加上 `-a` 选项，Git 会自动把所有**已跟踪**的文件暂存起来一并提交，从而跳过 `git add` 步骤。
 
 ## 查看文件状态
 
-```bash
+```shell
 git status
 ```
 
@@ -172,7 +170,7 @@ git status
 
 ### 状态简览
 
-```bash
+```shell
 git status -s
 ```
 
@@ -186,11 +184,11 @@ M  README.txt
 MM testfile
 ```
 
--   新添加的未跟踪文件前面有 `??` 标记。
+-   新添加的未跟踪文件前面有 `??` 标记；
 
--   新添加到暂存区中的文件前面有 `A` 标记。
+-   新添加到暂存区中的文件前面有 `A` 标记；
 
--   修改过的文件前面有 `M` 标记。
+-   修改过的文件前面有 `M` 标记；
 
 -   表示状态的位置有两列，左边指明了暂存区的状态，右边指明了工作区的状态。
 
@@ -207,7 +205,7 @@ MM testfile
 
 文件 `.gitignore` 的格式规范如下：
 
--   所有空行或者以 ＃ 开头的行都会被 Git 忽略。
+-   所有空行或者以 `＃` 开头的行都会被 Git 忽略。
 -   可以使用标准的 `glob` 模式匹配。
 -   匹配模式可以以 `/` 开头防止递归。
 -   匹配模式可以以 `/` 结尾指定目录。
@@ -250,27 +248,27 @@ doc/**/*.pd
 
 比较工作区中和暂存区之间的差异：
 
-```bash
+```shell
 git diff [file]
 ```
 
 比较暂存区和版本库之间的差异：
 
-```bash
+```shell
 git diff --cached [file]
 ```
 
 比较工作区和版本库之间的差异：
 
-```bash
+```shell
 git diff HEAD -- [file]
 ```
 
 ## 删除文件
 
-从版本库中删除。
+从版本库中删除：
 
-```bash
+```shell
 git rm [file]
 ```
 
@@ -278,7 +276,7 @@ git rm [file]
 
 若删除之前修改过并且已经放到暂存区域的话，则必须要使用强制删除选项 `-f`，以防止误删还没有添加到快照的数据。
 
-```bash
+```shell
 git rm --cached [file]
 ```
 
@@ -286,13 +284,13 @@ git rm --cached [file]
 
 ## 移动文件
 
-```bash
+```shell
 git mv README.txt README.md
 ```
 
 该命令相当于执行了以下三条命令：
 
-```bash
+```shell
 mv README.txt README.md
 git rm README.txt
 git add README.md
@@ -300,9 +298,9 @@ git add README.md
 
 ## 撤消工作区修改
 
-若不想保留对文件的修改，将它还原成当前暂存区或上次提交时的状态。
+若不想保留对文件的修改，可以还原成当前暂存区或上次提交时的状态：
 
-```bash
+```shell
 git checkout -- [file]
 git restore [file]
 ```
@@ -311,7 +309,7 @@ git restore [file]
 
 ## 撤销暂存区修改
 
-```bash
+```shell
 git reset HEAD [file]
 git restore --staged
 ```
@@ -320,7 +318,7 @@ git restore --staged
 
 ## 查看提交历史
 
-```bash
+```shell
 git log --pretty=oneline
 ```
 
@@ -328,7 +326,7 @@ git log --pretty=oneline
 
 `--abbrev-commit` 选项可以将 `commit id` 缩短显示：
 
-```bash
+```shell
 git log --pretty=oneline --abbrev-commit
 ```
 
@@ -336,19 +334,19 @@ git log --pretty=oneline --abbrev-commit
 
  `-p` 选项可以显示每次提交的差异， `-数字` 可以指定显示条数：
 
-```bash
+```shell
 git log -p -2
 ```
 
 `--graph` 选项以图形形式显示提交历史：
 
-```bash
+```shell
 git log --graph
 ```
 
 `--stat` 选项显示每次提交的文件修改统计信息：
 
-```bash
+```shell
 git log --stat
 ```
 
@@ -356,7 +354,7 @@ git log --stat
 
 把当前版本回退到上一个版本，使用 `git reset ` 命令：
 
-```bash
+```shell
 git reset --hard HEAD^
 ```
 
@@ -364,7 +362,7 @@ git reset --hard HEAD^
 
 若这时要恢复之前的版本，使用 `git log` 命令是看不到的，这时可以通过之前记录的版本号来恢复。
 
-```bash
+```shell
 git reset --hard [id]
 ```
 
@@ -374,7 +372,7 @@ Git 的版本回退速度非常快，因为 Git 在内部有个指向当前版�
 
 ## 覆盖提交
 
-```bash
+```shell
 git commit --amend
 ```
 
@@ -384,7 +382,7 @@ git commit --amend
 
 ## 查看远程仓库
 
-```bash
+```shell
 git remote -v
 ```
 
@@ -392,7 +390,7 @@ git remote -v
 
 >   Git 仓库服务器的默认名为 `origin`。
 
-```bash
+```shell
 git remote show [remote]
 ```
 
@@ -402,35 +400,35 @@ git remote show [remote]
 
 添加一个新的远程 Git 仓库，同时指定一个简写，可以在命令行中使用简写来代替整个 URL。
 
-```bash
+```shell
 git remote add [name] [url]
 ```
 
 ## 从远程仓库拉取
 
-从中远程仓库中拉取所有本地还没有的数据，但并不会自动合并或修改当前工作，必须手动将其合并。
+从中远程仓库中拉取所有本地还没有的数据，但**并不会自动合并或修改**当前分支，必须手动将其合并。
 
-```bash
+```shell
 git fetch [remote]
 ```
 
 当使用 `git clone` 命令克隆了一个仓库，命令会自动将其添加为远程仓库并默认以 `origin` 为简写。`git fetch origin` 命令会抓取克隆后新推送的所有内容。
 
-还可以用 `git pull` 来拉取并自动合并该远程分支到当前分支。
+还可以用 `git pull` 来**拉取并自动合并**该远程分支到当前分支。
 
-```bash
+```shell
 git pull [remote]
 ```
 
 ## 推送到远程仓库
 
-```bash
+```shell
 git push [remote] [branch]
 ```
 
 将 `main` 分支推送到 `origin` 时，该命令将数据的备份推送到服务器。
 
-```bash
+```shell
 git push -u origin main
 ```
 
@@ -438,24 +436,30 @@ git push -u origin main
 
 如果本地分支名和远程分支名不一样，如本地分支为 `local-main`，远程分支为 `main`，则需要指定本地分支和远程分支。
 
-```bash
+```shell
 git push origin -u local-main:main
 ```
 
 只有具有远程仓库的写入权限，且该远程分支在本地分支修改期间没有被修改过，该命令才生效。在推送前如果远程分支已经更新，则必须先拉取并合并后才能推送。
 
-## 移除与重命名
+## 删除与重命名
 
 重命名远程仓库：
 
-```bash
+```shell
 git remote rename [old] [new]
 ```
 
 删除远程仓库：
 
-```bash
+```shell
 git remote rm [remote]
+```
+
+删除远程分支：
+
+```shell
+git push [remote] -d [branch]
 ```
 
 # 5 标签管理
@@ -464,13 +468,13 @@ git remote rm [remote]
 
 查看已有标签：
 
-```bash
+```shell
 git tag
 ```
 
 使用通配符查看指定标签：
 
-```bash
+```shell
 git tag -l "v1.2.3*"
 ```
 
@@ -488,13 +492,13 @@ Git 支持两种标签：
 
 首先切换到需要打标签的分支上：
 
-```bash
+```shell
 git switch [branch]
 ```
 
 使用 `-a` 选项创建附注标签：
 
-```bash
+```shell
 git tag -a v1.0 -m "version 1.0"
 ```
 
@@ -502,7 +506,7 @@ git tag -a v1.0 -m "version 1.0"
 
 使用 `git show` 命令查看标签信息：
 
-```bash
+```shell
 git show v1.0
 ```
 
@@ -512,13 +516,13 @@ git show v1.0
 
 不需要使用 `-a` 选项：
 
-```bash
+```shell
 git tag v1.0-lw
 ```
 
 使用 `git show` 命令只会看到提交信息：
 
-```bash
+```shell
 git show v1.0-lw
 ```
 
@@ -526,13 +530,13 @@ git show v1.0-lw
 
 要对过去的版本打标签，需要先找到 `commit id`：
 
-```bash
+```shell
 git log --pretty=oneline --abbrev-commit
 ```
 
 然后打 tag 时加上 `commit id`：
 
-```bash
+```shell
 git tag v0.9-lw 4c805e2
 ```
 
@@ -542,13 +546,13 @@ git tag v0.9-lw 4c805e2
 
 默认情况下，`git push` 命令并不会传送标签到远程仓库服务器上，在创建完标签后必须显式地推送标签。 
 
-```bash
+```shell
 git push [remote] [tag]
 ```
 
 要一次性推送多个标签，即将不在远程仓库中的标签全部推送，使用 `--tags` 选项。
 
-```bash
+```shell
 git push [remote] --tags
 ```
 
@@ -558,14 +562,14 @@ git push [remote] --tags
 
 使用 `-d` 选项删除本地仓库上的标签：
 
-```bash
+```shell
 git tag -d [tag]
 ```
 
 删除远程标签首先要先在本地删除，再从远程删除：
 
-```bash
-git push [remote] --delete [tag]
+```shell
+git push [remote] -d [tag]
 ```
 
 # 6 分支管理
@@ -576,25 +580,25 @@ git push [remote] --delete [tag]
 
 使用 `git branch` 命令查看分支列表：
 
-```bash
+```shell
 git branch
 ```
 
 查看每个分支最后一次提交，使用 `-v` 选项：
 
-```bash
+```shell
 git branch -v
 ```
 
 查看所有当前分支已经合并的分支，使用 `--merged` 选项：
 
-```bash
+```shell
 git branch --merged
 ```
 
 查看所有当前分支未合并的分支，使用 `--no-merged` 选项：
 
-```bash
+```shell
 git branch --no-merged
 ```
 
@@ -602,7 +606,7 @@ git branch --no-merged
 
 使用 `git branch` 命令创建分支：
 
-```bash
+```shell
 git branch [name]
 ```
 
@@ -610,7 +614,7 @@ git branch [name]
 
 使用 `git switch` 命令创建并切换到新分支中去：
 
-```bash
+```shell
 git switch -c [name]
 ```
 
@@ -618,8 +622,8 @@ git switch -c [name]
 
 ## 切换分支
 
-```bash
-git switch [name]
+```shell
+git switch [branch]
 ```
 
 这样 `HEAD` 就指向指定的分支了。
@@ -632,25 +636,25 @@ git switch [name]
 
 `git branch` 命令的 ` -d`  选项可以删除分支：
 
-```bash
+```shell
 git branch -d [name]
 ```
 
--   `-d` 选项用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败。
+-   `-d` 选项用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败；
 -   `-D` 选项用于强制删除指定分支，即使该分支还没有被合并到当前分支。
 
 `git branch` 命令的 ` -m`  选项可以重命名当前分支：
 
-```bash
+```shell
 git branch -m [new]
 ```
 
--   `-m` 选项用于重命名当前分支。若新的分支名已经存在，则会执行失败。
+-   `-m` 选项用于重命名当前分支。若新的分支名已经存在，则会执行失败；
 -   `-M` 选项用于强制重命名当前分支。若新的分支名已存在，则会丢弃已有的分支并重命名当前分支。
 
 ## 合并分支
 
-```bash
+```shell
 git merge [branch]
 ```
 
@@ -658,7 +662,7 @@ git merge [branch]
 
 使用 `--graph` 选项查看分支合并图：
 
-```bash
+```shell
 git log --graph
 ```
 
@@ -666,15 +670,9 @@ git log --graph
 
 当在两个不同的分支中，对同一个文件的同一个部分进行了不同的修改，在进行合并时就会产生冲突。此时 Git 做了合并，但是没有自动地创建一个新的合并提交，并会暂停下来，等待手工解决合并冲突。
 
-使用 `git mergetool` 命令来可视化解决冲突：
+## 分支历史
 
-```bash
-git mergetool
-```
-
-## 分叉历史
-
-```bash
+```shell
 git log --oneline --graph --all
 ```
 
@@ -684,7 +682,7 @@ git log --oneline --graph --all
 
 ## 生成密钥
 
-```bash
+```shell
 ssh-keygen -t ed25519 -C "email@example.com"
 ```
 
@@ -692,17 +690,185 @@ ssh-keygen -t ed25519 -C "email@example.com"
 
 ![在 Github 中添加公钥](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305011708011.png)
 
-在 Linux 中，还需要更改私钥的权限才能生效。
+在 Unix / Linux 中，还需要更改私钥的权限才能生效：
 
-```bash
+```shell
 sudo chmod 600 ~/.ssh/id_ed25519
 ```
 
-然后测试 SSH 是否能够连接。
+然后测试 SSH 是否能够连接：
 
-```bash
+```shell
 ssh -T -i ~/.ssh/id_ed25519 git@github.com
 ```
 
-# 8 常用 Git 工作流
+# 8 Git 工作流
 
+个人项目通常直接使用 `git add`、`git commit`、`git push` 三步就足够了，但是在一个大项目中，通常需要遵循一些协作规范，以便多个开发人员可以协同工作，避免代码冲突和其他问题。
+
+一些大型项目通常会采用分支管理的策略，使得不同的开发人员可以在自己的分支上进行开发和测试，而不会影响主分支的稳定性。
+
+## 常用工作流
+
+Git 协作策略和操作步骤，具体的协作流程可能因项目而异，但对于绝大多数项目而言，下面的工作流通常都能够胜任。
+
+>   以 Gihub 为例，设有一个多人协作项目 `demo-git`，然后根据 Git 工作流进行协作。
+
+### 创建仓库
+
+首先在 Github 上创建一个新项目。
+
+<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041754340.png" alt="创建一个新项目" style="zoom: 67%;" />
+
+此时该项目仅有一个 `README.md` 文件。
+
+![创建好的项目](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041801399.png)
+
+### 克隆仓库
+
+复制项目的 URL，并克隆到本地，然后进入该目录：
+
+```shell
+git clone https://github.com/<your_github_account>/demo-git.git
+cd demo-git
+```
+
+此时默认位于项目的主分支 `main` 上。
+
+### 同步远程仓库
+
+除了首次克隆外，之后的开发工作中，在进行一次新的修改之前，都需要同步远程仓库的代码：
+
+```shell
+git pull
+```
+
+>   `git pull` 命令其实是 `git fetch` 和 `git merge` 命令的组合，会从远程仓库拉取代码并自动将代码合并到本地分支上。虽然该命令操作简单，但也有一些缺点：
+>
+>   1.  难以处理冲突：当远程分支和本地分支产生冲突时，`git pull` 命令会自动进行合并操作，但无法处理复杂的冲突，需要手动解决冲突，容易出现错误；
+>   2.  难以保持提交历史的清晰：使用 `git pull` 命令合并代码时，Git 会生成一个新的合并提交，这会使得提交历史变得混乱，不易于阅读和理解。
+
+### 创建分支
+
+然后在本地创建一个 `my-dev` 分支并切换过去：
+
+```shell
+git switch -c my-dev
+```
+
+### 进行开发
+
+在 `README.md` 中增加一行：
+
+```shell
+echo "Hello world!" >> README.md
+```
+
+然后进行提交：
+
+```shell
+git add .
+git commit -m "add a 'Hello world!' line"
+```
+
+### 再次同步远程仓库（可选）
+
+这里直接在 Github 上的 `main`  分支直接修改 `README.md` 文件，以模拟本地提交后，远程也发生了新的提交。
+
+<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041845309.png" alt="直接修改" style="zoom:67%;" />
+
+此时远程仓库中 `main` 和 `my-dev` 分支中 `README.md` 的内容分别为：
+
+`main` 分支，**文件：README.md**
+
+```markdown
+# demo-git
+
+Directly modified!
+```
+
+`my-dev` 分支，**文件：README.md**
+
+```markdown
+# demo-git
+
+Hello world!
+```
+
+因为本地的 `my-dev` 分支原本是基于没有新增的那一行的 `main` 分支修改的，此时本地提交后发现远程 `main` 分支有新的提交，因此在进行向远程推送前，需要先进行同步，并解决冲突。
+
+---
+
+同步有两种方式：
+
+-   使用 `git merge` 命令来合并；
+-   使用 `git rebase` 命令来变基。
+
+这两种都需要先将远程 `main` 分支的最新代码拉取到本地，但不合并到本地分支：
+
+```shell
+git fetch origin
+```
+
+---
+
+第一种使用 `git merge` 合并的方式：
+
+```shell
+git merge origin/main
+```
+
+当使用 `git merge` 命令时，若出现了代码冲突，Git 会提示自动合并失败，并并提示需要手动解决冲突。
+
+具体步骤如下：
+
+1.  使用 `git status` 命令查看冲突文件的状态，在提示中会显示哪些文件存在冲突；
+2.  使用文本编辑器打开存在冲突的文件，并手动解决冲突；
+3.  在解决冲突后，使用 `git add` 命令将修改的文件标记为已解决冲突；
+4.  使用 `git commit` 命令提交代码。在提交代码时，Git 会自动生成一条合并提交，该提交包含了本地分支修改和远程分支的修改；
+5.  在提交完成后，使用 `git log` 命令查看提交历史。可以看到一条合并提交，该提交将两个分支的修改合并到一起。
+
+---
+
+第二种使用 `git rebase` 变基的方式：
+
+```shell
+git rebase origin/main
+```
+
+当使用 `git rebase` 命令时，若出现了代码冲突，Git 会停止变基操作，并提示需要手动解决冲突。
+
+具体步骤如下：
+
+1.  使用 `git status` 命令检查当前冲突的状态；
+2.  使用文本编辑器打开存在冲突的文件，并手动解决冲突；
+3.  在解决冲突后，使用 `git add` 命令将修改的文件标记为已解决冲突；
+4.  使用 `git rebase --continue` 命令继续变基操作，并自动应用到后续提交。
+
+### 推送代码
+
+在完成开发之后，将本地分支上的代码推送到远程仓库中。
+
+```shell
+git push origin my-dev
+```
+
+此时查看 Gihub 上的仓库，发现修改已经同步，并且新增了 `my-dev` 分支。
+
+![修改后的仓库](E:\ProgData\ImgCache\image-20230504183725791.png)
+
+### 发起合并请求
+
+代码被推送到远程分支后，发起一个合并请求，让此分支合并到主分支上。通常使用代码托管平台（如 GitHub、GitLab 等）提供的功能来发起合并请求，并邀请其他开发人员进行审核和合并操作。
+
+### 清理工作
+
+当远程 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
+
+```shell
+git branch -D my-dev
+git push origin -d my-dev
+git pull
+```
+
+这样，本地和远程就又一次保持了同步，并可以进行下一次修改提交。
