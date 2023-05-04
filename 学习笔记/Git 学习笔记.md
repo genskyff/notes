@@ -855,7 +855,7 @@ git push origin my-dev
 
 此时查看 Gihub 上的仓库，发现修改已经同步，并且新增了 `my-dev` 分支。
 
-![修改后的仓库](E:\ProgData\ImgCache\image-20230504183725791.png)
+![修改后的仓库](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305042019318.png)
 
 ### 发起合并请求
 
