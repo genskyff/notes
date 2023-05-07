@@ -875,9 +875,15 @@ git push origin my-dev
 当远程的 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的 `my-dev` 分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
 
 ```shell
-git branch -D my-dev
+git branch -d my-dev
 git push origin -d my-dev
 git pull
 ```
 
 这样，本地和远程就又一次保持了同步，并可以进行下一次修改提交。
+
+>   可以使用 `git remote prune` 命令删除本地仓库中已经不存在的远程跟踪分支。这些无效的跟踪分支通常是由于远程仓库中的分支已被删除而在本地仍保留跟踪分支所致。
+>
+>   ```shell
+>   git remote prune origin
+>   ```
