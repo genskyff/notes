@@ -22,11 +22,11 @@ apt update && apt -y install git
 
 使用 `git config` 命令来读取和配置环境变量：
 
--   `--system` 选项：对所有用户都适用的配置。
+-   `--system` 选项：对所有用户都适用的配置；
     -   Windows：Git 安装目录下的 `etc/gitconfig` 文件 ；
     -   Linux： `/etc/gitconfig` 文件。
 
--   `--global` 选项：仅对当前用户适用的配置。
+-   `--global` 选项：仅对当前用户适用的配置；
     -   Windows、Linux：`~/.gitconfig` 文件。
 
 -   `--local` 选项：**默认选项**，仅对当前 Git 目录适用的配置。
