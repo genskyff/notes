@@ -119,7 +119,7 @@ render html: '<h1>Welcome</h1>'.html_safe
 
 >   在使用 `render` 方法时，Rails 默认会根据控制器的约定自动渲染与当前操作名称匹配的视图模板。例如，`render :index` 在 `PostsController` 的 `index` 动作中将默认渲染 `index` 视图模板。
 
-## redirect_to 和 render
+## `redirect_to` 和 `render`
 
 `redirect_to` 和 `render` 是在 Rails 控制器中用于处理响应的两个常用方法，它们之间有一些重要的区别。
 
@@ -205,17 +205,17 @@ end
 
 ## 默认 RESTful 路由
 
-| 方法        | 路径                 | 控制器动作         | 命名路由                |
-| ----------- | -------------------- | ------------------ | ----------------------- |
-| `get`       | `/articles`          | `articles#index`   | `articles_path`         |
-| `get`       | `/articles/:id`      | `articles#show`    | `article_path(article)` |
-| `get`       | `/articles/new`      | `articles#new`     | `new_article_path`      |
-| `post`      | `/articles`          | `articles#create`  | `articles_path`         |
-| `get`       | `/articles/:id/edit` | `articles#edit`    | `edit_article_path`     |
-| `put/patch` | `/articles/:id`      | `articles#update`  | `article_path(article)` |
-| `delete`    | `/articles/:id`      | `articles#destroy` | `article_path(article)` |
+| 方法        | 路径                 | 控制器动作         | 路由名称       |
+| ----------- | -------------------- | ------------------ | -------------- |
+| `get`       | `/articles`          | `articles#index`   |                |
+| `get`       | `/articles/:id`      | `articles#show`    |                |
+| `get`       | `/articles/new`      | `articles#new`     | `new_article`  |
+| `post`      | `/articles`          | `articles#create`  |                |
+| `get`       | `/articles/:id/edit` | `articles#edit`    | `edit_article` |
+| `put/patch` | `/articles/:id`      | `articles#update`  |                |
+| `delete`    | `/articles/:id`      | `articles#destroy` |                |
 
-在 Rails 中，`new` 和 `edit` 这两个操作具有默认的路由名称 `new_resource` 和 `edit_resource`，其中 `resource` 是指资源的名称（例如 `article`）。这是 Rails 的约定，方便在视图和控制器中引用这些动作的路径和 URL。在这些名称后面可以跟 `_url` 或 `_path` 等后缀的辅助方法。
+在 Rails 中，`new` 和 `edit` 这两个操作具有默认的路由名称 `new_resource` 和 `edit_resource`，其中 `resource` 是指资源的名称（例如 `article`）。这是 Rails 的约定，方便在视图和控制器中引用这些动作的路径和 URL。
 
 然而，对于 `index` 和 `show` 这两个操作，默认情况下没有相应的默认路由名称。这是因为这些操作通常用于显示集合或单个资源的信息，它们的路由命名通常直接使用资源的名称，而不添加额外的动作前缀。
 
