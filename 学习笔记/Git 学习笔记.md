@@ -916,7 +916,7 @@ git stash
 git stash save "message"
 ```
 
-### 保存进度列表
+### 查看已保存进度
 
 ```shell
 git stash list
