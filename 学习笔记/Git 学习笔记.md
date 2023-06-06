@@ -330,15 +330,15 @@ git restore --staged
 ## 查看提交历史
 
 ```shell
-git log --pretty=oneline
+git log --oneline
 ```
 
-`--pretty=oneline` 选项表示以一行的形式简洁输出结果。一长串字符串是 `commit id`，这是 SHA-1 计算出来的数字，在不冲突的情况下，`commit id` 可以只写前几位。
+`--oneline` 选项表示以一行的形式简洁输出结果。一长串字符串是 `commit id`，这是 SHA-1 计算出来的数字，在不冲突的情况下，`commit id` 可以只写前几位。
 
 `--abbrev-commit` 选项可以将 `commit id` 缩短显示：
 
 ```shell
-git log --pretty=oneline --abbrev-commit
+git log --oneline --abbrev-commit
 ```
 
 在 Git 中，用 `HEAD` 表示当前版本，上一个版本就是 `HEAD^`，上上个版本就是 `HEAD^^`，往上 100 个版本写作 `HEAD~100`。
@@ -542,7 +542,7 @@ git show v1.0-lw
 要对过去的版本打标签，需要先找到 `commit id`：
 
 ```shell
-git log --pretty=oneline --abbrev-commit
+git log --oneline --abbrev-commit
 ```
 
 然后打 tag 时加上 `commit id`：
@@ -829,7 +829,7 @@ git fetch origin
 git merge origin/main
 ```
 
-当使用 `git merge` 命令时，若出现了代码冲突，Git 会提示自动合并失败，并并提示需要手动解决冲突。
+当使用 `git merge` 命令时，若出现了代码冲突，Git 会提示自动合并失败，并提示需要手动解决冲突。
 
 具体步骤如下：
 
@@ -888,10 +888,67 @@ git push origin -d my-dev
 git pull
 ```
 
+可以使用 `git remote prune` 命令删除本地仓库中已经不存在的远程跟踪分支。这些无效的跟踪分支通常是由于远程仓库中的分支已被删除而在本地仍保留跟踪分支所致。
+
+```shell
+git remote prune origin
+```
+
 这样，本地和远程就又一次保持了同步，并可以进行下一次修改提交。
 
->   可以使用 `git remote prune` 命令删除本地仓库中已经不存在的远程跟踪分支。这些无效的跟踪分支通常是由于远程仓库中的分支已被删除而在本地仍保留跟踪分支所致。
->
->   ```shell
->   git remote prune origin
->   ```
+## 保存进度
+
+有时候会遇到这样一种情况，当在 `dev` 分支进行开发时，有人反馈了一个 Bug，需要紧急切换到另一个分支去修改，但是在 `dev` 分支的工作还没有完成，这时就可使用 `git stash` 命令把当前进度保存起来，然后切换到另一个分支去修改，修改完提交后，再切回 `dev` 分支来恢复之前的进度继续开发新功能。
+
+还有一种情况，当在 `feature/a` 分支的开发功能完成后，准备在 `feature/b` 分支开发新功能，但是做到一半后才发现忘记开新分支了，依然是在 `feature/a` 做的开发，所以需要将修改应用到新分支去，这时也可以使用 `git stash` 命令来完成。
+
+### 保存当前进度
+
+```shell
+git stash
+```
+
+该命令会把暂存区和工作区的改动保存起来。执行完这个命令后，再运行 `git status` 命令，会发现当前是一个干净的工作区，没有任何改动。
+
+可以使用 `git stash save` 命令来添加注释：
+
+```shell
+git stash save "message"
+```
+
+### 保存进度列表
+
+```shell
+git stash list
+```
+
+该命令显示保存进度的列表，即 `git stash` 命令可以执行多次。
+
+### 恢复进度
+
+```shell
+git stash pop [stash_id]
+```
+
+该命令会恢复指定的进度到工作区，其中 `stash_id` 是用 `git stash list` 得到的，若不指定则恢复最新的进度。通过该命令恢复进度后，会删除保存在列表中的进度。
+
+```shell
+git stash apply [stash_id]
+```
+
+和 `git stash pop` 命令作用相同，但是不删除保存的进度。
+
+### 删除进度
+
+```shell
+git stash drop [stash_id]
+```
+
+删除一个保存的进度，若不指定则删除最新的进度。
+
+```shell
+git stash clear
+```
+
+
+删除所有保存的进度。
