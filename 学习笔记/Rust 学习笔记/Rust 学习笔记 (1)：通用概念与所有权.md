@@ -1,9 +1,10 @@
->   本系列文章使用的 Rust Edition 为 2021。
+>   本系列文章使用的 Rust 的 Edition 为 `2021`。
 >
 >   主要参考：
 >
 >   -   [《Rust 程序设计语言》](https://kaisery.github.io/trpl-zh-cn/ch05-01-defining-structs.html)
 >   -   [《通过例子学 Rust》](https://rustwiki.org/zh-CN/rust-by-example/)
+>   -   [《Rust 语言圣经》](https://course.rs/about-book.html)
 >   -   [The Rust Standard Library](https://doc.rust-lang.org/std/index.html#the-rust-standard-library)
 >
 
@@ -15,7 +16,7 @@
 
 ## 在 Linux / macOS 上安装
 
-```bash
+```shell
 curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 ```
 
@@ -23,17 +24,22 @@ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 
 `rustup` 是一个管理 Rust 版本和相关工具的命令行工具。
 
-```bash
+```shell
 # 查看 rust 编译器版本
 rustc -V
+
 # 查看 rustup 版本
 rustup -V
+
 # 更新 rust
 rustup update
+
 # 更新 rustup
 rustup self update
+
 # 卸载 rust 和 rustup
 rustup self uninstall
+
 # 本地文档
 rustup doc
 ```
@@ -54,7 +60,7 @@ fn main() {
 
 ### 使用 rustc 编译
 
-```bash
+```shell
 rustc main.rs
 ```
 
@@ -66,20 +72,23 @@ Cargo 是 Rust 的构建系统和包管理器。
 
 ### 创建项目
 
-```bash
+```shell
 # 查看版本
 cargo -V
+
 # 创建项目
 cargo new hello --bin
 ```
 
-此命令创建了一个名为 *hello* 的目录并将其初始化为 Git 仓库，同时在其中创建项目文件，`--bin` 表示该项目为可执行文件。
+此命令创建了一个名为 *hello* 的目录并将其初始化为 Git 仓库，同时在其中创建项目文件，`--bin` 表示该项目为可执行文件，可省略。
 
 初次创建完毕后，此目录通常包含：
 
 - 一个 *Cargo.toml* 文件；
 - 一个 *src* 目录，以及位于其中的 *main.rs* 文件；
 - 一个 *.gitignore* 文件。
+
+若在一个已经存在的 Git 仓库中运行 `cargo new`，则这些 Git 文件不会生成，但可以使用 `cargo new --vcs=git` 来依然生成这些 Git 文件。还可以使用 `cargo init` 将一个目录初始化为 Rust 项目。
 
 ---
 
@@ -94,29 +103,30 @@ edition = "2021"
 [dependencies]
 ```
 
-`toml` 是 Cargo 配置文件的格式。
+-   `toml` 是 Cargo 配置文件的格式；
+-   `[package]` 是一个标题片段，用来配置一个包。其中设置了 Cargo 编译程序所需的配置，如包名称、包版本和 Rust 版本；
+-   `[dependencies]` 是项目依赖的片段，在 Rust 中，所依赖的代码包被称为 **crates**。Cargo 从 **registry** 上获取所有包的最新版本信息，这是一份来自 [Crates.io](https://crates.io/) 的数据拷贝。此外还可以运行 `cargo doc --open` 命令来构建所有本地依赖提供的文档；
+-   *main.rs* 为 Cargo 自动生成的程序。
 
-`[package]` 是一个片段标题，下面的语句用来配置一个包。其中设置了 Cargo 编译程序所需的配置：包名称、版本和 Rust 版本。
-
-`[dependencies]` 是项目依赖的片段，在 Rust 中，所依赖的代码包被称为 **crates**。Cargo 从 **registry** 上获取所有包的最新版本信息，这是一份来自 [Crates.io](https://crates.io/) 的数据拷贝。此外还可以运行 `cargo doc --open` 命令来构建所有本地依赖提供的文档。
-
-*main.rs* 为 Cargo 自动生成 *hello, world!* 的程序。
-
-Cargo 期望源文件存放在 src 目录中，根目录只存放 README、License、配置文件和其它与代码无关的文件。
+Cargo 期望源文件存放在 *src* 目录中，根目录只存放 README、LICENSE、配置文件和其它与代码无关的文件。
 
 ### 构建和运行
 
-```bash
-# 构建
+```shell
+# 构建 debug 版本
 cargo build
-# 显式更新依赖
-cargo update
+
+# 构建 release 版本
+cargo build --release
+
 # 构建并运行
 cargo run
+
 # 检查
 cargo check
-# 发布
-cargo build --release
+
+# 显式更新依赖
+cargo update
 ```
 
 在项目的目录下，`build` 命令会在 *target/debug* 目录下生成可执行文件。
@@ -125,7 +135,7 @@ cargo build --release
 
 `update` 命令会忽略 Cargo.lock 文件，并计算出所有符合 Cargo.toml 声明的最新版本，若成功了，则会把新版本写入 Cargo.lock 文件中。
 
-Cargo 默认只会寻找最大的**语义化版本**，若原指定版本为 0.8.5，实际上这是 `^0.8.5` 的缩写，表示至少为 0.8.5 但小于 0.9.0 的版本，以确保 API 兼容。若想要使用这之外的版本，则必须手动在 Cargo.toml 文件中指定新版本。
+Cargo 默认只会寻找最大的**语义化版本**，若原指定版本为 `0.8.5`，实际上这是 `^0.8.5` 的缩写，表示至少为 `0.8.5` 但小于 `0.9.0` 的版本，以确保 API 兼容。若想要使用这之外的版本，则必须手动在 Cargo.toml 文件中指定新版本。
 
 ```toml
 [dependencies]
@@ -138,9 +148,9 @@ xxx = "0.9.0"
 
 `check` 命令来快速检查代码确保其可以通过编译，但并不产生可执行文件。
 
-发布时使用 `--release` 选项来优化编译项目，此命令会在 *target/release* 目录下生成可执行文件。
+构建时使用 `--release` 选项来优化编译项目，此命令会在 *target/release* 目录下生成可执行文件。
 
->   关于 Cargo 的更多信息，可参考 [The Cargo book](https://doc.rust-lang.org/cargo/)。
+>   关于 Cargo 的更多信息，可参考 [The Cargo Book](https://doc.rust-lang.org/cargo/)。
 
 # 3 通用编程概念
 

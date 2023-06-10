@@ -908,7 +908,7 @@ git remote prune origin
 git stash
 ```
 
-该命令会把暂存区和工作区的改动保存起来。执行完这个命令后，再运行 `git status` 命令，会发现当前是一个干净的工作区，没有任何改动。
+该命令会把工作区和暂存区的改动保存起来。执行完这个命令后，再运行 `git status` 命令，会发现当前是一个干净的工作区，没有任何改动。
 
 可以使用 `git stash save` 命令来添加注释：
 
@@ -930,7 +930,7 @@ git stash list
 git stash pop [stash_id]
 ```
 
-该命令会恢复指定的进度到工作区，其中 `stash_id` 是用 `git stash list` 得到的，若不指定则恢复最新的进度。通过该命令恢复进度后，会删除保存在列表中的进度。
+该命令会恢复指定的进度到工作区，其中 `stash_id` 是通过 `git stash list` 得到的，若不指定则恢复最新的进度。通过该命令恢复进度后，会删除保存在列表中的进度。
 
 ```shell
 git stash apply [stash_id]
