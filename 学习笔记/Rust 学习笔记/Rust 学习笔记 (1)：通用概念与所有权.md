@@ -159,7 +159,7 @@ xxx = "0.9.0"
 -   可以是任意非空的，且非 emoji 的 Unicode 字符串；
 -   不能以数字开头，且不能为关键字；
 
--   当以下划线开头时，标识符的长度至少为 **2**；
+-   当以下划线开头时，长度至少为 **2**；
 
 -   单个 `_` 标识符表示**忽略**。
 
@@ -211,7 +211,7 @@ let (mut a, mut b) = (1, 2);
 
 ```rust
 let x: i32;       // 错误
-println!("{}", x);
+println!("{x}");
 ```
 
 不可变变量和常量是有区别的：
@@ -219,7 +219,7 @@ println!("{}", x);
 -   常量使用 `const` 关键字，且**必须注明值的类型**；
 -   变量使用 `let` 关键字，可以在其前加上 `mut` 来使其可变，不能在 `const` 前加上 `mut` 来使其可变；
 -   常量只能被设置为常量表达式，而不能是函数调用的结果，或任何其它只能在运行时计算出的值；
--   常量可以在任何作用域中声明，包括全局作用域。
+-   常量可以在任何作用域中声明，包括全局作用域，而变量只能在函数作用域生效。
 
 ```rust
 const MAX_POINTS: u32 = 10_000;
@@ -256,9 +256,9 @@ fn sum(x: i32, y: i32) -> i32 {
 let v = 2;
 {
     let v = 4;
-    println!("{}", v);   // 输出 4
+    println!("{v}");   // 输出 4
 }
-println!("{}", v);       // 输出 2
+println!("{v}");       // 输出 2
 ```
 
 ## 数据类型
@@ -387,7 +387,7 @@ let tup: (i32, f64, u8) = (100, 2.1, 20);
 ```rust
 let tup = (100, 2.1, 20);
 let (x, y, z) = tup;
-println!("y = {}", y);
+println!("y = {y}");
 ```
 
 首先创建了一个元组并绑定到 `tup` 变量上。接着使用了 `let` 和一个模式将 `tup` 分成了三个不同的变量：`x`、`y` 和 `z`，这叫做**解构**。
@@ -411,7 +411,7 @@ let z = tup.2;
 let t: (i32,) = (1,);
 ```
 
-没有任何值的元组为 `()`，为**单元类型**类型，只有一个**单元值** 。如果表达式不返回任何其他值，则会隐式返回单元值。
+没有任何值的元组为 `()`，即**单元类型**类型，只有一个**单元值** 。如果表达式不返回任何其他值，则会隐式返回单元值。
 
 ```rust
 let empty: () = ();
@@ -620,7 +620,7 @@ while i < 3 {
 ```rust
 let arr = [1, 2, 3];
 for e in arr {
-    println!("{}", e);
+    println!("{e}");
 }
 ```
 
@@ -632,7 +632,7 @@ for e in arr {
 
 ```rust
 for e in (1..4).rev() {
-    println!("{}", e);
+    println!("{e}");
 }
 ```
 
@@ -660,7 +660,7 @@ for e in (1..4).rev() {
 
 ### 所有权规则
 
-- Rust 中的每一个值都有一个被称为其**所有者**的变量；
+- Rust 中的每一个值都有一个**所有者**；
 - 值**有且仅有一个**所有者；
 - 当所有者离开作用域，这个值将被丢弃。
 
@@ -721,7 +721,7 @@ Rust 采取的策略是：内存在拥有它的变量离开作用域后就被自
 
 当变量离开作用域，Rust 将在结尾的 `}` 处自动调用一个特殊的函数 `drop` 以将内存返还给操作系统。
 
-这种方式在更复杂的场景下代码的行为可能是不可预测的，如当有多个变量使用在堆上分配的内存时。
+>   在 C++ 中，这种在生命周期结束时释放资源的模式被称作 RAII（Resource Acquisition Is Initialization，资源获取即初始化）。
 
 ### 数据交互：移动
 
@@ -739,7 +739,7 @@ let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-对于 String 类型，并不会完全生成一个 `s1` 的拷贝。String 类型由三部分组成：**指向字符串的指针，长度和容量**。这一组数据存储在栈上，堆上则存放字符串的内容。
+对于 String 类型，并不会完全生成一个 `s1` 的拷贝。String 类型由三部分组成：**指向字符串的指针、长度和容量**。这一组数据存储在栈上，堆上则存放字符串的内容。
 
 ![String 在内存中的表示](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203232352837.png)
 
@@ -755,8 +755,8 @@ let s2 = s1;
 
 ```rust
 let s1 = String::from("hello");
-let s2 = s1;            // s1 失效
-println!("{}", s1);     // 错误
+let s2 = s1;        // s1 失效
+println!("{s1}");   // 错误
 ```
 
 在把 `s1` 赋值给 `s2` 后，Rust 认为 `s1` 不再有效，所以会产生错误，因为 Rust 禁止使用无效的引用。
@@ -772,7 +772,7 @@ println!("{}", s1);     // 错误
 ```rust
 let s1 = String::from("hello");
 let s2 = s1.clone();
-println!("{}, {}", s1, s2);
+println!("{s1}, {s2}");
 ```
 
 当调用 `clone` 时，一些特定的代码被执行因此效率会降低。
@@ -807,18 +807,18 @@ Rust 有一个叫做 `Copy` trait 的特殊注解，可以用在类似整型这�
 fn main() {
     let n = 3;
     let s = String::from("hello");
-    print_number(n);        // n 的值移动到函数中，但 i32 是 Copy 的，可在之后继续使用
-    print_string(s);        // s 的值移动到函数中，之后不能继续使用
-    println!("{}", n);      // n 依旧有效
-    println!("{}", s);      // s 已经无效，此行代码错误
+    print_number(n);      // n 的值移动到函数中，但 i32 是 Copy 的，可在之后继续使用
+    print_string(s);      // s 的值移动到函数中，之后不能继续使用
+    println!("{n}");      // n 依旧有效
+    println!("{s}");      // s 已经无效，此行代码错误
 }   // n 被移出作用域，s 的值已被移走，不会有特殊操作
 
 fn print_number(pn: i32) {
-    println!("{}", pn);
+    println!("{pn}");
 }   // pn 被移出作用域，不会有特殊操作
 
 fn print_string(ps: String) {
-    println!("{}", ps);
+    println!("{ps}");
 }   // ps 被移出作用域并调用 drop 函数，占用的内存被释放
 ```
 
@@ -851,7 +851,7 @@ fn take_ret(ts: String) -> String { // 调用它的函数的参数的值移动�
 fn main() {
     let s1 = String::from("hello");
     let (s1, l) = str_len(s1);   // s1 的值被移动到函数中，又通过函数返回移动到 s1 中
-    println!("s1: {}, l: {}", s1, l);
+    println!("s1: {s1}, l: {l}");
 }
 
 fn str_len(s: String) -> (String, usize) {
@@ -870,7 +870,7 @@ fn str_len(s: String) -> (String, usize) {
 fn main() {
     let s1 = String::from("hello");
     let len = str_len(&s1);
-    println!("s1: {}, len: {}", s1, len);
+    println!("s1: {s1}, len: {len}");
 }
 
 fn str_len(s: &String) -> usize {   // s 是对 String 的引用
@@ -962,7 +962,6 @@ let rx = &y;            // 正确，可以通过隐藏来改变 rx 的类型
 let mut s = String::from("hello");
 let r1 = &mut s;
 let r2 = &mut s;    // 错误
-println!("{}, {}", r1, r2);
 ```
 
 这个限制允许可变性，不过是以一种受限制的方式允许，这个限制可以使 Rust 在编译时就避免数据竞争。
@@ -992,7 +991,6 @@ let mut s = String::from("hello");
 let r1 = &s;
 let r2 = &s;
 let r3 = &mut s;    // 错误
-println!("{}, {}, {}", r1, r2, r3);
 ```
 
 一个引用的作用域从声明的地方开始一直持续到**最后一次使用为止**。例如，最后一次使用不可变引用在声明可变引用之前。编译器在作用域结束之前判断不再使用的引用的能力称为**非词法作用域生命周期**。
@@ -1001,9 +999,9 @@ println!("{}, {}, {}", r1, r2, r3);
 let mut s = String::from("hello");
 let r1 = &s;
 let r2 = &s;
-println!("{}, {}", r1, r2);   // 最后一次使用引用，r1、r2 作用域结束
-let r3 = &mut s;              // 可以使用
-println!("{}", r3);
+println!("{r1}, {r2}");   // 最后一次使用引用，r1、r2 作用域结束
+let r3 = &mut s;          // 可以使用
+println!("{r3}");
 ```
 
 在引用的生命周期内，被引用的变量本身不允许改变，不管是 `&` 还是 `&mut`。
@@ -1012,7 +1010,7 @@ println!("{}", r3);
 let mut x = 1;
 let rx = &mut x;              // 亦或是 &x
 x = 2;                        // 错误，不允许 x 自身内容变化
-println!("{}", rx);
+println!("{rx}");
 ```
 
 对于可变引用，总是遵循以下规则：
@@ -1072,7 +1070,7 @@ fn main() {
     let mut s = String::from("hello world");
     let n = find_str(&s);   // n 的值为 5
     s.clear();              // 清空字符串，s 的值无效，n 的值仍有效
-    println!("{}", n);
+    println!("{n}");
 }
 ```
 
