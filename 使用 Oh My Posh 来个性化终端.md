@@ -45,14 +45,7 @@ scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/downl
 
 ## Meslo NF 字体
 
-由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体。
-
-通过 scoop 来安装，依次执行命令：
-
-```powershell
-scoop bucket add nerd-fonts
-scoop install nerd-fonts/Meslo-NF
-```
+由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/dotfiles-public/blob/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Regular.ttf) 并安装。
 
 安装完字体后需要在 Windows Terminal 中设置，打开后进入设置，在 `默认值-外观` 选项卡中设置字体，这样对所有终端都生效。
 
@@ -82,6 +75,17 @@ scoop bucket add extras
 scoop install posh-git
 ```
 
+## PSReadLine
+
+[PSReadLine](https://github.com/PowerShell/PSReadLine) 可以提供命令自动补全、语法高亮等功能。
+
+通过 Powshell 安装，依次执行命令：
+
+```powershell
+Install-Module -Name PowerShellGet -Force
+Install-Module PSReadLine
+```
+
 # 3 配置 PowerShell
 
 安装完成后启动 PowerShell 时并不会默认加载个性化后的配置，因此需要修改 PowerShell 配置文件来让每次启动都加载。
@@ -108,6 +112,9 @@ notepad $PROFILE
 oh-my-posh init pwsh | Invoke-Expression
 Import-Module -Name Terminal-Icons
 Import-Module posh-git
+Import-Module PSReadLine
+Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 ```
 
 保存后重启 Windows Terminal，即可看到个性化后的界面。
