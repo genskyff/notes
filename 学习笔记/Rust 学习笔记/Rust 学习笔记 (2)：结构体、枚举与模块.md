@@ -164,7 +164,7 @@ fn area(width: u32, height: u32) -> u32 {
 }
 ```
 
-长度和宽度本应该是相关联的，但函数 `area` 却有两个参数，程序本身却没有表现出关联性。可以将长度和宽度通过元组组合在一起。
+长度和宽度本应该是相关联的，但 `area` 函数却有两个参数，程序本身却没有表现出关联性。可以将长度和宽度通过元组组合在一起。
 
 ```rust
 fn main() {
@@ -195,7 +195,7 @@ fn area(rect: &Rect) -> u32 {
 }
 ```
 
-函数 `area` 现在被定义为接收 `Rect` 类型的不可变借用的参数，这样 `main` 函数就可以保持 `rect` 的所有权并继续使用它。`area` 函数访问 `Rect` 实例的 `width` 和 `height` 字段。`area` 的函数签名表示使用 `Rect` 的 `width` 和 `height` 字段，这表明宽高是相互联系的，并为这些值提供了描述性的名称而不是使用元组的索引值 `0` 和 `1` 。
+`area` 函数现在被定义为接收 `Rect` 类型的不可变借用的参数，这样 `main` 函数就可以保持 `rect` 的所有权并继续使用它。`area` 函数访问 `Rect` 实例的 `width` 和 `height` 字段。`area` 的函数签名表示使用 `Rect` 的 `width` 和 `height` 字段，这表明宽高是相互联系的，并为这些值提供了描述性的名称而不是使用元组的索引值 `0` 和 `1` 。
 
 ## 通过派生 trait 增加实用功能
 
@@ -328,7 +328,7 @@ fn area(self: &Self) {}
 
 ---
 
-方法可以选择获取 `self` 的所有权，不可变或可变地借用 `self`。选择 `&self` 的理由是并不获取其所有权，只需能够读取结构体中的数据，而不用写入。若想要在方法中修改调用方法的实例，需要将第一个参数改为 `&mut self`。
+方法可以选择获取 `self` 的所有权、不可变或可变地借用 `self`。选择 `&self` 的理由是并不获取其所有权，只需能够读取结构体中的数据，而不用写入。若想要在方法中修改调用方法的实例，需要将第一个参数改为 `&mut self`。
 
 通过仅仅使用 `self` 作为第一个参数来使方法获取实例的所有权是很少见的，这种技术通常用在当方法将 `self` 转换成别的实例的时候，这时可以防止调用者在转换之后继续使用原始的实例。
 
@@ -390,7 +390,7 @@ impl Point {
 
 ### 自动引用和解引用
 
-在 C / C++ 语言中，有两个不同的运算符来调用方法：`.` 直接在对象上调用方法，而 `->` 在一个对象的指针上调用方法，这时需要先解引用指针。比如 `object` 是一个指针，那么 `object->method()` 则等同于 `(*object).method()`。
+在 C / C++ 语言中，有两个不同的运算符来调用方法：`.` 直接在对象上调用方法，而 `->` 在一个对象的指针上调用方法，这时需要先解引用指针。如 `object` 是一个指针，那么 `object->method()` 等同于 `(*object).method()`。
 
 Rust 并没有一个与 `->` 等效的运算符，但有**自动引用和解引用**。方法调用是 Rust 中少数几个拥有这种行为的地方。
 
@@ -423,7 +423,7 @@ impl Point {
         self.x * other.x + self.y * other.y
     }
     
-    fn new(x: u32, y: u32) -> Point {
+    fn new(x: u32, y: u32) -> Self {
         Point { x, y }
     }
 }
@@ -735,11 +735,10 @@ fn size_value(size: Size) -> u32 {
 ```rust
 let s = Some(String::from("hello"));
 match s {
-    Some(v) => println!("{}", v),
-    None => println!("Nohing"),
+    Some(v) => println!("{v}"),
+    None => println!("Nothing"),
 }
-// 错误，s 中的值已经移动到 v
-println!("{:?}", s);
+println!("{:?}", s);    // 错误，s 中的值已经移动到 v
 ```
 
 由于在进行匹配时，`Some(v)` 中的 `v` 会获得 `s` 中 `String` 的所有权，`s` 中的一部分被移动了，因此在之后 `s` 就不能继续使用整体，要在后续也能够使用，需要在匹配时获取一个引用，或者只使用没有被移动的部分。
@@ -954,6 +953,7 @@ cargo build --bin package_name
 ```bash
 # 使用 rustc，编译成 libfoo.rlib
 rustc --crate-type=lib foo.rs
+
 # 使用 cargo，只编译库 crate
 cargo build --lib
 ```
@@ -1319,6 +1319,10 @@ fn main() {
 
 通过 `pub use`，`main` 函数可以通过新路径 `performance_group::instrument::clarinet` 来调用 `clarinet` 函数。若没有指定 `pub use`，`clarinet_trio` 函数可以在其作用域中调用 `instrument::clarinet`，但 `main` 则不允许使用这个新路径。
 
+通过结合 `pub` 和重导出，可以方便的向外暴露 API。
+
+>   关于 Rust 的 API 设计，可参考 [The Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)。
+
 ### 嵌套路径
 
 当需要引入很多定义于相同包或相同模块的项时，为每一项单独列出一行会占用很大的空间。
@@ -1394,9 +1398,11 @@ use std::collections::HashMap;
 
 可以在一个文件中定义多个模块，但当模块变得更大时，将它们的定义移动到一个单独的文件中使代码更容易阅读。
 
-有两种分割的方式，一种是创建与模块同名的文件来管理，另一种是创建与模块同名的文件夹，并在其中创建 *mod.rs* 来管理。
+有两种分割的方式，一种是创建与模块同名的文件来管理，另一种是创建与模块同名的文件夹，并在其中创建 *mod.rs* 来管理，后一种通常在 Rust Edition 2021 以前用的比较多。
 
-### 使用同名文件
+>   不能在同一个项目中混用两种风格的分割方式。
+
+### 使用同名文件（新风格）
 
 将 `sound` 模块移动到单独的文件 *src/sound.rs* 中，在 `mod sound` 后使用分号来告诉 Rust 在另一个与模块同名的文件中加载模块的内容。
 
@@ -1418,8 +1424,6 @@ pub mod instrument {
     pub fn clarinet() {}
 }
 ```
-
----
 
 继续将 `instrument` 模块也提取到其自己的文件中，修改 *src/sound.rs* 只包含 `instrument` 模块的声明。
 
@@ -1449,7 +1453,7 @@ src
 
 模块树依然保持相同，`main` 中的函数调用也无需修改继续保持有效，即使其定义存在于不同的文件中。这样随着代码增长可以将模块移动到新文件中。
 
-### 使用 mod.rs
+### 使用 mod.rs（旧风格）
 
 通过在每个模块的文件夹下单独创建一个 *mod.rs* 来管理一个模块。
 
@@ -1462,8 +1466,6 @@ pub mod instrument {
     pub fn clarinet() {}
 }
 ```
-
----
 
 同样再把 `instrument` 模块提取出来，此时可以跟之前一样创建 `src/sound/instrument.rs`，还可以创建 *src/sound/instrument/mod.rs*。
 
@@ -1489,7 +1491,3 @@ src
     │   └── mod.rs
     └── mod.rs
 ```
-
----
-
-以上两种方式都能够分割模块，但使用 *mod.rs* 可以更好的管理，因为可以直接描述模块的整体并设置公有性，且在大项目上更加层次分明。

@@ -45,7 +45,7 @@ scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/downl
 
 ## Meslo NF 字体
 
-由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/dotfiles-public/blob/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Regular.ttf) 并安装。
+由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
 
 安装完字体后需要在 Windows Terminal 中设置，打开后进入设置，在 `默认值-外观` 选项卡中设置字体，这样对所有终端都生效。
 
