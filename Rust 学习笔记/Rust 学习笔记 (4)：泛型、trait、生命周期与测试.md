@@ -132,6 +132,19 @@ impl Point<f64> {
 
 `Point<f64>` 类型有一个方法 `distance`，而其他 `T` 不是 `f64` 类型的 `Point<T>` 实例则没有实现此方法，因此只有 `Point<f64>` 类型的实例能够使用此方法。
 
+虽然可以为 `Point<f32>` 实现方法，但是这种特化的实现，其中的函数名不能与其它实现相同。
+
+```rust
+// 错误
+impl Point<f64> {
+    fn foo(&self) {}
+}
+
+impl<T> Point<T> {
+    fn foo(&self) {}
+}
+```
+
 ---
 
 结构体定义中的泛型类型参数并不总是与结构体方法签名中使用的泛型是同一类型：
@@ -211,7 +224,7 @@ trait Summary {
 }
 ```
 
-使用 `trait` 关键字来声明一个 trait，然后声明实现这个 trait 的类型所需要的行为的方法签名。
+使用 `trait` 关键字来声明，然后添加这个 trait 所需要行为的方法签名。
 
 每一个实现这个 trait 的类型都需要提供其自定义行为的方法体，编译器也会确保任何实现 `Summary` trait 的类型都拥有与这个签名的定义完全一致的方法。trait 中可以有多个方法：一行一个方法签名且都以分号结尾。
 
@@ -503,7 +516,7 @@ let r;
     let x = 5;
     r = &x;
 }
-r;    // 报错
+r;    // 错误
 ```
 
 外部作用域声明了一个没有初值的变量 `r`，而内部作用域声明了一个初值为 5 的变量 `x`。在内部作用域中，将 `r` 的值设置为一个 `x` 的引用，接着在内部作用域结束后，尝试使用 `r` 的值。这段代码不能编译，因为 `r` 引用的值在使用之前就离开了作用域，若允许使用，就会造成悬垂引用。
@@ -810,17 +823,18 @@ let s: &'static str = "hello";
 这个字符串的文本被直接储存在程序的二进制文件的只读区块 `.rodata` 中，因此所有的字符串字面值都是 `'static` 的。
 
 ```rust
-// 可以编译
-let s1 = "abcdefg";
 let result;
 {
-    let s2 = "hello";
-    result = longest(s1, s2);
+    let s = "hello";
+    result = s;      // 可以编译
+    result = &s;     // 不能编译
 }
 println!("{}", result);
 ```
 
-之前使用 `String` 来创建 `s1` 和 `s2` 时，这段代码不能通过编译，原因是 `String` 会在堆上分配空间并在栈上创建指向这个堆的引用，因此其生命周期就取决于作用域，超出了就会被释放，导致 `result` 可能引用一个无效的值。而这段代码由于直接使用了字符串字面值，因此其生命周期是静态的，即 `'static str`，在整个程序运行都有效，因此 `result` 引用的值也必定是有效的，所以能够通过编译。
+之前使用 `String` 来创建字符串时，这段代码不能通过编译，原因是 `String` 会在堆上分配空间并在栈上创建指向这个堆的引用，因此其生命周期就取决于作用域，超出了就会被释放，导致 `result` 可能引用一个无效的值。而这段代码由于直接使用了字符串字面值，因此其生命周期是静态的，即 `'static str`，在整个程序运行都有效，因此 `result` 引用的值也必定是有效的，所以能够通过编译。
+
+但是如果获得的是一个 `&s`，那么实际上是一个 `s` 的引用，即 `result` 会被推断为 `&&str` 类型，该引用会在作用域外失效（即使该字符串没有失效），所以不能通过编译。
 
 使用 `static` 关键字创建的变量也同样具有 `'static` 生命周期，在整个程序运行期间都存在：
 
@@ -924,12 +938,13 @@ impl StrWrap<'_> {
 `'_` 的具体含义取决于上下文，而对于每个`'_`，会产生一个新的生命周期：
 
 ```rust
-struct Foo<'a, 'b: 'a> {
-    field: &'a &'b str,
+struct Foo<'a, 'b> {
+    x: &'a str,
+    y: &'b str
 }
 
 // 两者等同
-impl<'a, 'b: 'a> Foo<'a, 'b> {}
+impl<'a, 'b> Foo<'a, 'b> {}
 impl Foo<'_, '_> {}
 ```
 
@@ -991,6 +1006,8 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 最后是全体测试运行结果的摘要：`test result: ok.`，表示所有测试都通过了。
 
 `1 passed; 0 failed` 表示通过或失败的测试数量。由于没有将任何测试标记为忽略，所以摘要中会显示 `0 ignored`，也没有过滤需要运行的测试，所以摘要中会显示 `0 filtered out`，而 `0 measured` 表示性能测试。
+
+>   截至目前的版本（1.71），性能测试仍只能用于 Nightly 版本，更多信息可参考 [The Rust Unstable Book](https://doc.rust-lang.org/unstable-book/library-features/test.html)。
 
 ---
 
@@ -1300,7 +1317,7 @@ cargo test -- --include-ignored
 
 #### #[cfg(test)] 注解
 
-测试模块的 `#[cfg(test)]` 注解告诉编译器只在执行 `cargo test` 时才编译和运行测试代码。
+测试模块的 `#[cfg(test)]` 是一个条件编译注解，告诉编译器只在执行 `cargo test` 时才编译和运行测试代码。若直接在测试函数上添加 `#[test]` 而不放在 `#[cfg(test)]` 注解的模块中，那么无论是在测试环境还是在正常环境，这个函数都会被编译。但只有在测试环境中才会被执行。
 
 #### 测试私有函数
 
@@ -1408,6 +1425,6 @@ tests
 
 #### 二进制 crate
 
-若项目是二进制 crate 且只包含 *src/main.rs* 而没有 *src/lib.rs*，就不能在 *tests* 目录创建集成测试并使用 `extern crate` 导入 *src/main.rs* 中定义的函数。只有库 crate 才能向其他 crate 暴露了可供调用和使用的函数，二进制 crate 只意在单独运行。
+若项目是二进制 crate 且只包含 *src/main.rs* 而没有 *src/lib.rs*，就不能在 *tests* 目录创建集成测试并使用 `use crate` 导入 *src/main.rs* 中定义的函数。只有库 crate 才能向其他 crate 暴露了可供调用和使用的函数，二进制 crate 只意在单独运行。
 
-明确采用 *src/main.rs* 调用 *src/lib.rs* 的方式好处是，集成测试可以通过 `extern crate` 测试库 crate 中的主要功能，而如果这些重要的功能没有问题的话，那么 *src/main.rs* 中调用的代码也就没有问题，也就不需要测试 *src/main.rs*。
+明确采用 *src/main.rs* 调用 *src/lib.rs* 的方式好处是，集成测试可以通过 `use crate` 测试库 crate 中的主要功能，而如果这些重要的功能没有问题的话，那么 *src/main.rs* 中调用的代码也就没有问题，也就不需要测试 *src/main.rs*。
