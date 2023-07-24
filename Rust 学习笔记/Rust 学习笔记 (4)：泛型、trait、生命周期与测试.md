@@ -482,7 +482,7 @@ fn get_info() -> impl Summary {
 
 ```rust
 // 错误
-fn get_info(swtich: bool) -> impl trait {
+fn get_info(swtich: bool) -> impl Summary {
     if swtich {
         Article {
             title: "Hello World".to_string(),
@@ -501,6 +501,230 @@ fn get_info(swtich: bool) -> impl trait {
 ```
 
 因为 `impl trait` 工作方式的限制，这段代码不能通过编译。
+
+## trait 对象动态分发
+
+对于 trait 对象，有如下特征：
+
+-   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 对象的大小无法确定；
+-   使用 trait 对象时，总是使用引用的方式：
+    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
+    -   一个指针指向具体类型的实例；
+    -   另一个指针指向一个虚表 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，直接从 `vtable` 中找到方法并调用。
+    -   trait 对象的引用方式有多种，对于 `trait A`，其 trait 对象类型的引用可以是 `&dyn A`、`Box<dyn A>` 和 `Rc<dyn A>` 等。
+
+```rust
+trait Person {
+    fn run(&self);
+}
+
+struct Student {
+    name: String
+}
+
+struct Teacher {
+    name: String
+}
+
+impl Person for Student {
+    fn run(&self) {
+        println!("Student: {}", self.name);
+    }
+}
+
+impl Person for Teacher {
+    fn run(&self) {
+        println!("Teacher: {}", self.name);
+    }
+}
+
+fn main() {
+    let stu = Student { name: "alice".to_string() };
+    let tec = Teacher { name: "bob".to_string() };
+
+    let p1: &dyn Person = &stu;
+    let p2: &dyn Person = &tec;
+
+    p1.run();
+    p2.run();
+}
+```
+
+在上面这段代码的内存布局如下图。
+
+![动态 trait 对象内存布局](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202307242214983.png)
+
+`stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `trait Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
+
+`vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在程序的 `.rodata` 段上保存 `vtable`。
+
+`vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也因此会损失一定的性能。
+
+在返回 impl Trail 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
+
+```rust
+fn get_person(swtich: bool) -> Box<dyn Person> {
+    if swtich {
+        Box::new(Student { name: "Alice".to_string() })
+    } else {
+        Box::new(Teacher { name: "Bob".to_string() })
+    }
+}
+```
+
+## trait 对象安全
+
+只有对象安全的 trait 才可以组成 trait 对象，当 trait 的方法满足以下两点要求时才是对象安全的：
+
+-   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去；
+-   方法没有任何泛型类型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定。
+
+下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
+
+```rust
+// 错误
+struct Person {
+    student: Box<dyn Clone>,
+ }
+```
+
+## 常见 trait
+
+### Display
+
+`std::fmt::Display`：格式化打印用户字符串。
+
+```rust
+use std::fmt;
+
+struct Person {
+    name: String,
+    age: u32,
+}
+
+impl fmt::Display for Person {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({} years)", self.name, self.age)
+    }
+}
+```
+
+### Debug
+
+`std::fmt::Debug`：格式化打印调试字符串。
+
+```rust
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: u32,
+}
+```
+
+### PartialEq 和 Eq
+
+-   `std::cmp::PartialEq`：部分值相等关系；
+-   `std::cmp::PartialOrd`：部分值顺序关系。
+
+```rust
+#[derive(PartialEq, Eq)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+```
+
+>   要实现 `Eq`，必须同时实现 `PartialEq`。
+
+### PartialOrd 和 Ord
+
+-   `std::cmp::Eq`：完全相等关系；
+-   `std::cmp::Ord`：完全顺序关系；
+
+```rust
+#[derive(PartialOrd, Ord)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+```
+
+>   要实现 `Ord`，必须同时实现 `PartialOrd`。
+
+### Clone 和 Copy
+
+-   `std::clone::Clone`：能显式复制；
+-   `std::marker::Copy`：能隐式复制。
+
+```rust
+#[derive(Clone, Copy)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+```
+
+>   要实现 `Copy`，必须同时实现 `Clone`。
+
+### Add 和 Mul
+
+-   `std::ops::Add`：定义加法；
+-   `std::ops::Mul`：定义乘法。
+
+```rust
+use std::ops::{Add, Mul};
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl Mul for Point {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+        }
+    }
+}
+```
+
+### Iterator
+
+`std::iter::Iterator`：定义迭代器。
+
+```rust
+struct Counter {
+    count: u32,
+}
+
+impl Iterator for Counter {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.count += 1;
+
+        if self.count <= 5 {
+            Some(self.count)
+        } else {
+            None
+        }
+    }
+}
+```
 
 # 3 生命周期
 
