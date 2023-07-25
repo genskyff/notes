@@ -82,7 +82,7 @@ foo(2);
 
 闭包不用像函数那样在参数和返回值上注明类型。函数中需要类型注解是因为需要作为接口给外部调用，因此需要严格定义。但闭包是在局部范围内使用，不用命名或作为接口。
 
-闭包通常很短，只关联于小范围的上下文。在这些有限制的上下文中，编译器可推断出参数和返回值的类型。
+闭包通常很短，只关联小范围的上下文。在这些有限制的上下文中，编译器可推断出参数和返回值的类型。
 
 但也可以显式标注出类型：
 
@@ -155,7 +155,7 @@ fn main() {
 
 ---
 
-当闭包从环境中捕获一个值，闭包会在闭包体中储存这个值，这会产生额外的内存开销，而函数不允许捕获环境，因此定义和使用函数也就不会有这些额外开销。
+当闭包从环境中捕获一个值，闭包会在闭包体中储存这个值，这会产生额外的内存开销，而函数不允许捕获环境，因此定义和使用函数也就没有这些额外开销。
 
 闭包可以通过三种方式捕获其环境，对应函数的三种获取参数的方式：
 
@@ -171,11 +171,13 @@ fn main() {
 -   `FnMut` 从环境获取值的可变的借用，因此可以改变其环境的值；
 -   `Fn` 从环境获取值的不可变的借用。
 
-当定义一个闭包时，编译器会根据其如何使用环境中值来推断如何引用环境的值：
+当定义一个闭包时，编译器会根据其如何使用环境中的值来推断如何引用环境的值：
 
 -   由于所有闭包都可以被至少调用一次，因此所有闭包都实现了 `FnOnce` ；
 -   没有获取被捕获值的所有权的闭包都实现了 `FnMut` ；
 -   没有对被捕获值进行可变访问的闭包都实现了 `Fn` 。 
+
+---
 
 `Fn` 系列 trait 由标准库提供，所有的闭包都自动实现了 `FnOnce`、`FnMut` 或 `Fn` 中的一个。
 
@@ -183,14 +185,18 @@ fn main() {
 
 上面的代码中，由于 `equal_to_x` 闭包不可变的借用了 `x`，所以 `equal_to_x` 具有 `Fn` trait。
 
+---
+
 ```rust
-let mut x = 3;
-let mut addn = |n| x += n;
-addn(2);
-assert_eq!(5, x);
+let mut s = String::from("hello");
+let mut add_suffix = || s.push_str(" world");
+println!("{s}");  // 错误
+add_suffix();
 ```
 
-`addn` 这个闭包可变的借用了 `x`，因此具有 `FnMut` trait，且需要加上 `mut` 关键字。
+`add_suffix` 这个闭包可变的借用了 `s`，因此具有 `FnMut` trait，且需要加上 `mut` 关键字。
+
+这里由于 `s` 已经被闭包可变的借用了，因此 `println!` 会报错，因为它会不可变的借用。
 
 ---
 
@@ -199,11 +205,21 @@ assert_eq!(5, x);
 ```rust
 let s = String::from("hello");
 let equal_to_s = move |n| s == n;
-assert!(equal_to_s(String::from("hello")));
 println!("{}", s);    // 此处 s 已失效
+assert!(equal_to_s(String::from("hello")));
 ```
 
 >   简单类型由于实现了 `Copy` trait，就算使用了 `move` 关键字，闭包获取的也只是值的拷贝，因此需要使用像 `vector`、`String` 这样的类型。
+
+---
+
+```rust
+let f = |_| ();
+let s = String::from("hello");
+f(s);
+```
+
+这里，由于 `f` 获取了 `s` 的所有权，而 `f` 又什么都不做，因此 `f` 具有 `FnOnce` trait，在结束后会丢弃捕获的值，因此这里就相当于 `s` 被立刻回收了，即和 `drop` 函数作用相同。
 
 ## 闭包作为返回值
 
@@ -264,28 +280,28 @@ fn run(n: i32) {
 为了让结构体存放闭包，需要指定闭包的类型。由于每一个闭包都是一个唯一的类型，因此需要将闭包放在泛型中，并使用 trait bound 来约束闭包的签名。
 
 ```rust
-struct Cacher<T>
+struct Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    calc: T,
+    calc: F,
     value: Option<i32>,
 }
 ```
 
-这里创建了一个 `Cacher` 结构体，包含用来存放闭包的泛型字段 `calc` 和缓存值 `value`。`T` 的 trait bound 指定了 `T` 是一个使用 `Fn` 的闭包。任何储存到 `Cacher` 实例的 `calc` 字段的闭包必须有一个 `i32` 参数，且必须返回一个 `i32`。
+这里创建了一个 `Cacher` 结构体，包含用来存放闭包的泛型字段 `calc` 和缓存值 `value`。`F` 的 trait bound 指定了 `F` 是一个使用 `Fn` 的闭包。任何储存到 `Cacher` 实例的 `calc` 字段的闭包必须有一个 `i32` 参数，且必须返回一个 `i32`。
 
 字段 `value` 是 `Option<i32>` 类型的。在执行闭包前，`value` 为 `None`，这时使用 `Cacher` 的实现来请求闭包的结果，会执行闭包并将结果储存在 `value` 字段的 `Some` 成员中。当再次请求闭包的结果时，由于 `value` 字段不是 `None`，因此不执行闭包，而是返回存放在 `Some` 成员中的结果。
 
 然后对 `Cacher` 进行实现：
 
 ```rust
-impl<T> Cacher<T>
+impl<F> Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    fn new(calc: T) -> Cacher<T> {
-        Cacher { calc, value: None }
+    fn new(calc: F) -> Self {
+        Self { calc, value: None }
     }
 
     fn value(&mut self, arg: i32) -> i32 {
@@ -301,7 +317,7 @@ where
 }
 ```
 
-`Cacher::new` 函数获取一个闭包作为参数，类型为泛型参数 `T`，定义于 `impl` 块上下文中并与 `Cacher` 结构体有着相同的 trait bound。`Cacher::new` 返回一个在 `calc` 字段中存放了指定闭包和在 `value` 字段中存放了 `None` 值的 `Cacher` 实例，因为此时还未执行闭包。
+`Cacher::new` 函数获取一个闭包作为参数，类型为泛型参数 `F`，定义于 `impl` 块上下文中并与 `Cacher` 结构体有着相同的 trait bound。`Cacher::new` 返回一个在 `calc` 字段中存放了指定闭包和在 `value` 字段中存放了 `None` 值的 `Cacher` 实例，因为此时还未执行闭包。
 
 当需要闭包的执行结果时，不同于直接调用闭包，而是调用 `value` 方法。这个方法会检查 `self.value` 是否已经有了一个 `Some` 的结果值，若存在，则返回 `Some` 中的值而不是再次执行闭包。
 
@@ -347,21 +363,21 @@ println!("{}", closure_cache.value(3));
 可以通过再增加一个 `arg` 字段用来存放之前传递的参数，若再次调用的参数和之前的一致，则直接返回 `value` 字段的值，否则再次调用闭包，并将参数和结果保存。
 
 ```rust
-struct Cacher<T>
+struct Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    calc: T,
+    calc: F,
     value: Option<i32>,
     arg: Option<i32>,
 }
 
-impl<T> Cacher<T>
+impl<F> Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    fn new(calc: T) -> Cacher<T> {
-        Cacher {
+    fn new(calc: F) -> Self {
+        Self {
             calc,
             value: None,
             arg: None,
@@ -397,27 +413,27 @@ where
 这种做法显得十分繁琐，且含有重复代码，更好的做法是使用哈希 map 来存放值。将 `arg` 作为 key，而闭包调用的结果作为 value，这样只需要使用 `entry` 和 `or_insert` 方法即可实现相同的功能。
 
 ```rust
-struct Cacher<T>
+struct Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    calc: T,
+    calc: F,
     value: HashMap<i32, i32>,
 }
 
-impl<T> Cacher<T>
+impl<F> Cacher<F>
 where
-    T: Fn(i32) -> i32,
+    F: Fn(i32) -> i32,
 {
-    fn new(calc: T) -> Cacher<T> {
-        Cacher {
+    fn new(calc: F) -> Self {
+        Self {
             calc,
             value: HashMap::new(),
         }
     }
 
     fn value(&mut self, arg: i32) -> i32 {
-        self.value.entry(arg).or_insert((self.calc)(arg))
+        *self.value.entry(arg).or_insert((self.calc)(arg))
     }
 }
 ```
