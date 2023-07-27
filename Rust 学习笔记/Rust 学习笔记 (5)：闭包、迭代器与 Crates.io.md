@@ -181,7 +181,7 @@ fn main() {
 
 `Fn` 系列 trait 由标准库提供，所有的闭包都自动实现了 `FnOnce`、`FnMut` 或 `Fn` 中的一个。
 
->   函数也都实现了这三个 `Fn` trait，若不需要捕获环境中的值，则可以使用实现了 `Fn` trait 的函数而不是闭包。
+>   函数也都实现了这三个 `Fn` trait，若不需要捕获环境中的值，则可以使用实现了 `Fn` trait 的闭包，或者直接使用函数。
 
 上面的代码中，由于 `equal_to_x` 闭包不可变的借用了 `x`，所以 `equal_to_x` 具有 `Fn` trait。
 
@@ -219,7 +219,7 @@ let s = String::from("hello");
 f(s);
 ```
 
-这里，由于 `f` 获取了 `s` 的所有权，而 `f` 又什么都不做，因此 `f` 具有 `FnOnce` trait，在结束后会丢弃捕获的值，因此这里就相当于 `s` 被立刻回收了，即和 `drop` 函数作用相同。
+这里，由于 `f` 没有捕获环境的值，因此 `f` 具有 `Fn` trait，但是其参数会获取所有权，在闭包运行结束后，就 `s` 被立刻回收，因此该闭包相当于 `drop` 函数的作用。
 
 ## 闭包作为返回值
 
@@ -524,7 +524,12 @@ let mul_sum = v.iter().fold(1, |acc, x| acc * x);
 println!("add_sum = {}, mul_sum = {}", add_sum, mul_sum);
 ```
 
-使用 `fold` 方法可以方便地计算累加和与元素乘积。
+使用 `fold` 方法可以方便地计算累加和与元素乘积。与其相似的还有 `reduce` 方法，但只接受一个闭包参数，并把迭代器的第一个元素作为初始值，返回一个 `Option<T>`，当迭代器为空时，返回 `None`。
+
+```rust
+let v: Vec<i32> = vec![];
+assert_eq!(None, v.into_iter().reduce(|acc, x| acc + x));
+```
 
 ## 迭代适配器
 
@@ -621,7 +626,7 @@ assert_eq!(counter.next(), Some(5));
 assert_eq!(counter.next(), None);
 ```
 
-若调用 `next` 方法，会改变迭代器内部的状态，因此要将迭代器声明为 `mut`。
+调用 `next` 方法，会改变迭代器内部的状态，因此要将迭代器声明为 `mut`。
 
 ### 返回迭代器
 
@@ -667,13 +672,18 @@ Cargo 有两个主要的构建配置：
 opt-level = 0
 
 [profile.release]
-opt-level = 3
 strip = true
+lto = true
+panic = "abort"
 ```
 
-`opt-level` 设置优化级别，值从 0 到 3，越高的优化级别需要更多的时间编译。`strip` 表示是否删除调试符号信息，选择在 `release` 构建中开启，可以减小文件大小，防止泄露不必要的信息。
+-   `opt-level`：设置优化级别，值从 0 到 3，级别越高编译所需时间越多，dev 编译默认为 0，release 编译默认为 3；
 
->   对于每个配置的设置和默认值的完整列表，请参考 [Cargo 文档](https://course.rs/cargo/reference/profiles.html)。
+-   `strip`：表示是否删除调试符号信息，选择在 `release` 构建中开启，可以减小文件大小，防止泄露不必要的信息；
+-   `lto`：表示开启链接时优化，可以提高程运行效率，但会增加编译时间和内存消耗。默认值为 `false`，当为 `true` 时默认开启为 Fat 模式，这会最大程度优化，但最消耗资源，当为 `thin` 时表示不进行最大优化，可以减少资源消耗；
+-   `panic`：表示程序在发生 panic 时的动作，默认值为 `unwind`，使用 `abort` 可以在发生 panic 时直接中止程序，不进行资源的清理和回收，这样具有更高的性能。
+
+>   对于每个配置的设置和默认值的完整列表，可参考 [Cargo 文档](https://course.rs/cargo/reference/profiles.html)。
 
 ## Cargo 工作空间
 
@@ -879,9 +889,7 @@ fn main() {
 cargo run -p adder_2
 ```
 
-### 为工作空间增加测试
-
-可以给工作空间的增加测试，如分别给 *add_one* 和 *add_two* 增加单元测试：
+### 为工作空间增加单元测试
 
 **文件：add_one/src/lib.rs**
 
@@ -918,6 +926,43 @@ mod tests {
 ```shell
 # 只运行 add_one 的测试
 cargo test -p add_one
+```
+
+### 为工作空间增加集成测试
+
+创建集成测试只需要在各 crate 下创建 tests 目录。
+
+**文件：add_one/tests/integration_test.rs**
+
+```rust
+use add_one;
+
+#[test]
+fn it_works() {
+    let result = add_one::add_one(1);
+    assert_eq!(result, 2);
+}
+
+```
+
+**文件：add_two/tests/integration_test.rs**
+
+```rust
+use add_two;
+
+#[test]
+fn it_works() {
+    let result = add_two::add_two(2);
+    assert_eq!(result, 4);
+}
+```
+
+集成测试也需要显式 use crate，因为 tests 目录下每一个文件都被看成一个单独的 crate。
+
+通过 `-p` 和 `--test` 可以单独运行指定 crate 的指定集成测试。
+
+```shell
+cargo test -p add_one --test integration_test
 ```
 
 ## 文档注释
@@ -971,7 +1016,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 ### 注释包含的项
 
-使用 `//!` 为包含注释的项，而不是给位于注释之后的项增加文档，多行则使用 `/*!...*/` 的形，通常用于 crate 根文件或为模块整体提供文档。
+使用 `//!` 为包含注释的项，而不是给位于注释之后的项增加文档，多行则使用 `/*!...*/` 的形式，通常用于 crate 根文件或为模块整体提供文档。
 
 **文件：demo/lib.rs**
 

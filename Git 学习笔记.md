@@ -61,7 +61,7 @@ git config --global core.editor "code --wait"
 git config --list
 ```
 
-通过输入 `git config [key]` 来查看某一项配置：
+通过 `git config [key]` 来查看某一项配置：
 
 ```shell
 git config user.name
@@ -80,6 +80,16 @@ git config --list --show-origin
 ```shell
 git config --show-origin user.name
 ```
+
+### 删除本地配置信息
+
+通过 `git config --unset [key]` 来删除本地的配置信息：
+
+```shell
+git config --unset user.name
+```
+
+
 
 # 2 Git 基础
 
