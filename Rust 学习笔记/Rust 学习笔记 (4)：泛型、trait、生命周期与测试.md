@@ -590,6 +590,18 @@ struct Person {
 
 ## 常见 trait
 
+### Debug
+
+`std::fmt::Debug`：格式化打印调试字符串。
+
+```rust
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: u32,
+}
+```
+
 ### Display
 
 `std::fmt::Display`：格式化打印用户字符串。
@@ -609,18 +621,6 @@ impl fmt::Display for Person {
 }
 ```
 
-### Debug
-
-`std::fmt::Debug`：格式化打印调试字符串。
-
-```rust
-#[derive(Debug)]
-struct Person {
-    name: String,
-    age: u32,
-}
-```
-
 ### PartialEq 和 Eq
 
 -   `std::cmp::PartialEq`：部分值相等关系；
@@ -628,10 +628,7 @@ struct Person {
 
 ```rust
 #[derive(PartialEq, Eq)]
-struct Point {
-    x: i32,
-    y: i32,
-}
+struct Point(i32, i32);
 ```
 
 >   要实现 `Eq`，必须同时实现 `PartialEq`。
@@ -643,10 +640,7 @@ struct Point {
 
 ```rust
 #[derive(PartialOrd, Ord)]
-struct Point {
-    x: i32,
-    y: i32,
-}
+struct Point(i32, i32);
 ```
 
 >   要实现 `Ord`，必须同时实现 `PartialOrd`。
@@ -658,49 +652,10 @@ struct Point {
 
 ```rust
 #[derive(Clone, Copy)]
-struct Point {
-    x: i32,
-    y: i32,
-}
+struct Point(i32, i32);
 ```
 
 >   要实现 `Copy`，必须同时实现 `Clone`。
-
-### Add 和 Mul
-
--   `std::ops::Add`：定义加法；
--   `std::ops::Mul`：定义乘法。
-
-```rust
-use std::ops::{Add, Mul};
-
-struct Point {
-    x: i32,
-    y: i32,
-}
-
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-impl Mul for Point {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self {
-        Self {
-            x: self.x * other.x,
-            y: self.y * other.y,
-        }
-    }
-}
-```
 
 ### Iterator
 
@@ -725,6 +680,57 @@ impl Iterator for Counter {
     }
 }
 ```
+
+## 运算符重载
+
+有一系列用于运算符重载的 trait，可以方便的为类型实现各种运算操作。
+
+### Add、Sub、Mul 和 Div
+
+-   `std::ops::Add`：定义加法；
+-   `std::ops::Sub`：定义减法；
+-   `std::ops::Mul`：定义乘法；
+-   `std::ops::Div`：定义除法。
+
+```rust
+use std::ops::{Add, Sub, Mul, Div};
+
+struct Point(i32, i32);
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self(self.0 + other.0, self.1 + other.1)
+    }
+}
+
+impl Sub for Point {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self(self.0 - other.0, self.1 - other.1)
+    }
+}
+
+impl Mul for Point {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self::Output {
+        Self(self.0 * other.0, self.1 * other.1)
+    }
+}
+
+impl Div for Point {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self::Output {
+        Self(self.0 / other.0, self.1 / other.1)
+    }
+}
+```
+
+此外还有许多其它运算符的 trait，具体可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
 
 # 3 生命周期
 
