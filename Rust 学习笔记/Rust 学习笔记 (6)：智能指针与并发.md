@@ -1334,7 +1334,7 @@ fn main() {
     let mut handles = vec![];
     let b = Arc::new(Barrier::new(3));
     for _ in 0..3 {
-        let t = b.clone();
+        let t = Arc::clone(&b);
         let handle = thread::spawn(move || {
             println!("hello");
             t.wait();
@@ -1413,23 +1413,27 @@ let d2 = m.try_lock().unwrap();
 `Mutex<T>` 会对每次读写都进行加锁，因此当有大量的并发读就无法满足需求了，此时就可以使用读写锁 `RwLock<T>`。
 
 ```rust
-use std::sync::RwLock;
+use std::thread;
+use std::sync::{Arc, RwLock};
 
-let rwlock = RwLock::new(5);
-// 允许多个读
-{
-    let r1 = rwlock.read().unwrap();
-    let r2 = rwlock.read().unwrap();
-    println!("{}, {}", *r1, *r2);
+let num = Arc::new(RwLock::new(5));
+let mut handles = vec![];
+
+for _ in 0..10 {
+    let n = Arc::clone(&num);
+    let h = thread::spawn(move || {
+        println!("{}", n.read().unwrap());
+    });
+    handles.push(h);
 }
 
-// 只能一个写
-{
-    let mut w = rwlock.write().unwrap();
-    *w = 10;
+for h in handles {
+    h.join().unwrap();
 }
 
-println!("{}", rwlock.read().unwrap());
+*num.write().unwrap() = 10;
+
+println!("{}", num.read().unwrap());
 ```
 
 >   `RwLock<T>` 在使用上和 `Mutex<T>` 基本相同。
@@ -1445,7 +1449,7 @@ println!("{}", rwlock.read().unwrap());
 
 `Mutex<T>` 要更简单，因为使用 `RwLock<T>` 需要关心：
 
--   读和写不能同时发生，若使用 `try_xxx` 解决，需要做错误处理；
+-   读和写不能同时发生，若使用 `try_xxx` 解决，则需要做错误处理；
 -   当读多写少时，写操作可能会因为无法获得锁导致连续多次失败；
 -   `RwLock<T>` 为操作系统提供，具体实现比 `Mutex<T>` 更复杂。
 
