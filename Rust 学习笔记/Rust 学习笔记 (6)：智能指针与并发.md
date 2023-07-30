@@ -373,6 +373,13 @@ fn main() {
 ```rust
 // 错误，String 不是 Copy 的
 let s = Cell::new(String::from("hello"));
+
+// 正确，引用类型是 Copy 的
+let s = String::from("hello");
+let s2 = String::from("ok");
+let x = Cell::new(&s);
+x.set(&s2);
+println!("{}", x.get());
 ```
 
 对实现了 `Copy` trait 的类型使用 `Cell<T>` 意义不大，通常是对非 `Copy` 的类型使用 `RefCell<T>`。
@@ -383,9 +390,9 @@ let s = Cell::new(String::from("hello"));
 
 | 指针类型        | 所有权 | 可变性       | 违反规则     |
 | --------------- | ------ | ------------ | ------------ |
-| 引用和 Box\<T\> | 唯一   | 不可变或可变 | 编译期错误   |
-| Rc\<T\>         | 多个   | 不可变       | 编译期错误   |
-| RefCell\<T\>    | 唯一   | 不可变或可变 | 运行时 panic |
+| 引用和 `Box<T>` | 唯一   | 不可变或可变 | 编译期错误   |
+| `Rc<T>`         | 多个   | 不可变       | 编译期错误   |
+| `RefCell<T>`    | 唯一   | 不可变或可变 | 运行时 panic |
 
 通常在编译期检查借用规则，但由于编译器是保守的，因此会拒绝掉所有不符合借用规则的代码，这在有些时候会很不方便，`RefCell<T>` 正是用于确信代码遵守借用规则，而编译器无法在编译期正确检查的时候使用。
 
@@ -523,7 +530,7 @@ b.count = 2
 
 强引用代表如何共享 `Rc<T>` 实例的所有权，但弱引用并不属于所有权关系，不会造成引用循环，因为任何弱引用的循环会在其相关的强引用计数为 0 时被打断。
 
-因为 `Weak<T>` 引用的值可能已经被释放了，为了使用 `Weak<T>` 所指向的值，必须确保其值仍然有效。为此可以调用 `Weak<T>` 实例的 `upgrade` 方法，这会返回一个 `Option<Rc<T>>`。若 `Rc<T>` 值还未被丢弃，则为 `Some`，否则为 `None`。
+因为 `Weak<T>` 引用的值可能已经被释放了，为了使用 `Weak<T>` 所指向的值，必须确保其值仍然有效。为此可以调用 `Weak<T>` 实例的 `upgrade` 方法，这会返回一个 `Option<Rc<T>>`。**若 `Rc<T>` 值还未被丢弃，则为 `Some(Rc<T>)`，并将 `Rc<T>` 的 `strong_count` 加 1，否则为 `None`。**
 
 ---
 
@@ -606,7 +613,7 @@ Some(RefCell { value: (Weak) })
 
 ---
 
-设有一个树型数据结构，父节点可以拥有多个子节点，因此使用 `Rc<T>` 和 `Vec` 来封装，子节点可以访问父节点，为了避免循环引用，因此子节点拥父节点弱引用，父节点拥有子节点的强引用，同时父和子节点皆可被修改，因此都需要使用 `RefCell<T>` 封装。
+设有一个树型数据结构，父节点可以拥有多个子节点，因此使用 `Rc` 和 `Vec` 来封装，子节点可以访问父节点，为了避免循环引用，因此子节点拥父节点弱引用，父节点拥有子节点的强引用，同时父和子节点皆可被修改，因此都需要使用 `RefCell` 封装。
 
 ```rust
 use std::rc::Rc;
@@ -619,18 +626,19 @@ struct Node {
     children: RefCell<Vec<Rc<Node>>>,
 }
 
-fn main() {
-    let leaf1 = Rc::new(Node {
-        value: 2,
-        parent: RefCell::new(Weak::new()),
-        children: RefCell::new(vec![]),
-    });
+impl Node {
+    fn new(value: i32) -> Self {
+        Self {
+            value,
+            parent: RefCell::new(Weak::new()),
+            children: RefCell::new(vec![])
+        }
+    }
+}
 
-    let leaf2 = Rc::new(Node {
-        value: 3,
-        parent: RefCell::new(Weak::new()),
-        children: RefCell::new(vec![]),
-    });
+fn main() {
+    let leaf1 = Rc::new(Node::new(1));
+    let leaf2 = Rc::new(Node::new(2));
 
     println!("leaf1.parent = {:?}", leaf1.parent.borrow().upgrade());
     println!(
@@ -646,11 +654,9 @@ fn main() {
     );
 
     {
-        let branch = Rc::new(Node {
-            value: 1,
-            parent: RefCell::new(Weak::new()),
-            children: RefCell::new(vec![Rc::clone(&leaf1), Rc::clone(&leaf2)]),
-        });
+        let branch = Rc::new(Node::new(0));
+        branch.children.borrow_mut().push(Rc::clone(&leaf1));
+        branch.children.borrow_mut().push(Rc::clone(&leaf2));
 
         println!("branch = {:#?}\n", branch);
         println!(
@@ -968,7 +974,7 @@ Rust 中一个实现消息传递并发的主要方式是**信道**，由两部�
 
 ### 使用 channel
 
-设有一个程序，它会在一个线程生成值并向信道发送，另一个线程会接收值并打印。这可以通过信道在线程间发送消息来完成。
+设有一个程序，它会在一个线程生成值并向信道发送，另一个线程会接收值并打印，这可以通过信道在线程间发送消息来完成。
 
 ```rust
 use std::sync::mpsc;
