@@ -657,7 +657,7 @@ let values: &[i32] = unsafe {
 
 Rust 可以方便的与其它语言进行交互。使用 `extern` 关键字，可以创建和使用**外部函数接口**（Foreign Function Interface，FFI）。外部函数接口是一个编程语言用以定义函数的方式，其允许不同编程语言调用这些函数。
 
-`extern` 块中声明的函数在 Rust 代码中总是不安全的，因为其他语言不会强制执行 Rust 的规则且 Rust 也无法检查它们。
+`extern` 块中声明的函数在 Rust 代码中总是不安全的，因为其他语言不会强制执行 Rust 的规则且 Rust 也无法检查它们，必须在 `unsafe` 块中进行调用。
 
 如调用 C 标准库中的 `abs` 函数：
 
