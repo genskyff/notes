@@ -882,6 +882,20 @@ pub trait Add<Rhs = Self> {
 
 这是一个带有关联类型和方法的 trait，尖括号中的 `Rhs = Self` 为**默认类型参数**，用于定义 `add` 方法中的 `rhs` 参数。当实现 `Add` trait 时不指定 `Rhs` 的具体类型，`Rhs` 的类型将是默认的 `Self` 类型，也就是在其上实现 `Add` 的类型。
 
+`Rhs` 和 `Output` 的关系为，`self` 是可以和很多类型相加的，但是对于给定的两个类型，应该输出同样的类型，即对于类型为 `T` 的 `self`，当和类型 `S` 相加，其 `Output` 的类型也是固定的。
+
+`Add` trait 的定义或许还能是这样的：
+
+```rust
+pub trait Add {
+    type Output;
+
+    fn add<Rhs>(self, rhs: Rhs) -> Self::Output;
+}
+```
+
+但这是不行的，虽然不能给函数级别的泛型参数也设置默认值，但这并不是不能的原因，主要还是因为若是定义在函数级别上，那么在重载 `+` 运算符时，就无法得到有关 `Rhs` 结构的信息，因此无法以这种方式实现任何合理的加法函数。
+
 ---
 
 若实现 `Add` trait 时要自定义 `Rhs` 类型而不是使用默认类型，如实现一个能够将毫米与米相加，且 `Add` trait 的实现能正确处理转换，可以为 `Millis` 实现 `Add` trait 并以 `Meters` 作为 `Rhs`。
