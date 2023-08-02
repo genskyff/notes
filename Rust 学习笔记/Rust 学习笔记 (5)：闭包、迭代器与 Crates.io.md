@@ -1238,6 +1238,14 @@ rg --help
 
 >   要删除安装的二进制文件，可以使用 `cargo uninstall [crate_name]`。
 
+### --locked 选项
+
+在安装时使用 `--locked` 选项，将使用 `Cargo.lock` 文件中的精确版本进行构建。若不使用，则会使用 `Cargo.toml` 中所描述的依赖版本进行构建，但由于其中为语义化版本，因此可能和 crate 的开发者得到的结果不一致甚至构建失败。
+
+```shell
+cargo install ripgrep --locked
+```
+
 ### Cargo 自定义扩展命令
 
 Cargo 可以通过新的子命令来进行扩展，而无需修改 Cargo 本身。如在系统 `$PATH` 下有名为 `cargo-xxx` 的二进制文件，则可以通过 `cargo xxx` 来像 Cargo 子命令一样运行。
