@@ -511,11 +511,9 @@ Rust 在编译时会进行安全检查以保证内存安全。由于编译器是
 -   实现不安全 trait；
 -   访问 `union` 的字段。
 
-实际上，`unsafe` 并不会禁用安全检查，该关键字仅让这几种原本不能通过的代码变得能通过。
+实际上，`unsafe` 并不会禁用安全检查，该关键字仅让以上几种原本不能通过的代码变得能通过，其余的安全检查依然存在。因此即使使用 unsafe 代码，也依然能够获得一定的安全性。
 
 另外，`unsafe` 块中的代码并不代表一定不安全，只是需要开发者自己来保证安全，相当于在安全与不安全之间明确了界限，并缩小了可能出问题的代码的范围。
-
-将不安全代码隔离，并封装到一个安全的抽象层，然后提供安全 API 是常用做法，在 Rust 标准库中有很多这类实现。
 
 ### 解引用裸指针
 
@@ -578,7 +576,7 @@ unsafe {
 
 #### 不安全代码的安全抽象
 
-一个安全的函数中包含 unsafe 块并不代表整个函数不安全。将不安全代码封装进安全函数是一个常见的抽象。如标准库中的 `split_at_mut` 函数，它获取一个可变的 slice 并从给定的索引参数开始将其分为两个可变 slice，并返回一个包含这个两个元素的元组。
+一个安全的函数中包含 unsafe 块并不代表整个函数不安全。将不安全代码隔离，并封装到一个安全的抽象层，然后提供安全 API 是常用做法。在 Rust 标准库中有很多这类实现，如标准库中的 `split_at_mut` 函数，它获取一个可变的 slice 并从给定的索引参数开始将其分为两个可变 slice，并返回一个包含这个两个元素的元组。
 
 ```rust
 let mut list = vec![1, 2, 3, 4, 5, 6];
@@ -686,7 +684,7 @@ fn main() {
 ```rust
 #[no_mangle]
 pub extern "C" fn call_rust_func() {
-    println!("Just called a Rust function!");
+    println!("Hello from Rust!");
 }
 ```
 
@@ -704,7 +702,7 @@ fn main() {
 }
 ```
 
-静态变量类似于常量，但名称采用大写蛇形命名法。静态变量只能储存拥有 `'static` 生命周期的引用，因此编译器可以计算出生命周期而无需显式标注。
+静态变量类似于常量，但名称采用大写蛇形命名法，且必须显式标注类型。静态变量只能储存拥有 `'static` 生命周期的引用，因此编译器可以计算出生命周期而无需显式标注。
 
 常量与不可变静态变量的一个区别是静态变量是作为程序二进制的一部分被保存在 `.rodata` 区块中，因此当程序加载时静态变量有一个固定的地址。
 
@@ -752,3 +750,348 @@ unsafe impl Foo {}
 可以使用 `unsafe` 来进行这五种操作，但是需要自己来保证安全，通过使用显式的 `unsafe` 标注可以更容易地在错误发生时追踪问题的源头。
 
 >   更多关于 Unsafe Rust 的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io)。
+
+## 高级 trait
+
+### 关联类型
+
+**关联类型**是一个将类型占位符与 trait 相关联的方式，这样 trait 的方法签名中就可以使用这些占位符类型。trait 的实现会指定相应的具体类型，这样就可定义一个使用多种类型的 trait。
+
+如标准库中的 `Iterator` trait，含有一个 `Item` 的关联类型来替代遍历的值的类型。
+
+```rust
+pub trait Iterator {
+    type Item;
+
+    fn next(&mut self) -> Option<Self::Item>;
+}
+```
+
+`Item` 是一个占位符类型，同时 `next` 方法定义表明它返回 `Option<Self::Item>` 类型的值。这个 trait 的实现会指定 `Item` 的具体类型。
+
+关联类型和泛型很类似，但还是有一些区别，下面为 `Counter` 实现 `Iterator` trait：
+
+```rust
+struct Counter {
+    count: u32
+}
+
+impl Iterator for Counter {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+```
+
+若用泛型来实现，假设 `Iterator` trait 是由泛型定义的：
+
+```rust
+pub trait Iterator<T> {
+    fn next(&mut self) -> Option<T>;
+}
+```
+
+那么为 `Counter` 就应该这样实现：
+
+```rust
+impl Iterator<u32> for Counter {
+    fn next(&mut self) -> Option<u32> {
+        todo!()
+    }
+}
+```
+
+当 trait 有泛型参数时，就可以通过改变泛型参数的具体类型来多次实现这个 trait，因为 `Counter` 还可以是其他类型。
+
+```rust
+// 其它实现
+impl Iterator<u64> for Counter {
+    fn next(&mut self) -> Option<u64> {
+        todo!()
+    }
+}
+
+impl Iterator<i64> for Counter {
+    fn next(&mut self) -> Option<i64> {
+        todo!()
+    }
+}
+```
+
+若使用泛型的方式，那么当使用 `Counter` 的 `next` 方法时，必须提供类型注解来表明希望使用 `Iterator` 的哪一个实现。
+
+```rust
+let mut counter = Counter { count: 0 };
+
+// 错误
+counter.next();
+
+// 正确
+<Counter as Iterator<i64>>::next(&mut counter);
+```
+
+而通过关联类型，则无需标注类型，因为不能多次实现这个 trait，其实现必须提供一个类型来替代关联类型占位符。
+
+### 默认泛型类型参数和运算符重载
+
+当使用泛型类型参数时，可以指定一个默认的具体类型。若默认类型就足够的话，就无需为具体类型实现 trait。在声明泛型类型时通过使用 `<PlaceholderType = ConcreteType>` 语法为泛型类型指定默认类型。
+
+默认泛型类型参数多用于运算符重载，Rust 并不允许创建自定义运算符或重载任意运算符，但可以通过实现 `std::ops` 中的 trait 来进行运算符重载。
+
+如在 `Point` 结构体上实现 `Add` trait 来重载 `+` 运算符：
+
+```rust
+use std::ops::Add;
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Point) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+fn main() {
+    assert_eq!(
+        Point { x: 1, y: 0 } + Point { x: 2, y: 3 },
+        Point { x: 3, y: 3 }
+    );
+}
+```
+
+这里默认泛型类型位于 `Add` trait 中，其定义为：
+
+```rust
+pub trait Add<Rhs = Self> {
+    type Output;
+
+    fn add(self, rhs: Rhs) -> Self::Output;
+}
+```
+
+这是一个带有关联类型和方法的 trait，尖括号中的 `Rhs = Self` 为**默认类型参数**，用于定义 `add` 方法中的 `rhs` 参数。当实现 `Add` trait 时不指定 `Rhs` 的具体类型，`Rhs` 的类型将是默认的 `Self` 类型，也就是在其上实现 `Add` 的类型。
+
+---
+
+若实现 `Add` trait 时要自定义 `Rhs` 类型而不是使用默认类型，如实现一个能够将毫米与米相加，且 `Add` trait 的实现能正确处理转换，可以为 `Millis` 实现 `Add` trait 并以 `Meters` 作为 `Rhs`。
+
+```rust
+use std::ops::Add;
+
+struct Millis(u32);
+struct Meters(u32);
+
+impl Add<Meters> for Millis {
+    type Output = Millis;
+
+    fn add(self, other: Meters) -> Self::Output {
+        Millis(self.0 + (other.0 * 1000))
+    }
+}
+```
+
+为了使 `Millis` 和 `Meters` 能够相加，指定 `impl Add<Meters>` 来设定 `Rhs` 类型参数的值而不是使用默认的 `Self`。
+
+默认参数类型主要用于：
+
+-   扩展类型而不破坏现有代码；
+-   在大部分不需要特定的情况进行自定义。
+
+大部分时候会将两个相似的类型相加，但也提供了自定义特定行为的能力。在 `Add` trait 定义中使用默认类型参数意味着大部分时候无需指定额外的参数。
+
+### 完全限定语法
+
+两个 trait 可以声明相同的函数或方法，两个类型也可以同时实现同一个 trait，因此当调用这些同名方法时，需要明确使用哪一个。
+
+`Pilot` 和 `Wizard` trait 都有方法 `fly`，接着在一个本身已经实现了名为 `fly` 方法的类型 `Human` 上实现这两个 trait，每一个 `fly` 方法都进行了不同的操作。
+
+```rust
+trait Pilot {
+    fn fly(&self);
+}
+
+trait Wizard {
+    fn fly(&self);
+}
+
+struct Human;
+
+impl Human {
+    fn fly(&self) {
+        println!("From Self");
+    }
+}
+
+impl Pilot for Human {
+    fn fly(&self) {
+        println!("From Pilot");
+    }
+}
+
+impl Wizard for Human {
+    fn fly(&self) {
+        println!("From Wizard");
+    }
+}
+```
+
+然后调用 `Human` 实例上的 `fly` 方法：
+
+```rust
+let person = Human;
+person.fly();
+```
+
+运行结果：
+
+```
+From Self
+```
+
+这表明调用了直接实现在 `Human` 上的 `fly` 方法。
+
+---
+
+为了能够调用 `Pilot` 或 `Wizard` trait 的 `fly` 方法，需要显式指定：
+
+```rust
+let person = Human;
+Pilot::fly(&person);
+Wizard::fly(&person);
+person.fly();
+```
+
+因为 `fly` 方法获取一个 `self` 参数，若有两个类型都实现了同一 trait，编译器可以根据 `self` 的类型计算出应该使用哪一个 trait 实现。然而在 trait 中声明的关联函数时，则无法传递 `self`，除非使用**完全限定语法**。
+
+`Dog` 上实现了关联函数 `name`，也实现了 `Animal` trait。
+
+```rust
+trait Animal {
+    fn name() -> String;
+}
+
+struct Dog;
+
+impl Dog {
+    fn name() -> String {
+        String::from("Spot")
+    }
+}
+
+impl Animal for Dog {
+    fn name() -> String {
+        String::from("puppy")
+    }
+}
+```
+
+编译器会优先调用类型上面直接实现的函数或方法。
+
+```rust
+let dog = Dog::name();
+println!("{dog}");
+```
+
+运行结果：
+
+```
+Spot
+```
+
+若要调用 `Dog` 上 `Animal` trait 实现的 `name` 函数，则不能使用之前的方法：
+
+```rust
+// 错误
+let dog = Animal::name();
+```
+
+因为 `Animal::name` 没有 `self` 参数，同时可能会有其它类型也实现了 `Animal` trait，因此编译器无法计算出所需的是哪一个实现。
+
+为了消歧义需要使用**完全限定语法**：
+
+```rust
+let dog = <Dog as Animal>::name();
+```
+
+在尖括号中提供类型注解，来指定 `Dog` 上 `Animal` trait 实现中的 `name` 函数。
+
+通常完全限定语法定义为：
+
+```rust
+<Type as Trait>::function(receiver_if_method, next_arg, ...);
+```
+
+对于关联函数，其没有 `receiver`，因此只会有其它参数。可以选择在任何函数或方法调用处使用完全限定语法，但可省略任何编译器能够从程序的其它信息中计算出的部分，只有当存在多个同名实现时才使用这个较为冗长的语法。
+
+### 父 trait 
+
+可以定义一个依赖另一个 trait 的 trait 定义：要求实现该 trait 的类型，也必须实现其上依赖的 trait。父 trait 可以通过 trait bound 语法来指定多个
+
+```rust
+use std::fmt::{self, Display};
+
+trait Foo: Display {
+    fn bar(&self) -> i32;
+}
+
+struct Wrap(i32);
+
+impl Foo for Wrap {
+    fn bar(&self) -> i32 {
+        todo!()
+    }
+}
+
+impl Display for Wrap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+}
+```
+
+`Wrap` 要实现 `Foo` trait，就必须也实现 `Display` trait。
+
+### newtype 模式
+
+在实现 trait 时，需要遵循**孤儿原则**，即不能为外部类型实现外部 trait。要绕开这个限制的方法是使用 **newtype 模式**，即把外部类型封装起来。
+
+如想要在 `Vec<T>` 上实现 `Display`，因为 `Display` trait 和 `Vec<T>` 都定义于外部，所以创建一个包含 `Vec<T>` 实例的 `Wrap` 结构体，然后就可以 `Wrap` 上实现 `Display` 并使用 `Vec<T>` 的值。
+
+```rust
+use std::fmt::{self, Display};
+
+struct Wrap(Vec<String>);
+
+impl Display for Wrap {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}]", self.0.join(", "))
+    }
+}
+
+fn main() {
+    let w = Wrap(vec![String::from("hello"), String::from("world")]);
+    println!("w = {}", w);
+}
+```
+
+这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本未封装类型的方法都不能使用。
+
+## 高级类型
+
+
+
+## 高级函数和闭包
+
+
+
