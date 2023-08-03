@@ -590,6 +590,20 @@ struct Person {
 
 ## 常见 trait
 
+### Default
+
+`std::default::Default`：为类型提供默认值。
+
+```rust
+#[derive(Default)]
+struct Person {
+    name: String,
+    age: u32,
+}
+
+let p: Person = Default::default();
+```
+
 ### Debug
 
 `std::fmt::Debug`：格式化打印调试字符串。
