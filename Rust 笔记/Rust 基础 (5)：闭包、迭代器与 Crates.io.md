@@ -438,7 +438,46 @@ where
 }
 ```
 
+## 闭包原理
 
+Rust 中的闭包是通过一个特殊的结构体实现的。具体来说，每个闭包都是一个结构体对象，其中包含了闭包的代码和从环境中捕获的变量。这个结构体对象实现了一个或多个 `Fn` trait，以便可以像函数一样使用它。当定义一个闭包时，编译器会根据闭包的代码和捕获的变量生成一个结构体类型，这个结构体类型实现了对应的 trait。
+
+如以下代码定义了一个闭包 `add_x` 并调用。
+
+```rust
+let x = 10;
+let add_x = |y| x + y;
+println!("{}", add_x(5));
+```
+
+编译时会将这个闭包转换为类似如下的结构体类型。
+
+```rust
+struct Closure<'a> {
+    x: i32,
+}
+
+impl<'a> FnOnce<(i32,)> for Closure<'a> {
+    type Output = i32;
+    fn call_once(self, args: (i32,)) -> i32 {
+        self.x + args.0
+    }
+}
+
+impl<'a> FnMut<(i32,)> for Closure<'a> {
+    fn call_mut(&mut self, args: (i32,)) -> i32 {
+        self.x + args.0
+    }
+}
+
+impl<'a> Fn<(i32,)> for Closure<'a> {
+    extern "rust-call" fn call(&self, args: (i32,)) -> i32 {
+        self.x + args.0
+    }
+}
+```
+
+当闭包被调用时，实际上是通过调用结构体的方法来执行的。
 
 # 2 迭代器
 
@@ -496,11 +535,20 @@ fn iterator_demonstration() {
 
 >   使用 `for` 循环时无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，它在内部不断调用 `next` 获取元素。 
 
+## IntoIterator trait
+
+若类型实现了 `IntoIterator` trait，就可以为该类型生成迭代器，即可以把该类型转换为迭代器，从而能够调用迭代器方法。
+
 生成迭代器的方法有三种：
 
 -   `into_iter`：获取元素序列的所有权并返回拥有所有权的迭代器；
 -   `iter`：返回元素序列的不可变引用的迭代器；
 -   `iter_mut`：返回元素序列的可变引用的迭代器。
+
+`Iterator` 和 `IntoIterator` trait 的关系：
+
+-   实现了 `Iterator ` trait 的就是迭代器，不需要转换即可使用迭代器方法；
+-   实现了 `IntoIterator` trait 的可通过  `into_iter()`、`iter()` 和 `iter_mut()` 方法转换为迭代器。
 
 ## 消耗适配器
 
@@ -515,7 +563,7 @@ let total: i32 = v_iter.sum();
 v_iter;    // 此处 v_iter 已失效
 ```
 
-此外还有一个迭代器方法 `fold`，它接受两个参数，一个初始值和一个带有两个参数的闭包，闭包的两个参数为累加器和迭代器元素，闭包返回累加器在下一次迭代中的值，最后该方法返回累加器的值。
+迭代器方法 `fold`，它接受两个参数，一个初始值和一个带有两个参数的闭包，闭包的两个参数为累加器和迭代器元素，闭包返回累加器在下一次迭代中的值，最后该方法返回累加器的值。
 
 ```rust
 let v = vec![1, 2, 3, 4, 5];
@@ -529,6 +577,18 @@ println!("add_sum = {}, mul_sum = {}", add_sum, mul_sum);
 ```rust
 let v: Vec<i32> = vec![];
 assert_eq!(None, v.into_iter().reduce(|acc, x| acc + x));
+```
+
+迭代器方法 `flatten` 和 `flat_map` 可以创建一个扁平化嵌套结构的迭代器，但后者还会像 `map` 一样在创建时对元素进行额外的操作。
+
+```rust
+let words = ["alpha", "beta", "gamma"];
+
+// 两个作用相同
+let merged: String = words.iter().flat_map(|s| s.chars()).collect();
+let merged: String = words.iter().map(|s| s.chars()).flatten().collect();
+
+assert_eq!(merged, "alphabetagamma");
 ```
 
 ## 迭代适配器
@@ -1252,3 +1312,12 @@ Cargo 可以通过新的子命令来进行扩展，而无需修改 Cargo 本身�
 
 >   执行 `cargo --list` 会列出所有子命令。
 
+### 常用第三方扩展
+
+由于 Cargo 自身没有更多的对安装的二进制文件的管理功能，如检查更新，安装更新等。以及在开发时，项目所依赖的 crate 实际上是下载到全局的，也就是 `~/.cargo/registry` 目录下，而且不会自动清理，Cargo 也没有清理这些缓存的功能。
+
+常用扩展：
+
+-   `cargo-cache`：清理 Cargo 所下载依赖的缓存；
+-   `cargo-outdated`：检查和更新 `Cargo.toml` 中的依赖；
+-   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制文件。

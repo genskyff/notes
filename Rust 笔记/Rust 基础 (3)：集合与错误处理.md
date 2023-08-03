@@ -194,7 +194,7 @@ let e = &v[0];
 v.push(4);     // 错误，不能在相同作用域中同时存在可变和不可变引用
 ```
 
-当发生了重新分配的情况，由于需要在堆中重新分配内存并进行拷贝操作，因此会影响效率，若能确定 vector 可能的大小，可以使用 `Vec::with_capacity` 来指定预期大小，还可使用 `as_ptr`、`len` 和 `capacity` 方法来获取 vector 的指针、长度和容量。
+当发生了重新分配的情况，由于需要在堆中重新分配内存并进行拷贝操作，因此会影响效率，若能确定 vector 可能的大小，可以使用 `Vec::with_capacity` 来指定预期大小，还可使用 `as_ptr`、`len` 和 `capacity` 方法来获取 vector 的指针、长度和容量。此外，可以使用 `shrink_to_fit` 方法减小容量以匹配当前长度。
 
 ```rust
 let mut v = Vec::with_capacity(10);
@@ -238,7 +238,7 @@ Rust 只有一种字符串类型：`&str`，即字符串 slice，它是一些储
 -   `new` 函数创建空 String；
 -   `from` 函数创建指定 String；
 -   `from_utf8` 函数创建来自 UTF-8 字节 vector 的 String；
--   `with_capacity` 函数创建指定容量大小且长度为 0 的字符串。
+-   `with_capacity` 函数创建指定容量大小且长度为 0 的字符串；
 
 ```rust
 let s = "hello".to_string();
@@ -700,6 +700,16 @@ println!("{}", scores.len());
 println!("{}", scores.capacity());
 ```
 
+`shrink_to_fit` 方法减小容量以匹配当前长度：
+
+```rust
+let mut map: HashMap<i32, i32> = HashMap::with_capacity(100);
+map.insert(1, 2);
+map.insert(3, 4);
+map.shrink_to_fit();
+assert!(map.capacity() >= 2);
+```
+
 `keys` 和 `values` 方法分别返回一个键和值的迭代器：
 
 ```rust
@@ -791,6 +801,18 @@ assert_eq!(map.remove("a"), None);
 map.insert("a", 1);
 assert_eq!(map.remove_entry("a"), Some(("a", 1)));
 assert_eq!(map.remove("a"), None);
+```
+
+### 合并
+
+`extend` 方法将另一个 HashMap 的键值对添加到目标 HashMap 中。若存在重复的键，则目标 HashMap 中的值将被覆盖。
+
+```rust
+let mut map1 = HashMap::from([("a", 1)]);
+let map2 = HashMap::from([("a", 2), ("b", 3)]);
+
+map1.extend(map2);
+assert_eq!(HashMap::from([("a", 2), ("b", 3)]), map1);
 ```
 
 # 2 错误处理
