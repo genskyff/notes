@@ -1372,15 +1372,16 @@ fn ret_closure() -> dyn Fn(i32) -> i32 {
 }
 ```
 
-通过使用动态 trait 对象则可以编译：
+通过使用动态分发的 trait 对象则可以编译：
 
 ```rust
+// 正确
 fn ret_closure() -> Box<dyn Fn(i32) -> i32> {
     Box::new(|x| x + 1)
 }
 ```
 
-非闭包 trait 要返回动态 trait 对象，也使用这种方法：
+非闭包类型的 trait 要返回动态分发的 trait 对象，也使用这种方法：
 
 ```rust
 trait Foo {}
