@@ -285,6 +285,23 @@ git diff --cached [file]
 git diff HEAD -- [file]
 ```
 
+比较当前分支与指定分支间的差异：
+```shell
+git diff [branch]
+```
+
+比较当前提交和指定提交间的差异：
+
+```shell
+git diff [commit]
+```
+
+比较当前分支指定文件和某个提交间的差异：
+
+```shell
+git diff [commit] -- [file]
+```
+
 ## 删除文件
 
 从版本库中删除：

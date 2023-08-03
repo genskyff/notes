@@ -1099,13 +1099,314 @@ fn main() {
 }
 ```
 
-这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本未封装类型的方法都不能使用。
+这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本未封装类型的方法都不能使用，但也可以隐藏内部细节，只向外提供 API。
 
 ## 高级类型
 
+### 类型别名
 
+使用 `type` 关键字来给现有类型声明一个类型别名。
+
+```rust
+type MyType = i32;
+```
+
+这里 `MyType` 实际上是 `i32` 的同义词，而不是像使用 newtype 模式那样为一个全新的类型 ，该类型的值将被当作 `i32` 来对待。
+
+```rust
+type MyType = i32;
+
+let x: i32 = 5;
+let y: MyType = 5;
+
+println!("x + y = {}", x + y);
+```
+
+类型别名主要用于减少重复，如这是一个很长的类型：
+
+```rust
+Box<dyn Fn() + Send + 'static>
+```
+
+在函数签名或类型注解中写这个是十分繁琐且冗长的：
+
+```rust
+let f: Box<dyn Fn() + Send + 'static> = Box::new(|| println!("hi"));
+fn takes_long_type(f: Box<dyn Fn() + Send + 'static>) {}
+fn returns_long_type() -> Box<dyn Fn() + Send + 'static> {}
+```
+
+通过类型别名来简化：
+
+```rust
+type Thunk = Box<dyn Fn() + Send + 'static>;
+
+let f: Thunk = Box::new(|| println!("hi"));
+fn takes_long_type(f: Thunk) {}
+fn returns_long_type() -> Thunk {}
+```
+
+类型别名也常与 `Result<T, E>` 结合使用来减少重复。标准库中的 `std::io` 模块，其上的 I/O 操作通常会返回一个 `Result<T, E>`。而 `std::io::Error` 结构体代表了所有可能的 I/O 错误，而返回的 `Result<T, E>` 中 `E` 实际上是 `std::io::Error`，如 `Write` trait 中的这些函数：
+
+```rust
+use std::fmt;
+use std::io::Error;
+
+pub trait Write {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Error>;
+    fn flush(&mut self) -> Result<(), Error>;
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error>;
+    fn write_fmt(&mut self, fmt: fmt::Arguments) -> Result<(), Error>;
+}
+```
+
+这里出现了很多的 `Result<..., Error>`。为此，`std::io` 有这个类型别名声明：
+
+```rust
+type Result<T> = std::result::Result<T, std::io::Error>;
+```
+
+因为这位于 `std::io` 中，可用的完全限定的别名是 `std::io::Result<T>`；也就是说，`Result<T, E>` 中 `E` 放入了 `std::io::Error`。`Write` trait 中的函数最终看起来像这样：
+
+```rust
+pub trait Write {
+    fn write(&mut self, buf: &[u8]) -> Result<usize>;
+    fn flush(&mut self) -> Result<()>;
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<()>;
+    fn write_fmt(&mut self, fmt: fmt::Arguments) -> Result<()>;
+}
+```
+
+这样定义类型别名可以在整个 `std::io` 中提供一致的接口，而且因为这是一个别名，它实际上是 `Result<T, E>`，可以在其上使用 `Result<T, E>` 中的任何方法，以及使用 `?` 来传播错误。
+
+### never type
+
+Rust 有一个叫做 `!` 的特殊类型，被称为 **never type**。主要用于在函数从不返回的时候充当返回值。
+
+```rust
+fn bar() -> ! {}
+```
+
+这表明 `bar` 函数从不返回，而从不返回的函数也被称为**发散函数**。
+
+---
+
+在 match 表达式中，需要返回一个值，且返回值类型必须相同。
+
+```rust
+let guess = match guess.trim().parse() {
+    Ok(_) => 5,
+    Err(_) => "hello",  // 错误
+};
+```
+
+这里由于返回值类型不相同，因此会报错。
+
+```rust
+let guess: u32 = match guess.trim().parse() {
+    Ok(num) => num,
+    Err(_) => continue,
+};
+```
+
+这里的 `continue` 实际上返回的就是一个 `!`。因为 `!` 并没有一个值，因此 `guess` 的类型是 `u32`。
+
+never type 实际上是所有类型的子类型，因此可以被强转为任何其他类型。允许 `match` 的分支以 `continue` 结束是因为 `continue` 并不真正返回一个值，因此事实上并未对 `guess` 赋值。
+
+---
+
+`panic!` 宏实际上返回的也是 `!`，如 `unwrap` 方法会返回一个值或使程序 panic。
+
+```rust
+impl<T> Option<T> {
+    pub fn unwrap(self) -> T {
+        match self {
+            Some(val) => val,
+            None => panic!("called `Option::unwrap()` on a `None` value"),
+        }
+    }
+}
+```
+
+`val` 是 `T` 类型，`panic!` 是 `!` 类型，所以整个 `match` 表达式的结果是 `T` 类型，因此可以编译。`panic!` 宏会终止程序，因此不返回值。
+
+---
+
+`loop` 循环也返回一个 `!`。
+
+```rust
+loop {
+    print!("forever");
+}
+```
+
+由于是无限循环，因此返回就值是 `!`，但若加上 `break` 就不是了，这也就是为什么只能在 `loop` 中使用 `break value`。
+
+```rust
+let mut i = 1;
+let val = loop {
+    if i > 10 {
+        break i;
+    }
+    i += 1;
+};
+```
+
+### 动态大小类型和 Sized trait
+
+**动态大小类型**允许处理只有在运行时才知道大小的类型。
+
+`str` （不是 `&str`）则是一个动态大小类型，直到运行时才能知道字符串有多长。因此不能创建 `str` 类型的变量，也不能获取 `str` 类型的参数。
+
+```rust
+// 错误
+let s1: str = "Hello there!";
+let s2: str = "How's it going?";
+```
+
+在编译时必须要知道应该为特定类型的值的大小，所有同一类型的值必须使用相同大小的内存，因此 `str` 是不能创建的。
+
+可以创建 `&str`，因为其仅存储 `str` 的地址和长度， `&str` 本质上是一个指针，而指针的大小是固定的，因此 `&str` 的大小在编译时就已知。
+
+要创建动态大小类型的值，必须将其置于某种指针之后，如 `Box<str>` 或 `Rc<str>`。实际上，trait 就是一个动态大小类型，每个 trait 都是可通过 trait 名称来引用的动态大小类型。因此要创建动态 trait 对象，必须放在像 `&dyn Trait`、`Box<dyn Trait>` 或 `Rc<dyn Trait>` 这种指针上。
+
+Rust 提供了 `Sized` trait 来决定一个类型的大小是否在编译时可知。这个 trait 自动为编译器在编译时就知道大小的类型实现。另外，Rust 隐式的为每一个泛型函数增加了 `Sized` bound。也就是说，对于如下泛型函数定义：
+
+```rust
+fn generic<T>(t: T) {}
+```
+
+实际上被当作如下处理：
+
+```rust
+fn generic<T: Sized>(t: T) {}
+```
+
+泛型函数默认只能用于在编译时已知大小的类型，但可使用如下特殊语法来放宽限制：
+
+```rust
+fn generic<T: ?Sized>(t: &T) {}
+```
+
+`?Sized` 上的 trait bound 意味着 `T` 可能是也可能不是 `Sized`，同时这个注解会覆盖泛型类型必须在编译时拥有固定大小的默认规则。这种意义的 `?Trait` 语法只能用于 `Sized` ，而不能用于任何其它 trait。
+
+此外 `t` 的类型从 `T` 变为了 `&T`：因为其类型可能不是 `Sized` 的，所以需要将其置于某种指针之后。
 
 ## 高级函数和闭包
 
+### 函数指针
 
+可以向函数传递闭包，也可以向函数传递常规函数。和闭包的 `Fn` 不同，函数类型为 `fn`，也被称为**函数指针**。通过函数指针可以将函数作为另一个函数的参数。
+
+指定参数为函数指针的语法和闭包类似：
+
+```rust
+fn add(x: i32, y: i32) -> i32 {
+    x + y
+}
+
+fn do_add((x, y): (i32, i32), f: fn(i32, i32) -> i32) -> i32 {
+    f(x, y)
+}
+
+fn main() {
+    let result = do_add((1, 2), add);
+    assert_eq!(3, result);
+}
+```
+
+`do_add` 中的 `f` 被指定为一个接受两个 `i32` 参数并返回 `i32` 的 `fn`。然后就可以将函数名 `add` 作为参数传递。
+
+不同于闭包，`fn` 是一个类型而不是一个 trait，所以直接指定 `fn` 作为参数而不是声明一个带有 `Fn` 作为 trait bound 的泛型参数。
+
+函数指针实现了所有三个闭包 trait（`FnOnce`、`FnMut` 和 `Fn`），所以函数指针可以传递给一个接受闭包为参数的函数，但是反过来就不一定，因此尽量将定义闭包为参数。
+
+只接受 `fn` 而不接受闭包的情况的例子是与不存在闭包的外部代码交互，如 C 的函数可以接受函数作为参数，但 C 没有闭包。
+
+一个例子是 `map` 方法，它接受一个闭包：
+
+```rust
+let list = vec![1, 2, 3];
+let list: Vec<String> = list.iter().map(|i| i.to_string()).collect();
+```
+
+但也可以把函数作为 `map` 的参数来代替闭包：
+
+```rust
+let list: Vec<String> = list.iter().map(ToString::to_string).collect();
+```
+
+这里必须完全限定语法，因为存在多个叫做 `to_string` 的函数。这里使用了定义于 `ToString` trait 的 `to_string` 函数，标准库为所有实现了 `Display` 的类型实现了这个 trait。
+
+---
+
+在枚举中，含有值的枚举成员名也是一个构造函数。可以使用这些构造函数作为实现了闭包 trait 的函数指针。
+
+```rust
+enum Status {
+    Value(i32),
+    Stop,
+}
+
+// 函数指针
+let list: Vec<Status> = (0..10).map(Status::Value).collect();
+
+// 闭包
+let list: Vec<Status> = (0..10).map(|i| Status::Value(i)).collect();
+```
+
+这里创建了 `Status::Value` 实例，并把构造函数传递给 `map`，这和使用闭包得到的结果是相同的。
+
+### 返回函数或闭包
+
+对于返回 trait 的情况，可使用实现了该 trait 的具体类型作为返回值。闭包虽然也是一个 trait，但并不是一个在编译期就能确定大小的类型，即是 `?Sized` 的，因此要返回闭包，必须利用指针。同时对于非闭包的 trait 也只能返回一个在编译期就能确定的类型，不能直接返回所有实现了该 trait 的类型，要实现动态 trait，同样也需要放在指针后面。
+
+例如这段代码就不能编译：
+
+```rust
+// 错误
+fn ret_closure() -> dyn Fn(i32) -> i32 {
+    |x| x + 1
+}
+```
+
+通过使用动态 trait 对象则可以编译：
+
+```rust
+fn ret_closure() -> Box<dyn Fn(i32) -> i32> {
+    Box::new(|x| x + 1)
+}
+```
+
+非闭包 trait 要返回动态 trait 对象，也使用这种方法：
+
+```rust
+trait Foo {}
+
+struct A;
+struct B;
+impl Foo for A {}
+impl Foo for B {}
+
+fn ret_dyn_trait(flag: bool) -> Box<dyn Foo> {
+    if flag {
+        Box::new(A {})
+    } else {
+        Box::new(B {})
+    }
+}
+```
+
+函数指针由于是一个指针，大小是确定的，因此可以直接返回：
+
+```rust
+fn ret_fn() -> fn(i32) -> i32 {
+    fn bar(n: i32) -> i32 {
+        n + 1
+    }
+    bar
+}
+```
 
