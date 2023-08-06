@@ -453,25 +453,25 @@ println!("{}", add_x(5));
 编译时会将这个闭包转换为类似如下的结构体类型。
 
 ```rust
-struct Closure<'a> {
+struct Closure {
     x: i32,
 }
 
-impl<'a> FnOnce<(i32,)> for Closure<'a> {
+impl FnOnce<(i32,)> for Closure {
     type Output = i32;
-    fn call_once(self, args: (i32,)) -> i32 {
+    fn call_once(self, args: (i32,)) -> Self::Output {
         self.x + args.0
     }
 }
 
-impl<'a> FnMut<(i32,)> for Closure<'a> {
-    fn call_mut(&mut self, args: (i32,)) -> i32 {
+impl FnMut<(i32,)> for Closure {
+    fn call_mut(&mut self, args: (i32,)) -> Self::Output {
         self.x + args.0
     }
 }
 
-impl<'a> Fn<(i32,)> for Closure<'a> {
-    extern "rust-call" fn call(&self, args: (i32,)) -> i32 {
+impl Fn<(i32,)> for Closure {
+    extern "rust-call" fn call(&self, args: (i32,)) -> Self::Output {
         self.x + args.0
     }
 }
