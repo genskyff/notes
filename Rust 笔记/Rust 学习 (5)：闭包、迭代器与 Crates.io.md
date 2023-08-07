@@ -548,7 +548,8 @@ fn iterator_demonstration() {
 `Iterator` 和 `IntoIterator` trait 的关系：
 
 -   实现了 `Iterator ` trait 的就是迭代器，不需要转换即可使用迭代器方法；
--   实现了 `IntoIterator` trait 的可通过  `into_iter()`、`iter()` 和 `iter_mut()` 方法转换为迭代器。
+-   实现了 `IntoIterator` trait 的可通过  `into_iter()` 方法转换为迭代器；
+-   若类型 `T` 实现了 `Iterator ` trait，那么就不能为 `T` 再实现 `IntoIterator` trait，因为 `T` 本身就是一个迭代器，不需要转换，但是可以为 `&T` 或 `&mut T` 实现 `IntoIterator` trait。
 
 ## 消耗适配器
 
