@@ -673,17 +673,19 @@ struct Point(i32, i32);
 
 >   要实现 `Copy`，必须同时实现 `Clone`。
 
-### Iterator
+### Iterator 和 IntoIterator
 
-`std::iter::Iterator`：定义迭代器。
+`std::iter::Iterator`：定义迭代器；
+
+`std::iter::IntoIterator`：转换为迭代器。
 
 ```rust
 struct Counter {
-    count: u32,
+    count: usize,
 }
 
 impl Iterator for Counter {
-    type Item = u32;
+    type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.count += 1;
@@ -695,13 +697,27 @@ impl Iterator for Counter {
         }
     }
 }
+
+impl<'a> IntoIterator for &'a Counter {
+    type Item = usize;
+    type IntoIter = std::iter::Take<std::ops::RangeFrom<usize>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (0..).take(self.count)
+    }
+}
+
+let c = Counter { count: 2 };
+for i in &c {
+    println!("{i}");
+}
 ```
 
 ### Hash
 
-`std::hash::Hash`：能用哈希函数将该类型的实例映射到一个固定大小的值上。
+`std::hash::Hash`：可散列的类型。
 
-如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
+实现了 `Hash` trait 的类型可通过 `Hasher` 的实例进行 `hash` 化。如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
 
 ```rust
 #[derive(PartialEq, Eq, Hash)]
@@ -713,7 +729,7 @@ map.insert(Point(1, 2), 1);
 
 >   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`。
 >
->   实现 `Hash` 的类型，其包含的字段或值也必须实现了 `Hash`。
+>   若所有字段都实现了 `Hash` trait，则可通过 `derive` 派生 `Hash`，产生的哈希值将是在每个字段上调用 `hash` 函数的值的组合。
 
 ## 运算符重载
 

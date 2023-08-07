@@ -427,7 +427,7 @@ match value {
 
 这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 的内部值。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值。
 
-### ref 匹配
+### ref 模式
 
 如果值不是 Copy 的，还想重复使用的话，那么就需要使用 `ref` 来匹配。
 
@@ -489,8 +489,21 @@ fn get(ref v: String) {
 let ref v = t;
 
 // 相当于
+let t = 1;
 let v = t;
 let v = &v;
+```
+
+---
+
+通过在 `ref` 后加 `mut` 关键字，可以获得一个可变引用。
+
+```rust
+let ref mut v = t;
+
+// 相当于
+let v = t;
+let v = &mut v;
 ```
 
 # 2 高级特性
@@ -1262,8 +1275,7 @@ let val = loop {
 
 ```rust
 // 错误
-let s1: str = "Hello there!";
-let s2: str = "How's it going?";
+let s: str = "Hello there!";
 ```
 
 在编译时必须要知道应该为特定类型的值的大小，所有同一类型的值必须使用相同大小的内存，因此 `str` 是不能创建的。
