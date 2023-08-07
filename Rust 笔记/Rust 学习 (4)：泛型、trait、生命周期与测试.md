@@ -602,6 +602,8 @@ struct Person {
 }
 
 let p: Person = Default::default();
+let p2 = Person::default();
+let p3 = Person { age: 20, ..Default::default() };
 ```
 
 ### Debug
@@ -650,7 +652,7 @@ struct Point(i32, i32);
 ### PartialOrd 和 Ord
 
 -   `std::cmp::Eq`：完全相等关系；
--   `std::cmp::Ord`：完全顺序关系；
+-   `std::cmp::Ord`：完全顺序关系。
 
 ```rust
 #[derive(PartialOrd, Ord)]
@@ -694,6 +696,24 @@ impl Iterator for Counter {
     }
 }
 ```
+
+### Hash
+
+`std::hash::Hash`：能用哈希函数将该类型的实例映射到一个固定大小的值上。
+
+如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
+
+```rust
+#[derive(PartialEq, Eq, Hash)]
+struct Point(i32, i32);
+
+let mut map = HashMap::new();
+map.insert(Point(1, 2), 1);
+```
+
+>   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`。
+>
+>   实现 `Hash` 的类型，其包含的字段或值也必须实现了 `Hash`。
 
 ## 运算符重载
 
