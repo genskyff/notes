@@ -506,6 +506,29 @@ let v = t;
 let v = &mut v;
 ```
 
+---
+
+同时 `ref` 还可用于部分移动。对于没有实现 `Copy` trait 的类型，在传递时会发生移动。若是一个结构体通过模式匹配来将字段值付给其它的变量，那么这个结构体就不能在后面作为一个整体来使用。
+
+```rust 
+#[derive(Debug)]
+struct User {
+    id: usize,
+    name: String,
+}
+
+let user = User {
+    id: 1,
+    name: String::from("Alice"),
+};
+
+let User { id, ref name }= user;
+println!("{id}, {name}");
+println!("{:?}", user);
+```
+
+这里通过 `ref` 来仅获得一个引用，因此在后面还可以使用 `user`。
+
 # 2 高级特性
 
 ## Unsafe Rust
