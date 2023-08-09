@@ -582,16 +582,11 @@ let v: Vec<i32> = vec![];
 assert_eq!(None, v.into_iter().reduce(|acc, x| acc + x));
 ```
 
-迭代器方法 `flatten` 和 `flat_map` 可以创建一个扁平化嵌套结构的迭代器，但后者还会像 `map` 一样在创建时对元素进行额外的操作。
+使用 `for_each` 方法可以立即对每个元素进行操作，且不返回值。
 
 ```rust
-let words = ["alpha", "beta", "gamma"];
-
-// 两个作用相同
-let merged: String = words.iter().flat_map(|s| s.chars()).collect();
-let merged: String = words.iter().map(|s| s.chars()).flatten().collect();
-
-assert_eq!(merged, "alphabetagamma");
+let mut m = [0; 10];
+m.iter_mut().for_each(|x| *x += 1);
 ```
 
 ## 迭代适配器
@@ -636,6 +631,22 @@ let v_filter: Vec<_> = v.filter(|x| x % 3 == 0).collect();
 ```
 
 `v` 是一个 1 到 99 的元素序列，同样也是一个迭代器，类型是 `Range<i32>`，`filter` 获取迭代器的每一个元素，然后将为 3 的倍数的元素放入新的迭代器。
+
+---
+
+迭代器方法 `flatten` 和 `flat_map` 可以创建一个扁平化嵌套结构的迭代器，但后者还会像 `map` 一样在创建时对元素进行额外的操作。
+
+```rust
+let words = ["alpha", "beta", "gamma"];
+
+// 两个作用相同
+let merged: String = words.iter().flat_map(|s| s.chars()).collect();
+let merged: String = words.iter().map(|s| s.chars()).flatten().collect();
+
+assert_eq!(merged, "alphabetagamma");
+```
+
+此外还有比较常用的 `take`、`take_while`、`skip` 等迭代器适配器。
 
 ## 自定义迭代器
 
@@ -1066,7 +1077,7 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 ### 对文档进行测试
 
-在文档注释中增加 `Examples` 块，可以表明如何使用库，且使用 `cargo test` 时也会测试文档中的示例代码，当只想对文档进行测试而不是进行所有测试时，可以使用 `cargo test --doc`。
+在文档注释中增加 `Examples` 块，可以表明如何使用库。然后使用 Markdown 的代码块语法将代码包含在里面，使用 `cargo test` 时则会测试文档中的示例代码，当只想对文档进行测试而不是进行所有测试时，可以使用 `cargo test --doc`。
 
 ```
 Doc-tests demo
@@ -1076,6 +1087,37 @@ test src\lib.rs - add (line 5) ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
 ```
+
+由于文档注释中的代码块会被当做一个单独的代码来看待，因此需要包含完整的上下文，如 `main` 函数、通过 `use` 导入等等，不然文档测试就会不通过。
+
+```rust
+/// use demo::add;
+/// let result = add(1, 2);
+```
+
+这里就需要通过 `use` 导入要使用的函数，而若一个函数返回 `Result`，那么比如 `main` 函数其实默认返回 `()`，那么也会不通过。可以通过在文档注释的代码行前增加 `#` 字符，可以在实际生成的文档中隐藏这些行，但是在测试中依然会包含这些行。
+
+```rust
+/// ```
+/// # // 被隐藏的行以 `#` 开始，但仍然会被编译
+/// # use demo::try_div;
+/// # fn main() -> Result<(), String> {
+/// let res = try_div(10, 2)?;  // 只有这行会在文档中显示 
+/// # Ok(())
+/// # }
+/// ```
+pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
+    if b == 0 {
+        Err(String::from("Divide-by-zero"))
+    } else {
+        Ok(a / b)
+    }
+}
+```
+
+这样不仅能通过文档测试，而且在文档中也会隐藏不必要的代码。
+
+![仅显示必要的代码行](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202308091831044.png)
 
 ### 注释包含的项
 
