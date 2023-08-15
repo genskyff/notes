@@ -129,9 +129,34 @@ cargo check
 cargo update
 ```
 
-在项目的目录下，`build` 命令会在 *target/debug* 目录下生成可执行文件。
+在项目的目录下，`cargo build` 命令会在 *target/debug* 目录下生成生成一些文件和子目录，这些都是构建过程中产生的临时文件和结果。
 
-首次运行此命令时，也会在项目的根目录创建一个新文件：*Cargo.lock*。这个文件记录项目依赖的实际版本，即使用指定的依赖版本，除非手动指定了新的依赖版本。
+**文件：target/debug**
+
+```
+.
+├── build
+├── deps
+├── examples
+├── hello.d
+├── hello.exe
+├── hello.pdb
+└── incremental
+```
+
+-   **build**: 保存了某些 crate 的构建脚本的输出。当 crate 有一个 `build.rs` 文件时，其构建脚本的输出通常会放在这里；
+-   **deps**: 所有依赖和项目库的编译输出目录。当有多个 crates (如库 crate 和二进制 crate) 或有外部依赖时，都会在这里被编译；
+-   **examples**: 存放项目示例代码被编译后的二进制文件；
+-   **hello.d**: 一个依赖文件，列出了生成可执行文件 `hello.exe` 的所有依赖。这样再次构建时，Cargo 可以更加智能地决定哪些组件需要重新编译；
+-   **hello.exe**: 项目的主要二进制输出；
+-   **hello.pdb**: 程序数据库文件，包含了调试和项目状态信息；
+-   **incremental**: 存放增量编译的状态信息。
+
+使用 `cargo clean` 命令，`target/debug` 目录以及其内容会被清除，以确保下一次构建是从干净的状态开始的。
+
+---
+
+首次运行构建命令时，也会在项目的根目录创建一个新文件：*Cargo.lock*。这个文件记录项目依赖的实际版本，即使用指定的依赖版本，除非手动指定了新的依赖版本。
 
 `update` 命令会忽略 Cargo.lock 文件，并计算出所有符合 Cargo.toml 声明的最新版本，若成功了，则会把新版本写入 Cargo.lock 文件中。
 
