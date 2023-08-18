@@ -1069,6 +1069,8 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 然后运行 `cargo doc --open` 会构建当前 crate 包含的所有文档（包括其依赖的文档）的 HTML 并在浏览器中打开，生成的文档在当前包的 *target/doc* 目录下。
 
+这种方法也会同时生成依赖的 crates 的文档，有时候会导致构建时间过长，可以通过 `--no-deps` 选项来限制。
+
 ![文档示例 1](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204082215102.png)
 
 ![文档示例 2](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204082215400.png)
