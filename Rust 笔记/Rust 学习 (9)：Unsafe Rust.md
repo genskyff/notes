@@ -344,3 +344,4 @@ Rust 中有多种指针类型。
 -   `std::rc::Weak` 和 `std::arc::Weak`：用于内部互连的数据结构，可防止循环引用；
 -   `alloc::raw vec::RawVec`：是 `Vec<T>` 和 `VecDeque<T>` 的基础类型；
 -   `std::cell::UnsafeCell`：是 `Cell<T>` 和 `RefCell<T>` 的基础类型。
+
