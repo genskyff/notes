@@ -511,7 +511,7 @@ fn get_info(swtich: bool) -> impl Summary {
     -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
     -   一个指针指向具体类型的实例；
     -   另一个指针指向一个虚表 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，直接从 `vtable` 中找到方法并调用。
-    -   trait 对象的引用方式有多种，对于 `trait A`，其 trait 对象类型的引用可以是 `&dyn A`、`Box<dyn A>` 和 `Rc<dyn A>` 等。
+    -   trait 对象的引用方式有多种，对于 `trait T`，其 trait 对象类型的引用可以是 `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等。
 
 ```rust
 trait Person {
