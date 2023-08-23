@@ -629,7 +629,7 @@ let v_add_one: Vec<_> = v.iter().map(|x| x + 1).collect();
 
 ---
 
-还有一个和 `map` 一样常用的迭代器适配器 `filter`，它接受一个返回值为 `bool` 的闭包作为参数，获取迭代器的每个元素作用于闭包。若闭包返回 `true`，则该元素将会包含在 `filter` 创建的新迭代器中，否则从迭代器中过滤掉该元素。
+`filter` 接受一个返回值为 `bool` 的闭包作为参数，获取迭代器的每个元素作用于闭包。若闭包返回 `true`，则该元素将会包含在 `filter` 创建的新迭代器中，否则从迭代器中过滤掉该元素。
 
 ```rust
 let v = 1..100;
@@ -637,6 +637,25 @@ let v_filter: Vec<_> = v.filter(|x| x % 3 == 0).collect();
 ```
 
 `v` 是一个 1 到 99 的元素序列，同样也是一个迭代器，类型是 `Range<i32>`，`filter` 获取迭代器的每一个元素，然后将为 3 的倍数的元素放入新的迭代器。
+
+`filter_map` 接受一个返回值为 `Option<T>` 的闭包，并过滤掉值为 `None` 的元素。这可以同时过滤和产生新的迭代器，可使 `filter` 和 `map` 的链更加简洁。
+
+```rust
+let v = ["1", "2", "three", "4", "zero"];
+
+// 两个作用相同
+let result: Vec<_> = v.iter()
+    .filter_map(|e| e.parse::<i32>().ok())
+    .collect();
+let result2: Vec<_> = v.iter()
+    .map(|e| e.parse::<i32>())
+    .filter(|e| e.is_ok())
+    .map(|e| e.unwrap())
+    .collect();
+
+assert_eq!(result, vec![1, 2, 4]);
+assert_eq!(result, result2);
+```
 
 ---
 
@@ -646,10 +665,16 @@ let v_filter: Vec<_> = v.filter(|x| x % 3 == 0).collect();
 let words = ["alpha", "beta", "gamma"];
 
 // 两个作用相同
-let merged: String = words.iter().flat_map(|s| s.chars()).collect();
-let merged: String = words.iter().map(|s| s.chars()).flatten().collect();
+let merged: String = words.iter()
+    .flat_map(|s| s.chars())
+    .collect();
+let merged2: String = words.iter()
+    .map(|s| s.chars())
+    .flatten()
+    .collect();
 
 assert_eq!(merged, "alphabetagamma");
+assert_eq!(merged, merged2);
 ```
 
 此外还有比较常用的 `take`、`take_while`、`skip` 等迭代器适配器。

@@ -53,6 +53,16 @@ git config --global user.email "email@example.com"
 git config --global core.editor "code --wait"
 ```
 
+### 显示非 ASCII 字符
+
+当使用像 `git status ` 这种命令时，默认情况下，输出的非 ASCII 字符会被转义。
+
+设置不转义非 ASCII 字符：
+
+```shell
+git config --global core.quotepath false
+```
+
 ### 查看配置信息
 
 列出所有配置信息：
