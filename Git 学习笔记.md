@@ -735,7 +735,7 @@ git log --oneline --graph --all
 ## 生成密钥
 
 ```shell
-ssh-keygen -t ed25519 -C "email@example.com"
+ssh-keygen -t ed25519 -C "name@example.com"
 ```
 
 其中 `-C` 为可选项。该命令在 `~/.ssh` 目录里生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，`id_ed25519` 是私钥，`id_ed25519.pub` 是公钥，然后在 Github 中添加自己的公钥，即可在本地把仓库 push 到 Github 中去。
