@@ -1056,3 +1056,19 @@ fn plus_one(n: Option<i32>) -> Option<i32> {
 }
 ```
 
+`?` 实际上就是 `try!` 宏的语法糖，两者都会尝试将错误类型转换为匹配返回的错误类型（前提是实现了 `From` trait），用 `match` 表达式的伪代码大致表示为：
+
+```rust
+macro try {
+    match exp {
+        Ok(val) => val,
+        Err(err) => {
+            let converted = From::from(err);
+            return Err(converted);
+        }
+    }
+}
+```
+
+>   目前 `try!` 已不常用。
+
