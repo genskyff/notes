@@ -5,7 +5,8 @@
 >   -   [《Rust 程序设计语言》](https://kaisery.github.io/trpl-zh-cn/ch05-01-defining-structs.html)
 >   -   [《通过例子学 Rust》](https://rustwiki.org/zh-CN/rust-by-example/)
 >   -   [《Rust 语言圣经》](https://course.rs/about-book.html)
->   -   [The Rust Standard Library](https://doc.rust-lang.org/std/index.html#the-rust-standard-library)
+>   -   [《Rust 实战》](https://book.douban.com/subject/36059499/)
+>   -   [Rust 标准库](https://rustwiki.org/zh-CN/std/)
 >
 
 # 1 安装 Rust
