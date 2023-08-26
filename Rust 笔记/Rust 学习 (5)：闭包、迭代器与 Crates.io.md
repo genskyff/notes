@@ -535,13 +535,15 @@ fn iterator_demonstration() {
 
 `iter` 方法生成一个不可变引用的迭代器，因此从 `next` 调用中得到的值是 vector 的不可变引用。而 `v_iter` 需要是可变的，因为在迭代器上调用 `next` 方法改变了迭代器中用来记录序列位置的状态。即**消耗**了迭代器，每一个 `next` 调用都会从迭代器中消耗一个项。
 
->   使用 `for` 循环时无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，它在内部不断调用 `next` 获取元素。 
+>   -   使用 `for` 循环时无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，它在内部不断调用 `next` 获取元素；
 >
 >   | 简化形式                      | 等价                                 | 访问级别   |
 >   | ----------------------------- | ------------------------------------ | ---------- |
 >   | `for item in collection`      | `for item in collection.into_iter()` | 拥有所有权 |
 >   | `for item in &collection`     | `for item in collection.iter()`      | 只读       |
 >   | `for item in &mut collection` | `for item in collection.iter_mut()`  | 读 / 写    |
+>
+>   -   只有在类型具有集合语义时，才有必要实现 `Iterator` trait，如对单元类型 `()` 实现是无意义的。
 
 ## IntoIterator trait
 
@@ -557,7 +559,7 @@ fn iterator_demonstration() {
 
 -   实现了 `Iterator ` trait 的就是迭代器，不需要转换即可使用迭代器方法；
 -   实现了 `IntoIterator` trait 的可通过  `into_iter()` 方法转换为迭代器；
--   若类型 `T` 实现了 `Iterator ` trait，那么就不能为 `T` 再实现 `IntoIterator` trait，因为 `T` 本身就是一个迭代器，不需要转换，但是可以为 `&T` 或 `&mut T` 实现 `IntoIterator` trait。
+-   若类型 `T` 实现了 `Iterator ` trait，那么就不能为 `T` 再实现 `IntoIterator` trait，因为 `T` 本身就是一个迭代器，不需要转换，但可以为 `&T` 或 `&mut T` 实现 `IntoIterator` trait。
 
 ## 消耗适配器
 
