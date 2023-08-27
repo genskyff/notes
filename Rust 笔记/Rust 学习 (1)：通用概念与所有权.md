@@ -1,4 +1,4 @@
->   本系列文章使用的 Rust 的 Edition 为 `2021`。
+>   本系列文章使用的 Rust Edition 为 `2021`。
 >
 >   主要参考：
 >
@@ -201,11 +201,16 @@ r#match();
 
 ## 原始字符串
 
-在字符串前加 `r` 表示原始字符串，不会对字符进行转义。
+以 `r` 或 `r#` 的形式来表示原始字符串，不会对字符进行转义。
 
 ```rust
-let s = r"hello\t\nhello";
+let s1 = r"hello\t\nhello";
+let s2 = r##"hello\t\nhello"##;
+let s3 = r###"hello\t\nhello"###;
+let s4 = r####"hello\t\nhello"####;
 ```
+
+当使用 `r#` 的形式时，需要确保前后 `#` 的数量是一致的。
 
 ## 注释
 
