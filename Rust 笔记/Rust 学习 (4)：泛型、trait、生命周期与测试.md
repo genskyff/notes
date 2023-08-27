@@ -1729,3 +1729,24 @@ tests
 若项目是二进制 crate 且只包含 *src/main.rs* 而没有 *src/lib.rs*，就不能在 *tests* 目录创建集成测试并使用 `use crate` 导入 *src/main.rs* 中定义的函数。只有库 crate 才能向其他 crate 暴露了可供调用和使用的函数，二进制 crate 只意在单独运行。
 
 明确采用 *src/main.rs* 调用 *src/lib.rs* 的方式好处是，集成测试可以通过 `use crate` 测试库 crate 中的主要功能，而如果这些重要的功能没有问题的话，那么 *src/main.rs* 中调用的代码也就没有问题，也就不需要测试 *src/main.rs*。
+
+## 运行示例
+
+为了让其他人能够快速使用自己创建的库 crate，最好提供代码示例。在根目录中添加一个 `examples` 目录，其中可以包含一个或多个 `.rs` 文件，这些文件都被视为二进制 crate。
+
+```
+.
+├── examples
+│   ├── exp1.rs
+│   └── exp2.rs
+└── src
+    ├── lib.rs
+    └── main.rs
+```
+
+运行这些示例：
+
+```shell
+cargo run --example <filename>
+```
+

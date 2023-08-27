@@ -1400,4 +1400,5 @@ Cargo 可以通过新的子命令来进行扩展，而无需修改 Cargo 本身�
 
 -   `cargo-cache`：清理 Cargo 所下载依赖的缓存；
 -   `cargo-outdated`：检查和更新 `Cargo.toml` 中的依赖；
+-   `cargo-watch`：代码更新后进行自动构建；
 -   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制文件。
