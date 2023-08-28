@@ -1308,7 +1308,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 `1 passed; 0 failed` 表示通过或失败的测试数量。由于没有将任何测试标记为忽略，所以摘要中会显示 `0 ignored`，也没有过滤需要运行的测试，所以摘要中会显示 `0 filtered out`，而 `0 measured` 表示性能测试。
 
->   截至目前的版本（1.71），性能测试仍只能用于 Nightly 版本，更多信息可参考 [The Rust Unstable Book](https://doc.rust-lang.org/unstable-book/library-features/test.html)。
+>   截至目前的版本（1.72），性能测试仍只能用于 Nightly 版本，更多信息可参考 [The Rust Unstable Book](https://doc.rust-lang.org/unstable-book/library-features/test.html)。
 
 ---
 
@@ -1732,10 +1732,11 @@ tests
 
 ## 运行示例
 
-为了让其他人能够快速使用自己创建的库 crate，最好提供代码示例。在根目录中添加一个 `examples` 目录，其中可以包含一个或多个 `.rs` 文件，这些文件都被视为二进制 crate。
+为了让其他人能够快速使用自己创建的库 crate，最好提供代码示例。在项目根目录中添加一个 `examples` 目录，其中可以包含一个或多个 `.rs` 文件，这些文件都被视为二进制 crate。
 
 ```
 .
+├── Cargo.toml
 ├── examples
 │   ├── exp1.rs
 │   └── exp2.rs
@@ -1749,4 +1750,136 @@ tests
 ```shell
 cargo run --example <filename>
 ```
+
+## 基准测试
+
+### 内置基准测试
+
+Rust 内置了基准测试框架来通过多次运行迭代来评估性能。
+
+>   截止 1.72 版本，需要使用 nightly 版本才能使用内置的基准测试。
+
+将当前项目切换为 nightly 版本：
+
+```shell
+rustup override set nightly
+```
+
+然后需要声明项目级属性，并导入内置的 `test` crate：
+
+**文件：src/lib.rs**
+
+```rust
+#![feature(test)]
+extern crate test;
+```
+
+>导入内置的 crate 不需要在 *Cargo.toml* 中的 `[dependencies]` 中添加，但是必须使用 `extern crate` 导入。
+
+内置的 `test` 包含一个 `Bencher` 类型，基准函数通过该类型来多次运行迭代相同的代码，并且只用于测试模式。
+
+然后添加要测试函数：
+
+```rust
+pub fn do_slow() {
+    println!(".");
+    for _ in 0..1000_0000 {}
+}
+
+pub fn do_fast() {}
+```
+
+在函数中使用 `println!`，这样就不会对空循环进行优化。此外还可以使用 `tests::black_box` 函数来完成。
+
+```rust
+#[bench]
+fn bench_slow(b: &mut test::Bencher) {
+    b.iter(|| test::black_box(do_slow()));
+}
+```
+
+>   就算使用 `black_box` 函数也不能保证不会进行优化。
+
+接着添加基准测试函数，需要在其上添加 `#[bench]` 就表示该函数是一个基准测试：
+
+```rust
+#[bench]
+fn bench_slow(b: &mut test::Bencher) {
+    b.iter(|| do_slow());
+}
+
+#[bench]
+fn bench_fast(b: &mut test::Bencher) {
+    b.iter(|| do_fast());
+}
+```
+
+在标有 `#[bench]` 属性的函数内部，`iter` 的参数是一个没有参数的闭包，这表示 `iter` 传递的函数可以使基准测试重复运行。
+
+最后执行基准测试命令：
+
+```shell
+cargo bench
+```
+
+### 第三方基准测试
+
+要在 stable 版本上进行基准测试，可以使用第三方 crate。目前最流行的第三方基准测试为 [criterion](https://crates.io/crates/criterion)，可以提供更详细的统计数据，还能生成图表，要使用 criterion 提供的图表功能，需要安装 [Gnuplot](http://www.gnuplot.info/)。
+
+首先切换回 stable 版本：
+
+```shell
+rustup override unset
+```
+
+然后在 *Cargo.toml* 中添加依赖和配置：
+
+```toml
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "my_bench"
+harness = false
+```
+
+这里在 `[dev-dependencies]` 中添加是因为只需要在开发环境测试，还添加了一个名为 `[[bench]]` 的项，`name` 字段表示测试的名字，`harness` 字段表示是否使用内置的基准测试工具，这里设置为 `false` 是因为使用的是 criterion 提供的测试工具。
+
+criterion 要求将用于基准测试的代码放在项目根目录的 `benches` 下面，且每一个测试文件名要与 `[[bench]]` 中 `name` 字段的值相同。
+
+**文件：src/lib.rs**
+
+```rust
+pub fn sum_slow() -> u128 {
+    let mut sum = 0;
+    for i in 1..1000_0000_u128 {
+        sum += i;
+    }
+    sum
+}
+
+pub fn sum_fast() -> u128 {
+    (1 + 1000_0000_u128) * 1000_0000_u128 / 2
+}
+```
+
+**文件：benches/my_bench.rs**
+
+```rust
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use demo::{sum_fast, sum_slow};
+
+fn bench_slow(c: &mut Criterion) {
+    c.bench_function("slow", |b| b.iter(|| black_box(sum_slow())));
+}
+
+fn bench_fast(c: &mut Criterion) {
+    c.bench_function("fast", |b| b.iter(|| sum_fast()));
+}
+
+criterion_group!(benches, bench_slow, bench_fast);
+criterion_main!(benches);
+```
+
+这里在 `lib.rs` 中创建了一个快速和一个慢速的 `sum` 函数，并在基准测试代码中导入，然后创建了两个用于测试的函数，
 

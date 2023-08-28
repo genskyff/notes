@@ -1154,9 +1154,9 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
 
 ![仅显示必要的代码行](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202308091831044.png)
 
-### 注释包含的项
+### 项目级文档注释
 
-使用 `//!` 为包含注释的项，而不是给位于注释之后的项增加文档，多行则使用 `/*!...*/` 的形式，通常用于 crate 根文件或为模块整体提供文档。
+使用 `//!` 为项目级文档注释，而不是给位于注释之后的项增加文档，多行则使用 `/*!...*/` 的形式，通常用于 crate 根文件或为模块整体提供文档。
 
 **文件：demo/lib.rs**
 
@@ -1169,7 +1169,22 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
 
 ![文档示例 3](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204082235831.png)
 
-包含这个注释的项是 *src/lib.rs* 文件，也就是 crate 根文件，因此这些注释描述了整个 crate。
+包含这个注释的模块是 *src/lib.rs* 文件，也就是 crate 根文件，因此这些注释描述了整个 crate。
+
+## 文档属性
+
+`///` 或 `//!` 实际上是 `#[doc="comment"]` 属性的语法糖，被称为**文档属性**，此外还有其他文档属性可以用于调整已生成的文档页面，这些属性可以应用在项目级或元素级，写成 `#[doc(key = value)]` 这样的形式。
+
+项目级属性：
+
+-   `#![doc(html_logo_url="imageurl")`：设置文档页面 Logo；
+-   `#![doc(html_root_url = "url")]`：设置文档页面的 URL；
+-   `#![doc(html_playground_url = "url")]`：设置文档中示例代码的 Run 按钮，以让 Rust Playground 可以处理。
+
+元素级属性：
+
+-   `#[doc(hidden)]`：为库的使用者隐藏该注释，仅方便自己看；
+-   `#[doc(include)]`：引用来自其它文件的文档，可以将过长的文档与代码分开。
 
 ## 使用 pub use 导出公有 API
 
