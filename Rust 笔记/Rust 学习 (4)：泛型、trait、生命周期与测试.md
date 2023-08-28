@@ -1824,7 +1824,7 @@ cargo bench
 
 ### 第三方基准测试
 
-要在 stable 版本上进行基准测试，可以使用第三方 crate。目前最流行的第三方基准测试为 [criterion](https://crates.io/crates/criterion)，可以提供更详细的统计数据，还能生成图表，要使用 criterion 提供的图表功能，需要安装 [Gnuplot](http://www.gnuplot.info/)。
+要在 stable 版本上进行基准测试，可以使用第三方 crate。目前最流行的第三方基准测试为 [criterion](https://crates.io/crates/criterion)，可以提供更详细的统计数据，还能生成图表，要使用 criterion 提供的图表功能，需要安装 [Gnuplot](http://www.gnuplot.info/)，否则会使用 [Plotters](https://crates.io/crates/plotters) 来绘图。
 
 首先切换回 stable 版本：
 
@@ -1881,5 +1881,15 @@ criterion_group!(benches, bench_slow, bench_fast);
 criterion_main!(benches);
 ```
 
-这里在 `lib.rs` 中创建了一个快速和一个慢速的 `sum` 函数，并在基准测试代码中导入，然后创建了两个用于测试的函数，
+这里在 `lib.rs` 中创建了一个快速和一个慢速的 `sum` 函数，并在基准测试代码中导入，然后创建了两个用于测试的函数，然后运行 `cargo bench` 进行测试。多次运行测试后，每次测试都会对比前几次的结果，并给出性能是否提升的判断。
+
+```
+slow time:   [1.0036 ns 1.0120 ns 1.0207 ns]
+  change: [-2.5799% -1.5666% -0.5465%] (p = 0.00 < 0.05)
+  Change within noise threshold.
+
+fast time:   [498.07 ps 501.25 ps 504.56 ps]
+  change: [-3.9728% -2.8770% -1.7942%] (p = 0.00 < 0.05)
+  Performance has improved.
+```
 
