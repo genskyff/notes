@@ -1177,7 +1177,7 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
 
 项目级属性：
 
--   `#![doc(html_logo_url="imageurl")`：设置文档页面 Logo；
+-   `#![doc(html_logo_url="imageurl")`：设置文档页面左上角的 Logo；
 -   `#![doc(html_root_url = "url")]`：设置文档页面的 URL；
 -   `#![doc(html_playground_url = "url")]`：设置文档中示例代码的 Run 按钮，以让 Rust Playground 可以处理。
 
