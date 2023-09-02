@@ -91,7 +91,7 @@ git config --global core.quotepath false
 
 #### 取消配置
 
-取消设定指定配置：
+取消指定配置：
 
 ```shell
 git config --unset <key>
