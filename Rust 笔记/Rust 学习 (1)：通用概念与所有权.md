@@ -568,6 +568,20 @@ fn sum(x: i32, y: i32) -> i32 {
 }
 ```
 
+### 编译期函数
+
+可以定义在编译期计算其参数的 const 函数。其必须是纯函数，因此不能包含可变参数，也不能包含如堆分配这样的动态操作。
+
+```rust
+const fn read_header(buf: &[u8]) -> (u8, u8, u8, u8) {
+    (buf[0], buf[1], buf[2], buf[3])
+}
+
+const FILE_HEADER: (u8, u8, u8, u8) = read_header(include_bytes!("test.txt"));
+```
+
+`read_header` 函数使用 `include_bytes!` 接收一个文件作为字节数组，这会在编译期读取文件。然后从中提取 4 字节，并将其作为具有 4 个元素的元组返回。 没有 const 关键字的话，这些都将在运行时完成。
+
 ## 控制流
 
 ### if 表达式
