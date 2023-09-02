@@ -249,7 +249,30 @@ unsafe impl Foo {}
 
 ## 访问 union 的字段
 
-这主要用于和 C 中的共用体进行交互。`union` 和 `struct` 类似，但在一个实例中同时只能使用一个声明的字段。访问共用体的字段是不安全的，因为 Rust 无法保证当前存储在联合体实例中数据的类型。
+这主要用于和 C 中的共用体进行交互。`union` 和 `struct` 类似，但在一个实例中同时只能使用一个声明的字段，且仅允许 Copy 类型作为其字段。访问共用体的字段是不安全的，因为 Rust 无法保证当前存储在共用体实例中数据的类型。
+
+```rust
+#[repr(C)]
+union Metric {
+    rounded: u32,
+    precise: f32,
+}
+fn main() {
+    let mut a = Metric { rounded: 323 };
+    unsafe {
+        println!("{}", a.rounded);
+    }
+    unsafe {
+        println!("{}", a.precise);
+    }
+    a.precise = 33.3;
+    unsafe {
+        println!("{}", a.precise);
+    }
+}
+```
+
+
 
 >   关于 Rust 中共用体的信息，可参考 [Unions - The Rust Reference](https://doc.rust-lang.org/reference/items/unions.html)。
 

@@ -331,6 +331,48 @@ impl Summary for Article {
 
 >   类型必须实现所有 trait 中所有声明的方法，除非这个方法有默认实现。
 
+## trait 结构体和枚举中的常量
+
+结构体、枚举和 trait 也可以与常量字段成员一起提供，可用于需要在共享常量的情况。如有一个 Circle trait，这个 trait 被不同的圆形类型实现，因此可以将一个 PI 常量添加到 Circle  trait 中。
+
+```rust
+trait Circular {
+    const PI: f64 = 3.14;
+    fn area(&self) -> f64;
+}
+
+struct Circle {
+    rad: f64,
+}
+
+impl Circular for Circle {
+    fn area(&self) -> f64 {
+        Circle::PI * self.rad * self.rad
+    }
+}
+```
+
+同样，结构体和枚举也能使用常量：
+
+```rust
+enum Item {
+    One,
+    Two,
+}
+
+struct Food {
+    count: usize,
+}
+
+impl Item {
+    const DEFAULT_COUNT: u32 = 5;
+}
+
+impl Food {
+    const FAVORITE_FOOD: &str = "Cake";
+}
+```
+
 ## trait 作为参数
 
 可以使用 trait 来接受多种不同类型的参数。`Article` 和 `News` 类型都实现了 `Summary` trait，可以定义一个函数 `notify` 来调用其参数 `item` 上的 `summarize` 方法，该参数是实现了 `Summary` trait 的某种类型，为此可以使用 `impl trait` 语法。
@@ -578,7 +620,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
 
 -   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型；
 -   方法没有任何泛型类型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
--   trait 不能拥有静态方法：因为无法知道在哪个实例上调用方法。
+-   trait 不能拥有静态方法：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
 
 下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
 
