@@ -338,8 +338,8 @@ git add <new>
 - 安全性：相对安全，因为不修改提交历史。
 - 影响：只影响工作区和暂存区，不影响提交历史。
 - 常见用法
-  - 撤销工作区的更改：`git restore <file>`；
-  - 撤销暂存区的更改：`git restore --staged <file>`。
+  - 撤销工作区的更改：`git restore <file>`
+  - 撤销暂存区的更改：`git restore --staged <file>`
 
 ### reset
 
@@ -347,9 +347,9 @@ git add <new>
 - 安全性：可能不安全，因为 `--hard` 选项可以修改提交历史。
 - 影响：可以影响工作区、暂存区和提交历史。
 - 常见用法
-  - 软重置（不影响工作区和暂存区）：`git reset --soft <commit>`；
-  - 硬重置（影响工作区和暂存区）：`git reset --hard <commit>；`
-  - 混合重置（**默认选项**，影响暂存区，但不影响工作区）：`git reset --mixed <commit>`。
+  - 软重置（不影响工作区和暂存区）：`git reset --soft <commit>`
+  - 硬重置（影响工作区和暂存区）：`git reset --hard <commit>`
+  - 混合重置（**默认选项**，影响暂存区，但不影响工作区）：`git reset --mixed <commit>`
 
 ### revert
 
@@ -357,8 +357,10 @@ git add <new>
 - 安全性：相对安全，因为不修改现有的提交历史，而是添加新的提交。
 - 影响：只影响提交历史。
 - 常见用法
-  - 撤销最新提交：`git revert HEAD`；
-  - 撤销指定提交：`git revert <commit>`，可能导致冲突，需要手动解决。
+  - 撤销最新提交：`git revert HEAD`
+  - 撤销指定提交：`git revert <commit>`
+
+>   `revert` 可能导致冲突，需要手动解决。
 
 ## 提交历史
 
@@ -463,7 +465,7 @@ git branch -d <name>
 ```
 
 -   `-d` 选项用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败；
--   `-D` 选项用于强制删除指定分支，即使该分支还没有被合并到当前分支。
+-   `-D` 选项用于强制删除指定分支，即使该分支还未被合并到当前分支。
 
 # 5 远程仓库
 
