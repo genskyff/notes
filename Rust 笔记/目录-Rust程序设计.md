@@ -1,17 +1,3 @@
-版权信息
-版权声明
-O'Reilly Media, Inc. 介绍
-  业界评论
-前言
-  读者对象
-  写作初衷
-  本书内容
-  排版约定
-  使用代码示例
-  O'Reilly在线学习平台（O'Reilly Online Learning）
-  联系我们
-  致谢
-  电子书
 第 1 章 为什么是Rust
   类型安全
 第 2 章 Rust初体验
@@ -406,6 +392,3 @@ O'Reilly Media, Inc. 介绍
     21.8.4 libgit2的原始接口
     21.8.5 libgit2的安全接口
   21.9 小结
-作者介绍
-封面介绍
-看完了
