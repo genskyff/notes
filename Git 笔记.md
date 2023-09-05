@@ -2,7 +2,7 @@
 >
 >   -   [Pro Git](https://git-scm.com/book/zh/v2)
 
-# 1 安装与配置
+# 1 环境配置
 
 ## 安装
 
@@ -404,6 +404,12 @@ git branch
 
 ```shell
 git branch -v
+```
+
+`-a` 选项查看所有本地和远程分支：
+
+```shell
+git branch -a
 ```
 
 `--merged/--no-merged` 选项查看所有当前分支已经合并或未合并的分支：
