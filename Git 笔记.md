@@ -665,7 +665,11 @@ git tag -d <tag>
 git push <remote> -d <tag>
 ```
 
-# 7 关联 Github
+# 7 子模块
+
+
+
+# 8 关联 Github
 
 ## 生成密钥
 
@@ -708,7 +712,7 @@ IdentityFile ~/.ssh/id_ed25519
 ssh -T mygit
 ```
 
-# 8 Git 工作流
+# 9 Git 工作流
 
 个人项目通常直接使用 `add`、`commit`、`push` 这三步就足够了，但是在一个大项目中，通常需要遵循一些协作规范，以便多个开发人员可以协同工作，避免代码冲突和其它问题。
 
