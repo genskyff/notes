@@ -83,7 +83,7 @@ scoop install posh-git
 
 ```powershell
 Install-Module -Name PowerShellGet -Force
-Install-Module PSReadLine
+Install-Module PSReadLine -Force
 ```
 
 # 3 配置 PowerShell
