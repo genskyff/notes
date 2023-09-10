@@ -4,11 +4,7 @@
 
 [Oh My Posh](https://ohmyposh.dev/) 是一款终端个性化工具，支持 Windows、Linux（WSL）、macOS 系统上的 PowerShell、bash、zsh 等终端，可以配置不同主题达到个性化的效果。
 
-![M365Princess 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547516.png)
-
 ![agnoster 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547648.png)
-
-![bubbles 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547351.png)
 
 ![clean-detailed 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547301.png)
 
