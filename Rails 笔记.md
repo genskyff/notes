@@ -119,7 +119,7 @@ render html: '<h1>Welcome</h1>'.html_safe
 
 >   在使用 `render` 方法时，Rails 默认会根据控制器的约定自动渲染与当前操作名称匹配的视图模板。例如，`render :index` 在 `PostsController` 的 `index` 动作中将默认渲染 `index` 视图模板。
 
-## `redirect_to` 和 `render`
+## redirect_to 和 render
 
 `redirect_to` 和 `render` 是在 Rails 控制器中用于处理响应的两个常用方法，它们之间有一些重要的区别。
 
@@ -158,7 +158,7 @@ render plain: 'Hello, World!'
 -   使用 `redirect_to` 可能会生成新的请求和响应，而使用 `render` 不会生成新的请求和响应。
 -   根据具体需求和场景，选择适当的方法来实现所需的功能和行为。
 
-### 为何使用 `redirect_to` 来返回成功页面， `render` 来返回失败页面？
+### 为何使用 redirect_to 来返回成功页面， render 来返回失败页面？
 
 在控制器的 `create` 动作中，通常会使用 `redirect_to` 进行重定向，以在成功创建资源后将用户导航到新创建的资源的页面或其他相关页面。而在创建操作失败时，通常使用 `render` 来重新渲染包含表单的页面，以便用户可以查看并修正错误。这种使用方式的原因如下：
 
