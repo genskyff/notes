@@ -547,12 +547,6 @@ git push origin local-main:main
 
 ## 重命名与删除
 
-重命名远程仓库：
-
-```shell
-git remote rename <old> <new>
-```
-
 删除远程仓库：
 
 ```shell
@@ -564,6 +558,8 @@ git remote rm <remote>
 ```shell
 git push <remote> -d <branch>
 ```
+
+重命名远程分支只能通过先删除远程分支，然后将本地分支改名后再重新推送。
 
 # 6 标签管理
 
