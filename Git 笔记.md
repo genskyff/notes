@@ -503,6 +503,14 @@ git remote add <alias> <repo>
 
 >   当使用 `clone` 命令克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
 
+## 修改
+
+若远程分支修改了名字，也需要在本地修改对应的 URL。
+
+```shell
+git remote set-url origin <url>
+```
+
 ## 拉取
 
 `fetch` 命令从中远程仓库拉取所有本地还没有的数据，但**并不会自动合并**到当前分支，必须手动合并。
