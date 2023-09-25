@@ -296,6 +296,12 @@ git diff <branch> [-- <file>]
 git diff <commit>  [-- <file>]
 ```
 
+比较当前提交和指定提交间的统计信息：
+
+```shell
+git diff --shortstat <commit> [-- <file>]
+```
+
 ## 删除文件
 
 `rm` 命令从工作区和仓库中删除指定的文件：
