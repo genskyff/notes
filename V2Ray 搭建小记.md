@@ -1,82 +1,82 @@
 # 1 前言
 
-Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极其优秀的代理工具，关于它的好处这里不多说，以下摘自它的的官方介绍：
+Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极其优秀的代理工具。
 
-> - 多入口多出口：一个 V2Ray 进程可并发支持多个入站和出站协议，每个协议可独立工作。
-> - 可定制化路由：入站流量可按配置由不同的出口发出。轻松实现按区域或按域名分流，以达到最优的网络性能。
-> - 多协议支持：V2Ray 可同时开启多个协议支持，包括 Socks、HTTP、Shadowsocks、VMess 等。每个协议可单独设置传输载体，如 TCP、mKCP、WebSocket 等。
-> - 隐蔽性：V2Ray 的节点可以伪装成正常的网站（HTTPS），将其流量与正常的网页流量混淆，以避开第三方干扰。
-> - 反向代理：通用的反向代理支持，可实现内网穿透功能。
-> - 多平台支持：原生支持所有常见平台，如 Windows、macOS、Linux，并已有第三方支持移动平台。
+以下摘自它的的官方介绍：
+
+> - 多入口多出口：一个 V2Ray 进程可并发支持多个入站和出站协议，每个协议可独立工作；
+> - 定制化路由：入站流量可按配置由不同地出口发出。轻松实现按区域或按域名分流，以达到最优的网络性能；
+> - 多协议支持：V2Ray 可同时开启多个协议支持，包括 Socks、HTTP、Shadowsocks、Trojan、Vmess、VLESS 等。每个协议可单独设置传输载体，比如 TCP、mKCP、QUIC、gPRC 和 WebSocket 等；
+> - 隐蔽和安全：V2Ray 的节点可以伪装成正常的网站（HTTPS），将其流量与正常的网页流量混淆，以避开第三方干扰，并提供数据包伪装和重放保护等功能；
+> - 负载均衡：入站流量按照探测策略和加权算法自动分发到最合适的出口；
+> - 多平台支持：原生支持所有常见平台，如 Windows、macOS 和 Linux，并已有第三方支持移动平台。
 
 其具体文档请参考：
 
 - [V2Ray 官方手册](https://v2fly.org/)
+- [V2Ray 安装](https://www.v2fly.org/guide/install.html)
 - [V2Ray 配置指南](https://guide.v2fly.org/)
+- [V2Ray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)
 
-本文以 Debian 为例，记录搭建 V2Ray 的过程。
+>   本文以 Debian 为例，记录搭建 V2Ray 的过程。
 
-# 2 服务端部署
+# 2 准备工作
 
 在安装之前，需要校准系统时间，因为 V2Ray 要求服务端与客户端的时间误差不能超过 90 秒，V2Ray 会自动转换时区，所以只需确保时间在误差允许范围内，可以通过以下命令来查看系统时间：
 
-```bash
+```shell
 date -R
 ```
 
 若时间不正确，可以安装 `ntp` 服务来自动同步时间：
 
-```bash
+```shell
 apt -y install ntp
+```
+
+也可以重新配置时区：
+
+```shell
+dpkg-reconfigure tzdata
 ```
 
 ## 安装 V2ray
 
-该脚本会安装 V2Ray 程序和 `.dat` 数据，用来配置路由规则。
-
-```bash
+```shell
+# 安装和更新 V2Ray 和 dat 数据
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
-```
 
-在首次安装完成之后，V2Ray 不会自动启动，需要手动启动。
-
-```bash
-systemctl enable v2ray
-systemctl start v2ray
-```
-
-### 相关命令
-
-```bash
-service v2ray start
-service v2ray stop
-service v2ray restart
-service v2ray status
-```
-
-### 更新 .dat 数据
-
-```bash
+# 仅更新 dat 数据
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh)
-```
 
-### 删除 V2Ray
-
-```bash
+# 删除 V2Ray
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh) --remove
 ```
 
-### 修改 V2Ray 配置文件
+在首次安装完成之后，V2Ray 不会自动启动，需要手动启动并设置开机自启。
+
+```shell
+# 设置开机自启
+systemctl enable v2ray
+
+# 启动 V2Ray
+systemctl start v2ray
+
+# 控制 V2Ray
+service v2ray <start|stop|restart|status>
+```
+
+## 配置文件
 
 Linux 上 V2Ray 的配置文件通常位于：
 
 ```
-/usr/local/etc/v2ray
+/usr/local/etc/v2ray/config.json
 ```
 
 在初次使用脚本安装完后会自动生成一个 UUID 并随机选择一个端口号，UUID 相当于用户密码（有一定格式要求，不能自己编写），服务端和用户端必须保持一致，如果要修改，可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用命令来生成：
 
-```bash
+```shell
 cat /proc/sys/kernel/random/uuid
 ```
 
