@@ -14,9 +14,6 @@ Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极
 其具体文档请参考：
 
 - [V2Ray 官方手册](https://v2fly.org/)
-- [V2Ray 安装](https://www.v2fly.org/guide/install.html)
-- [V2Ray 配置指南](https://guide.v2fly.org/)
-- [V2Ray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)
 
 >   本文以 Debian 为例，记录搭建 V2Ray 的过程。
 
@@ -41,6 +38,8 @@ dpkg-reconfigure tzdata
 ```
 
 ## 安装 V2ray
+
+>   参考：[V2Ray 安装](https://www.v2fly.org/guide/install.html)。
 
 ```shell
 # 安装和更新 V2Ray 和 dat 数据
@@ -68,16 +67,41 @@ service v2ray <start|stop|restart|status>
 
 ## 配置文件
 
-Linux 上 V2Ray 的配置文件通常位于：
+>   参考：[V2Ray 配置指南](https://guide.v2fly.org/)。
+
+Linux 上 V2Ray 的默认配置文件通常位于：
 
 ```
 /usr/local/etc/v2ray/config.json
 ```
 
-在初次使用脚本安装完后会自动生成一个 UUID 并随机选择一个端口号，UUID 相当于用户密码（有一定格式要求，不能自己编写），服务端和用户端必须保持一致，如果要修改，可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用命令来生成：
+### 配置文件格式
+
+>   参考：[V2Ray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)。
+
+所有的配置文件都由如下格式的配置项组成：
+
+```json
+{
+    "log": {},
+    "dns": {},
+    "router": {},
+    "inbounds": [],
+    "outbounds": [],
+    "services": {}
+}
+```
+
+无论是客户端还是服务端，配置文件都由这几部分组成，其中都至少需要包含 `inbounds` 和 `outbounds`。V2Ray 并没有在程序上区分客户端和服务端，仅由配置决定。
+
+每一个 V2Ray 服务都是一个节点，`inbound` 是关于如何与上一个节点连接的配置，`outbound` 是关于如何与下一个节点连接的配置。对于第一个节点，`inbound` 与浏览器连接；对于最后一个节点，`outbound`与目标网站连接。
+
+`inbounds` 和 `outbounds` 是 `inbound` 和 `outbound` 的集合，意味着每一个 V2Ray 节点都可以有多个入口和出口。
+
+在配置项中有一个 `id` 设置，是一个 UUID，客户端和服务端必须保持一致。可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用 V2Ray CLI 来生成：
 
 ```shell
-cat /proc/sys/kernel/random/uuid
+v2ray uuid
 ```
 
 # 3 配置方案
@@ -275,13 +299,13 @@ cat /proc/sys/kernel/random/uuid
 
 ### 安装 acme.sh
 
-```bash
+```shell
 curl https://get.acme.sh | bash
 ```
 
 确认脚本命令别名生效：
 
-```bash
+```shell
 source ~/.bashrc
 ```
 
@@ -289,7 +313,7 @@ source ~/.bashrc
 
 **注意这条命令会临时占用 80 端口，如果开启了 Nginx / Apache / Caddy 等类似占用了 80 端口的进程，需要临时关闭。**
 
-```bash
+```shell
 ~/.acme.sh/acme.sh --issue -d 域名 --standalone -k ec-256
 ```
 
@@ -297,7 +321,7 @@ source ~/.bashrc
 
 生成和更新完证书后需要安装证书和密钥：
 
-```bash
+```shell
  ~/.acme.sh/acme.sh --installcert -d 域名 --fullchain-file /usr/local/etc/v2ray/v2ray.cer --key-file /usr/local/etc/v2ray/v2ray.key --ecc
 ```
 
@@ -307,23 +331,23 @@ source ~/.bashrc
 
 手动更新：
 
-```bash
+```shell
 ~/.acme.sh/acme.sh --renew -d 域名 --force --standalone --ecc
 ```
 
 ## 配置 Nginx
 
-通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 V2Ray 的事实，可以使用 Nginx / Apache / Caddy。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来实现隐藏真实 IP 的作用，即被墙服务器可以继续使用。
+通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 V2Ray 的事实，可以使用 Nginx / Apache / Caddy。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
 
 ### 安装 Nginx
 
-```bash
+```shell
 apt -y install nginx
 ```
 
 Nginx 的配置文件位于 `/etc/nginx` 目录中，编辑：
 
-```bash
+```shell
 vim /etc/nginx/sites-available/default
 ```
 
@@ -380,7 +404,7 @@ server {
 
 修改完配置后需重新加载 Nginx 配置文件：
 
-```bash
+```shell
 service nginx force-reload
 ```
 
