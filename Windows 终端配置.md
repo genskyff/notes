@@ -1,5 +1,7 @@
 
 
+>   PC 环境：Windows 11 x64
+
 # 1 简介
 
 [Oh My Posh](https://ohmyposh.dev/) 是一款终端个性化工具，支持 Windows、Linux（WSL）、macOS 系统上的 PowerShell、bash、zsh 等终端，可以配置不同主题达到个性化的效果。

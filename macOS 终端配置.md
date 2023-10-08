@@ -1,34 +1,34 @@
-# macOS 终端配置
+>   PC 环境：Apple M1 Ventura
 
->   PC 环境：Apple M1 Ventura 13.3.1
+# 1 Homebrew
 
-## 1 Homebrew
+## 安装
 
 通过 [官网](https://brew.sh/) 提供的方式安装：
 
-```bash
+```shell
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-## 2 iTerm2
+# 2 iTerm2
 
-### 安装
+## 安装
 
 通过 Homebrew 安装：
 
-```bash
+```shell
 brew install iterm2
 ```
 
-### 配置主题
+## 配置主题
 
 可以在 [这里](https://iterm2colorschemes.com/) 查看主题效果和下载，这里直接拉取其 [Github 仓库](https://github.com/mbadolato/iTerm2-Color-Schemes)：
 
-```bash
+```shell
 git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 ```
 
-其中的 `schemes` 为主题文件夹，里面包含了所有的主题方案，可以导入到 iTerm2 中。这里以 `Solarized Dark Higher Contrast` 主题为例。
+其中 `schemes` 为主题文件夹，包含了所有的主题方案，可以导入到 iTerm2 中。这里以 `Solarized Dark Higher Contrast` 主题为例。
 
 ![自带主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355817.png)
 
@@ -36,42 +36,31 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 ![导入并选择主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355959.png)
 
-## 3 Oh My Zsh
+# 3 Oh My Zsh
 
-### 安装
+## 安装
 
 按照 [官网](https://ohmyz.sh/#install) 提供的方式安装：
 
-```bash
+```shell
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
-### 配置主题
+## 配置主题
 
 查看自带主题：
 
-```bash
+```shell
 ls ~/.oh-my-zsh/themes
 ```
 
 ![查看自带主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355113.png)
 
-可以在 [这里](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes) 查看所有自带主题的效果，但这里推荐一个非自带主题 [Powerlevel10k](https://github.com/romkatv/powerlevel10k)，下载到 `$ZSH_CUSTOM/themes` 目录
+可以在 [这里](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes) 查看所有自带主题的效果，但这里推荐一个非自带主题 [Powerlevel10k](https://github.com/romkatv/powerlevel10k)，通过 Homebrew 安装并配置：
 
-```bash
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k
-```
-
-配置要使用的主题，编辑 `~/.zshrc` 文件：
-
-```bash
-vim ~/.zshrc
-```
-
-找到 `ZSH_THEME` 选项，将默认的 `robbyrussell` 修改为 `powerlevel10k/powerlevel10k`：
-
-```bash
-ZSH_THEME="powerlevel10k/powerlevel10k"
+```shell
+brew install powerlevel10k
+echo "source $(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc
 ```
 
 然后重启 iTerm2，会自动开始 Powerlevel10k 配置向导，其中包括：
@@ -92,7 +81,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 增强版 `cd` 命令，可以在目录、子目录间快速跳转，以及在文件管理器中打开目录。
 
-```bash
+```shell
 brew install autojump
 ```
 
@@ -100,7 +89,7 @@ brew install autojump
 
 增强版自动补全，会根据历史记录和完成情况建议命令。
 
-```bash
+```shell
 brew install zsh-autosuggestions
 ```
 
@@ -108,17 +97,17 @@ brew install zsh-autosuggestions
 
 为 zsh 命令行提供语法高亮。
 
-```bash
+```shell
 brew install zsh-syntax-highlighting
 ```
 
 ### 配置插件
 
-根据安装提示需要在 `~.zshrc` 中添加行，其中 `zsh-syntax-highlighting` 的必须添加在文件末尾。
+根据安装提示需要在 `~.zshrc` 中添加行，其中 `zsh-syntax-highlighting` 必须添加在文件末尾。
 
 安装完成后在 `~/.zshrc` 中找到 `plugins` 选项并在其中添加插件名：
 
-```bash
+```shell
 plugins=(
   git
   autojump
@@ -129,33 +118,33 @@ plugins=(
 
 使配置生效：
 
-```bash
+```shell
 source ~/.zshrc
 ```
 
-## 其它终端工具
+# 4 其它终端工具
 
-### [Neofetch](https://github.com/dylanaraps/neofetch)
+## [Neofetch](https://github.com/dylanaraps/neofetch)
 
-美化显示操作系统、软件和硬件的信息。
+美化显示操作系统、软硬件信息。
 
-```bash
+```shell
 brew install neofetch
 ```
 
-### [LSD](https://github.com/lsd-rs/lsd)
+## [LSD](https://github.com/lsd-rs/lsd)
 
 增强版 `ls` 命令，美化了输出结果，并增加了颜色、图标、树视图等更多格式选项。
 
-```bash
+```shell
 brew install lsd
 ```
 
-### [BAT](https://github.com/sharkdp/bat)
+## [BAT](https://github.com/sharkdp/bat)
 
 增强版 `cat` 命令，但集成了 Git 和语法高亮。
 
-```bash
+```shell
 brew install bat
 ```
 
