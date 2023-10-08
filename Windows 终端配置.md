@@ -6,7 +6,7 @@
 
 ## winget
 
-Windows 10/11 已经默认安装了 [winget](https://learn.microsoft.com/zh-cn/windows/package-manager/winget/)，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9NBLGGH4NNS1) 安装。
+Windows 10 / 11 已经默认安装了 [winget](https://learn.microsoft.com/zh-cn/windows/package-manager/winget/)，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9NBLGGH4NNS1) 安装。
 
 ## PowerShell
 
@@ -34,10 +34,22 @@ PowerShell 5 与 7 是共存的，安装路径、名称、可执行文件名、�
 $PROFILE | Select-Object *Host* | Format-List
 
 # 模块路径
-$Env:PSModulePath -split (';')
+$env:PSModulePath -split (';')
 ```
 
 >   关于 PowerShell 5 和 7 的具体差异以及迁移指南，可参考 [从 Windows PowerShell 5.1 迁移到 PowerShell 7](https://learn.microsoft.com/zh-cn/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7?view=powershell-7.3)。
+
+### PSReadLine
+
+[PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的命令补全、命令历史搜索等功能。
+
+PowerShell 7 附带了 PSReadLine 2.2.6，也可以手动升级：
+
+```powershell
+Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease
+```
+
+>   PSReadLine 的配置选项，可参考 [PSReadLine 参考](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
 
 ## Windows Terminal
 
@@ -63,9 +75,9 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 ![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
 
-## scoop
+## Scoop
 
-[scoop](https://scoop.sh/) 是 Windows 下和 winget 类似的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 winget 或  scoop 来安装。
+[Scoop](https://scoop.sh/) 是 Windows 下和 winget 类似的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 winget 或  scoop 来安装。
 
 ```powershell
 # 安装 scoop
@@ -79,10 +91,20 @@ irm get.scoop.sh | iex
 
 ```powershell
 # 通过 winget 安装
-winget install gerardog.gsudo
+winget install --id gerardog.gsudo -s winget
 
 # 通过 scoop 安装
 scoop install gsudo
+```
+
+## posh-git
+
+[posh-git](https://github.com/dahlbyk/posh-git) 可以在 PowerShell 中显示 Git 状态的摘要信息并自动补全 Git 命令。
+
+```powershell
+# 通过 scoop 安装
+scoop bucket add extras
+scoop install posh-git
 ```
 
 ## Terminal-Icons
@@ -97,94 +119,104 @@ scoop bucket add extras
 scoop install terminal-icons
 ```
 
-## posh-git
-
-[posh-git](https://github.com/dahlbyk/posh-git) 可以在 PowerShell 中显示 Git 状态的摘要信息并自动补全 Git 命令。
-
-```powershell
-# 通过 scoop 安装
-scoop bucket add extras
-scoop install posh-git
-```
-
-# 3 配置主题
+# 3 个性化终端
 
 ## Oh My Posh
 
-
-
-[Oh My Posh](https://ohmyposh.dev/) 是一款终端个性化工具，支持 Windows、Linux（WSL）、macOS 系统上的 PowerShell、bash、zsh 等终端，可以配置不同主题达到个性化的效果。
-
-根据 [Oh My Posh 官方文档](https://ohmyposh.dev/docs/windows)，提供了不同系统上的安装方式，本文以 Windows 下安装并配置 PowerShell 为例。
-
-通过 scoop 来安装，执行命令：
+[Oh My Posh](https://ohmyposh.dev/docs/) 是一款终端个性化工具，可通过 [Microsoft Store](https://apps.microsoft.com/detail/XP8K0HKJFRXGCK) 安装，或使用 winget 或 scoop。
 
 ```powershell
+# 通过 winget 安装
+winget install --id JanDeDobbeleer.OhMyPosh -s winget
+
+# 通过 scoop 安装
 scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/oh-my-posh.json
 ```
 
-完成全部安装和配置后，使用的是默认主题，如果想要切换成其它主题，可以去 [官方主题目录](https://ohmyposh.dev/docs/themes) 查看各种主题的效果，同时这些主题也被安装在 Oh My Posh 的主题目录下。
-
-通过 scoop 安装后的主题目录为：
-
-```
-~\scoop\apps\oh-my-posh\current\themes
-```
-
-所有主题配置文件都放在这里，并以 `.omp.json` 结尾，从其它地方下载的主题配置文件也需要放在这里。
-
-在终端中执行以下命令，就可以查看所有主题在终端中的效果：
+启用主题，并可选地使用 `--config` 选项指定主题：
 
 ```powershell
-Get-PoshThemes ~\scoop\apps\oh-my-posh\current\themes 
+oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\craver.omp.json | Invoke-Expression
 ```
 
-选择一个主题的名字，如 `marcduiker`，然后编辑 PowerShell 的配置文件，执行命令：
+可在 [主题目录](https://ohmyposh.dev/docs/themes) 查看各种主题的效果，或在启用主题后使用命令查看所有主题的效果，主题配置文件也被安装在 Oh My Posh 的主题目录下。
 
 ```powershell
-notepad $PROFILE
+# 主题目录
+$env:POSH_THEMES_PATH
+
+# 查看所有主题效果（只有在启用主题后该命令才有效）
+Get-PoshThemes
 ```
 
-将其中的 `oh-my-posh init pwsh | Invoke-Expression` 加上 `--config [主题路径]` 参数：
-
-```powershell
-oh-my-posh init pwsh --config ~\scoop\apps\oh-my-posh\current\themes\marcduiker.omp.json | Invoke-Expression
-```
-
-保存后重启 Windows Terminal，即可看到更新后的个性化界面。
+所有主题配置文件都以 `.omp.json` 结尾，从其它地方下载的主题配置文件也需要放在该目录。
 
 ## Starship
 
-# 3 配置 PowerShell
-
-## PSReadLine
-
-[PSReadLine](https://github.com/PowerShell/PSReadLine) 可以提供命令自动补全、语法高亮等功能。
-
-通过 Powshell 安装，依次执行命令：
-
 ```powershell
-Install-Module -Name PowerShellGet -Force
-Install-Module PSReadLine -Force
+# 通过 winget 安装
+winget install --id Starship.Starship -s winget
+
+# 通过 scoop 安装
+scoop install starship
 ```
 
-安装完成后启动 PowerShell 时并不会默认加载个性化后的配置，因此需要修改 PowerShell 配置文件来让每次启动都加载。
 
-执行命令打开配置文件：
+
+# 4 配置 PowerShell
+
+为了使 PowerShell、PSReadLine、posh-git 等安装的模块或自定义的配置在每次启动时都生效，需要编辑 PowerShell 配置文件。
+
+打开并编辑 PowerShell 配置文件：
 
 ```powershell
+# 记事本打开
+notepad $PROFILE
+
+# VSCode 打开
 code $PROFILE
 ```
 
-最后向配置文件中添加：
+然后在其中添加：
 
 ```powershell
+# 使 Oh My Posh 主题生效
 oh-my-posh init pwsh | Invoke-Expression
-Import-Module -Name Terminal-Icons
-Import-Module posh-git
+
+# 或使 Starship 主题生效
+# Invoke-Expression (&starship init powershell)
+
+# 导入 PSReadLine
 Import-Module PSReadLine
-Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+
+# 导入 posh-git
+Import-Module posh-git
+
+# 导入 Terminal-Icons
+Import-Module Terminal-Icons
+
+# 设置 ↑ 键为后向搜索历史命令
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+
+# 设置向 ↓ 键为前向搜索历史命令
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+# 设置 Tab 键为智能提示和补全
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+
+# 设置回溯历史命令时光标定位于行尾
+Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+
+# 设置打开当前目录命令
+function OpenCurrentFolder {
+	param($Path = '.')
+	Invoke-Item $Path
+}
+Set-Alias -Name open -Value OpenCurrentFolder
 ```
 
-保存后重启 Windows Terminal，即可看到个性化后的界面。
+修改后需要重启 PowerShell 或用命令来使配置生效：
+
+```powershell
+. $PROFILE
+```
