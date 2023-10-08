@@ -2,52 +2,88 @@
 
 >   PC 环境：Windows 11 x64
 
-# 1 简介
+# 1 终端环境
 
-[Oh My Posh](https://ohmyposh.dev/) 是一款终端个性化工具，支持 Windows、Linux（WSL）、macOS 系统上的 PowerShell、bash、zsh 等终端，可以配置不同主题达到个性化的效果。
+## winget
 
-![agnoster 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547648.png)
+Windows 10/11 已经默认安装了 [winget](https://learn.microsoft.com/zh-cn/windows/package-manager/winget/)，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9NBLGGH4NNS1) 安装。
 
-![clean-detailed 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547301.png)
+## PowerShell
 
-![robbyrussel 主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547817.png)
+Windows 10/11 默认安装了 PowerShell 5，需要将其升级到 PowerShell 7。
 
-# 2 安装
+```powershell
+# 查看 PowerShell 版本
+$PSVersionTable
+```
 
-根据 [Oh My Posh 官方文档](https://ohmyposh.dev/docs/windows)，提供了不同系统上的安装方式，本文以 Windows 下安装并配置 PowerShell 为例。
+![查看 PowerShell 版本](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082043223.png)
+
+要升级到 PowerShell 7，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 安装，或使用 winget：
+
+```powershell
+winget install --id Microsoft.Powershell --source winget
+```
+
+PowerShell 5 与 7 是共存的，安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
+
+5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`；7 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
+
+```powershell
+# 配置文件路径
+$PROFILE | Select-Object *Host* | Format-List
+
+# 模块路径
+$Env:PSModulePath -split (';')
+```
+
+>   关于 PowerShell 5 和 7 的具体差异以及迁移指南，可参考 [从 Windows PowerShell 5.1 迁移到 PowerShell 7](https://learn.microsoft.com/zh-cn/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7?view=powershell-7.3)。
 
 ## Windows Terminal
 
-由于自带的 PowerShell 界面并不是很好用，推荐使用微软官方推出的 Windows Terminal，目前在 Windows 11 上已经自带，如果没有安装，可以去 [Microsoft Store](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701) 下载，安装完成后会默认启动为 PowerShell 而不是 CMD。
+Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701) 安装。
 
-![Windows Terminal](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280546511.png)
+在 Windows Terminal 设置的 `启动` 选项卡中，将默认配置文件从 Windwos PowerShell 切换为 PowerShell。
+
+![设置 PowerShell 7 为默认配置](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082138565.png)
+
+# 2 终端工具
+
+## Nerd Fonts 字体
+
+由于很多终端主题和工具都会使用一些特殊字符，如 Oh My Posh 和 posh-git，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此终端默认字体并不能很好的显示，推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
+
+安装完后需要在 Windows Terminal 中设置默认字体，在 `默认值` -> `外观` 选项卡中设置字体，这样对所有配置文件都生效。
+
+![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082203360.png)
+
+### VSCode 字体
+
+在 VSCode 中也能打开 PowerShell 终端，但是没有配置终端字体，因此需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
+
+![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
 
 ## scoop
 
-[scoop](https://scoop.sh/) 是 Windows 下的一款十分强大的包管理器，可以用来下载和管理各种软件包，虽然官方提供了多种安装方式，但是这里推荐使用 scoop。
-
-依次执行命令：
+[scoop](https://scoop.sh/) 是 Windows 下和 winget 类似的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 winget 或  scoop 来安装。
 
 ```powershell
-Set-ExecutionPolicy RemoteSigned -scope CurrentUser
-iwr -useb get.scoop.sh | iex
+# 安装 scoop
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
 ```
 
-## Oh My Posh
+## gsudo
 
-通过 scoop 来安装，执行命令：
+[gsudo](https://gerardog.github.io/gsudo/docs/intro) 是一个类似 Linux 上 sudo 的工具，可以将命令提权执行。
 
 ```powershell
-scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/oh-my-posh.json
+# 通过 winget 安装
+winget install gerardog.gsudo
+
+# 通过 scoop 安装
+scoop install gsudo
 ```
-
-## Meslo NF 字体
-
-由于 Oh My Posh 基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认的字体并不能很好的显示个性化后的各种特殊字符，官方推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
-
-安装完字体后需要在 Windows Terminal 中设置，打开后进入设置，在 `默认值-外观` 选项卡中设置字体，这样对所有终端都生效。
-
-![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301910766.png)
 
 ## Terminal-Icons
 
@@ -55,9 +91,8 @@ scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/downl
 
 ![图标效果](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547128.png)
 
-通过 scoop 来安装，依次执行命令：
-
 ```powershell
+# 通过 scoop 安装
 scoop bucket add extras
 scoop install terminal-icons
 ```
@@ -66,66 +101,27 @@ scoop install terminal-icons
 
 [posh-git](https://github.com/dahlbyk/posh-git) 可以在 PowerShell 中显示 Git 状态的摘要信息并自动补全 Git 命令。
 
-通过 scoop 来安装，依次执行命令：
-
 ```powershell
+# 通过 scoop 安装
 scoop bucket add extras
 scoop install posh-git
 ```
 
-## PSReadLine
+# 3 配置主题
 
-[PSReadLine](https://github.com/PowerShell/PSReadLine) 可以提供命令自动补全、语法高亮等功能。
+## Oh My Posh
 
-通过 Powshell 安装，依次执行命令：
 
-```powershell
-Install-Module -Name PowerShellGet -Force
-Install-Module PSReadLine -Force
-```
 
-# 3 配置 PowerShell
+[Oh My Posh](https://ohmyposh.dev/) 是一款终端个性化工具，支持 Windows、Linux（WSL）、macOS 系统上的 PowerShell、bash、zsh 等终端，可以配置不同主题达到个性化的效果。
 
-安装完成后启动 PowerShell 时并不会默认加载个性化后的配置，因此需要修改 PowerShell 配置文件来让每次启动都加载。
+根据 [Oh My Posh 官方文档](https://ohmyposh.dev/docs/windows)，提供了不同系统上的安装方式，本文以 Windows 下安装并配置 PowerShell 为例。
 
-执行命令打开配置文件：
+通过 scoop 来安装，执行命令：
 
 ```powershell
-notepad $PROFILE
+scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/oh-my-posh.json
 ```
-
-若提示不存在文件，且提示是否创建文件，则直接创建，否则需要手动在 PowerShell 目录下创建一个配置文件再进行编辑。
-
-若需手动创建配置文件，则依次执行命令：
-
-```powershell
-mkdir ~\Documents\WindowsPowerShell
-echo "" > ~\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
-notepad $PROFILE
-```
-
-最后向配置文件中添加：
-
-```powershell
-oh-my-posh init pwsh | Invoke-Expression
-Import-Module -Name Terminal-Icons
-Import-Module posh-git
-Import-Module PSReadLine
-Set-PSReadLineOption -HistorySearchCursorMovesToEnd
-Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
-```
-
-保存后重启 Windows Terminal，即可看到个性化后的界面。
-
-# 4 配置 VSCode
-
-在 VSCode 中也能打开 PowerShell 终端，但是没有配置终端字体，因此需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
-
-![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
-
-![终端效果](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547535.png)
-
-# 5 配置主题
 
 完成全部安装和配置后，使用的是默认主题，如果想要切换成其它主题，可以去 [官方主题目录](https://ohmyposh.dev/docs/themes) 查看各种主题的效果，同时这些主题也被安装在 Oh My Posh 的主题目录下。
 
@@ -156,3 +152,39 @@ oh-my-posh init pwsh --config ~\scoop\apps\oh-my-posh\current\themes\marcduiker.
 ```
 
 保存后重启 Windows Terminal，即可看到更新后的个性化界面。
+
+## Starship
+
+# 3 配置 PowerShell
+
+## PSReadLine
+
+[PSReadLine](https://github.com/PowerShell/PSReadLine) 可以提供命令自动补全、语法高亮等功能。
+
+通过 Powshell 安装，依次执行命令：
+
+```powershell
+Install-Module -Name PowerShellGet -Force
+Install-Module PSReadLine -Force
+```
+
+安装完成后启动 PowerShell 时并不会默认加载个性化后的配置，因此需要修改 PowerShell 配置文件来让每次启动都加载。
+
+执行命令打开配置文件：
+
+```powershell
+code $PROFILE
+```
+
+最后向配置文件中添加：
+
+```powershell
+oh-my-posh init pwsh | Invoke-Expression
+Import-Module -Name Terminal-Icons
+Import-Module posh-git
+Import-Module PSReadLine
+Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+```
+
+保存后重启 Windows Terminal，即可看到个性化后的界面。
