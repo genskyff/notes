@@ -61,7 +61,7 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 # 2 终端工具
 
-## Nerd Fonts 字体
+## Nerd Fonts
 
 由于很多终端主题和工具都会使用一些特殊字符，如 Oh My Posh 和 posh-git，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此终端默认字体并不能很好的显示，推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
 
@@ -182,39 +182,26 @@ code $PROFILE
 然后在其中添加：
 
 ```powershell
-# 启用 Oh My Posh
 # oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\multiverse-neon.omp.json | Invoke-Expression
-
-# 启用 Starship
 Invoke-Expression (&starship init powershell)
 
-# 启用 PSReadLine
 Import-Module PSReadLine
-
-# 启用 posh-git
+Import-Module gsudoModule
 Import-Module posh-git
-
-# 启用 Terminal-Icons
 Import-Module Terminal-Icons
 
-# 设置 ↑ 键为向前搜索历史命令
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
-
-# 设置向 ↓ 键为向后搜索历史命令
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
-
-# 设置 Tab 键为智能提示和补全
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
-
-# 设置回溯历史命令时光标定位于行尾
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 
-# 设置打开当前目录命令
 function OpenCurrentFolder {
 	param($Path = '.')
 	Invoke-Item $Path
 }
+
 Set-Alias -Name open -Value OpenCurrentFolder
+Set-Alias -Name sudo -Value gsudo
 ```
 
 修改后需要重启 PowerShell 或用命令来使配置生效：
