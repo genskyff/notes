@@ -41,7 +41,7 @@ $env:PSModulePath -split (';')
 
 ### PSReadLine
 
-[PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的命令补全、命令历史搜索等功能。
+[PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的智能提示和补全、历史命令搜索等功能。
 
 PowerShell 7 附带了 PSReadLine 2.2.6，也可以手动升级：
 
@@ -136,22 +136,24 @@ scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/downl
 启用主题，并可选地使用 `--config` 选项指定主题：
 
 ```powershell
-oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\craver.omp.json | Invoke-Expression
+oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\multiverse-neon.omp.json | Invoke-Expression
 ```
 
-可在 [主题目录](https://ohmyposh.dev/docs/themes) 查看各种主题的效果，或在启用主题后使用命令查看所有主题的效果，主题配置文件也被安装在 Oh My Posh 的主题目录下。
+可在 [预设主题](https://ohmyposh.dev/docs/themes) 查看所有预设主题的效果，或在启用主题后使用命令查看所有预设主题的效果。
 
 ```powershell
 # 主题目录
 $env:POSH_THEMES_PATH
 
-# 查看所有主题效果（只有在启用主题后该命令才有效）
+# 查看所有预设主题效果（只有在启用主题后该命令才有效）
 Get-PoshThemes
 ```
 
-所有主题配置文件都以 `.omp.json` 结尾，从其它地方下载的主题配置文件也需要放在该目录。
+主题配置文件也被安装在 Oh My Posh 的主题目录下，后缀为 `.omp.json`，自定义主题配置文件也需要放在该目录。
 
 ## Starship
+
+[Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation) 也是一款终端个性化工具，特点是快速、简洁。
 
 ```powershell
 # 通过 winget 安装
@@ -161,7 +163,7 @@ winget install --id Starship.Starship -s winget
 scoop install starship
 ```
 
-
+可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 查看所有预设主题效果。要使用默认以外的主题，需从预设主题中下载配置文件，并需要重命名为 `starship.toml` 并放在 `~\.config\` 下。
 
 # 4 配置 PowerShell
 
@@ -180,25 +182,25 @@ code $PROFILE
 然后在其中添加：
 
 ```powershell
-# 使 Oh My Posh 主题生效
-oh-my-posh init pwsh | Invoke-Expression
+# 启用 Oh My Posh
+# oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\multiverse-neon.omp.json | Invoke-Expression
 
-# 或使 Starship 主题生效
-# Invoke-Expression (&starship init powershell)
+# 启用 Starship
+Invoke-Expression (&starship init powershell)
 
-# 导入 PSReadLine
+# 启用 PSReadLine
 Import-Module PSReadLine
 
-# 导入 posh-git
+# 启用 posh-git
 Import-Module posh-git
 
-# 导入 Terminal-Icons
+# 启用 Terminal-Icons
 Import-Module Terminal-Icons
 
-# 设置 ↑ 键为后向搜索历史命令
+# 设置 ↑ 键为向前搜索历史命令
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 
-# 设置向 ↓ 键为前向搜索历史命令
+# 设置向 ↓ 键为向后搜索历史命令
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 
 # 设置 Tab 键为智能提示和补全
