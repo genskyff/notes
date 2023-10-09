@@ -194,6 +194,7 @@ Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+Set-PSReadLineOption -PredictionViewStyle ListView
 
 function OpenCurrentFolder {
 	param($Path = '.')
