@@ -49,7 +49,7 @@ PowerShell 7 附带了 PSReadLine 2.2.6，也可以手动升级：
 Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease
 ```
 
->   PSReadLine 的配置选项，可参考 [PSReadLine 参考](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
+>   PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
 
 ## Windows Terminal
 
