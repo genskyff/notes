@@ -302,6 +302,12 @@ git diff <commit>  [-- <file>]
 git diff --shortstat <commit> [-- <file>]
 ```
 
+比较当前提交和指定提交间的文件差异：
+
+```shell
+git diff --name-only <commit>
+```
+
 ## 删除文件
 
 `rm` 命令从工作区和仓库中删除指定的文件：
