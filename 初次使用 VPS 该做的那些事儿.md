@@ -6,10 +6,8 @@
 
 ## 更新软件包
 
-更新包列表和已安装包，由于内核也更新了，所以更新完需要重启：
-
 ```bash
-apt update && apt -y full-upgrade && shutdown -r now
+apt update && apt -y upgrade
 ```
 
 ## 安装基本软件包
