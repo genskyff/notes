@@ -153,6 +153,180 @@ let Some(x) = value;
 if let Some(x) = value {}
 ```
 
+## 匹配项的所有权
+
+对于没有实现 `Copy` trait 的类型值，在匹配时会获得所有权，从而发生移动。
+
+```rust
+let s = Some(String::from("hello"));
+match s {
+    Some(v) => println!("{v}"),
+    None => println!("Nothing"),
+}
+println!("{:?}", s);    // 错误，s 中的值已经移动到 v
+```
+
+`Some(v)` 中的 `v` 会获得 `s` 中 `String` 的所有权，`s` 中的一部分被移动了，在之后就不能继续使用 `s` 整体，但可使用没有被移动的部分。
+
+如果值不是 Copy 的，还想重复使用的话，那么就需要使用 `ref` 来匹配。
+
+```rust
+let value = Some(String::from("hello"));
+
+match value {
+    ref v@ Some(ref t) => {
+        println!("value: {:?}", v);
+        println!("inner value: {t}");
+    },
+    None => println!("None"),
+}
+
+println!("value: {:?}", value);
+```
+
+`ref` 通过引用来匹配，而不是根据值并获取所有权。
+
+`ref` 还可以用在 `let` 语句和函数参数中。
+
+```rust
+let s1 = String::from("hello");
+let s2 = String::from("world");
+
+let (ref r1, ref r2) = (s1, s2);
+
+// 错误，s1 和 s2 已经被移动
+println!("{s1}, {s2}");
+```
+
+这里 `r1` 和 `r2` 实际上是一个引用，其类型为 `&String`，但 `s1` 和 `s2` 则移动了所有权。
+
+```rust
+let (r1, r2) = (&s1, &s2);
+```
+
+而这里 `r1` 和 `r2` 也是一个 `&String`，但 `s1` 和 `s2` 则没有所有权。
+
+---
+
+而在函数中，实际上参数也是一个命名变量，并将传进来的值进行绑定。
+
+```rust
+let s = String::from("hello");
+foo(s);
+println!("{s}");  // 错误，s 已经被移动
+
+fn get(ref v: String) {
+    let t = v;    // t 的类型为 &String
+}
+```
+
+这里通过 `ref` 将参数变成了一个引用，但是获取了外部参数的所有权。
+
+实际上就相当于做了以下操作：
+
+```rust
+let ref v = t;
+
+// 相当于
+let t = 1;
+let v = t;
+let v = &v;
+```
+
+---
+
+通过在 `ref` 后加 `mut` 关键字，可以获得一个可变引用。
+
+```rust
+let ref mut v = t;
+
+// 相当于
+let v = t;
+let v = &mut v;
+```
+
+---
+
+同时 `ref` 还可用于部分移动。对于没有实现 `Copy` trait 的类型，在传递时会发生移动。若是一个结构体通过模式匹配来将字段值付给其它的变量，那么这个结构体就不能在后面作为一个整体来使用。
+
+```rust 
+#[derive(Debug)]
+struct User {
+    id: usize,
+    name: String,
+}
+
+let user = User {
+    id: 1,
+    name: String::from("Alice"),
+};
+
+let User { id, ref name }= user;
+println!("{id}, {name}");
+println!("{:?}", user);
+```
+
+这里通过 `ref` 来仅获得一个引用，因此在后面还可以使用 `user`。
+
+### 部分移动
+
+可以移动一个变量的一部分，称为**部分移动**，之后的代码不能使用变量的整体，但可以使用没有移动的部分。
+
+通过 `ref` 可以获得解构后的引用而不获取所有权：
+
+```rust
+struct Person {
+    firstname: String,
+    lastname: String,
+}
+
+fn main() {
+    let p = Person {
+        firstname: String::from("AAA"),
+        lastname: String::from("BBB"),
+    };
+
+    let Person {
+        ref firstname,  // 解构成一个引用
+        lastname,
+    } = p;
+
+    println!("{}", p.firstname);
+    println!("{}", p.lastname);  // 错误
+}
+```
+
+使用 `ref mut` 获得一个可变引用：
+
+```rust
+let mut s = Some(5);
+match s {
+    Some(ref mut v) => *v += 1,
+    _ => (),
+}
+println!("{:?}", s);
+```
+
+`ref` 通常用在要匹配的对象没有所有权的时候：
+
+```rust
+fn main() {
+    let s = Some(String::from("hi"));
+    print_s(&s);
+}
+
+fn print_s(s: &Option<String>) {
+    match *s {
+        Some(ref v) => println!("{}", v),
+        None => println!("Nothing"),
+    }
+}
+```
+
+`print_s` 函数接收一个引用 `&T`，因此并没有这个参数的所有权，当对其进行解引用后，匹配中的类型变为 `T`，但不能对引用的对象获得所有权，因此必须对 `v` 使用 `ref` 修饰，否则无法通过编译。
+
+>   `ref` 和 `&` 都在模式匹配中使用，但是前者不是模式的一部分，而后者是模式的一部分。`ref` 仅表示获得值的一个引用，而不获取所有权。
+
 ## 模式语法
 
 ### 匹配字面值
@@ -425,109 +599,7 @@ match value {
 }
 ```
 
-这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 的内部值。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值。
-
-### ref 模式
-
-如果值不是 Copy 的，还想重复使用的话，那么就需要使用 `ref` 来匹配。
-
-```rust
-let value = Some(String::from("hello"));
-
-match value {
-    ref v@ Some(ref t) => {
-        println!("value: {:?}", v);
-        println!("inner value: {t}");
-    },
-    None => println!("None"),
-}
-
-println!("value: {:?}", value);
-```
-
-`ref` 通过引用来匹配，而不是根据值并获取所有权。
-
-`ref` 还可以用在 `let` 语句和函数参数中。
-
-```rust
-let s1 = String::from("hello");
-let s2 = String::from("world");
-
-let (ref r1, ref r2) = (s1, s2);
-
-// 错误，s1 和 s2 已经被移动
-println!("{s1}, {s2}");
-```
-
-这里 `r1` 和 `r2` 实际上是一个引用，其类型为 `&String`，但 `s1` 和 `s2` 则移动了所有权。
-
-```rust
-let (r1, r2) = (&s1, &s2);
-```
-
-而这里 `r1` 和 `r2` 也是一个 `&String`，但 `s1` 和 `s2` 则没有所有权。
-
----
-
-而在函数中，实际上参数也是一个命名变量，并将传进来的值进行绑定。
-
-```rust
-let s = String::from("hello");
-foo(s);
-println!("{s}");  // 错误，s 已经被移动
-
-fn get(ref v: String) {
-    let t = v;    // t 的类型为 &String
-}
-```
-
-这里通过 `ref` 将参数变成了一个引用，但是获取了外部参数的所有权。
-
-实际上就相当于做了以下操作：
-
-```rust
-let ref v = t;
-
-// 相当于
-let t = 1;
-let v = t;
-let v = &v;
-```
-
----
-
-通过在 `ref` 后加 `mut` 关键字，可以获得一个可变引用。
-
-```rust
-let ref mut v = t;
-
-// 相当于
-let v = t;
-let v = &mut v;
-```
-
----
-
-同时 `ref` 还可用于部分移动。对于没有实现 `Copy` trait 的类型，在传递时会发生移动。若是一个结构体通过模式匹配来将字段值付给其它的变量，那么这个结构体就不能在后面作为一个整体来使用。
-
-```rust 
-#[derive(Debug)]
-struct User {
-    id: usize,
-    name: String,
-}
-
-let user = User {
-    id: 1,
-    name: String::from("Alice"),
-};
-
-let User { id, ref name }= user;
-println!("{id}, {name}");
-println!("{:?}", user);
-```
-
-这里通过 `ref` 来仅获得一个引用，因此在后面还可以使用 `user`。
+这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
 
 # 2 高级特性
 
