@@ -386,7 +386,9 @@ git log --oneline --abbrev-commit --graph
 
 -   `--abbrev-commit` 选项将 `commit id` 缩短显示；
 
--   `--graph` 选项以图形形式显示提交历史，包括分支历史。
+-   `--graph` 选项以图形形式显示提交历史，包括分支历史；
+
+-   `--reverse` 选项倒序显示提交历史。
 
  `-p` 选项可以显示每次提交的差异， `-数字` 可以指定显示条数：
 
