@@ -1756,7 +1756,7 @@ match value {
 
 ### 函数定义
 
-函数以 `fn` 定义，类型表示为 `fn(T, U, ..) -> R`，函数类型都实现了 `FnOnce`、`FnMut`、`Fn`、`Copy`、`Clone`、`Send` 和 `Sync` trait。
+函数以 `fn` 定义，类型表示为 `fn(T, U, ..) -> R`，函数类型都实现了 `FnOnce`、`FnMut`、`Fn`、`Copy`、`Clone`、`Send`、`Sync` 和 `Sized` trait。
 
 ```rust
 fn add(x: i32, y: i32) -> i32 {
@@ -1786,23 +1786,6 @@ extern "C" {
 }
 ```
 
-函数也可以作为函数指针来赋值或传递参数。
-
-```rust
-fn add(x: i32, y: i32) -> i32 {
-    x + y
-}
-
-fn get_add(x: i32, y: i32, f: fn(i32, i32) -> i32) {
-    f(x, y);
-}
-
-fn main() {
-    let f = add;
-    get_add(1, 2, f);
-}
-```
-
 ### 常量函数
 
 常量函数是在编译期执行的函数，通过 `const` 定义，必须是**纯函数**，也不能包含如堆分配这样的运行时操作。
@@ -1827,6 +1810,36 @@ fn len(
     slice: &[u16]
 ) -> usize {
     slice.len()
+}
+```
+
+### 函数指针
+
+函数也可以作为函数指针来赋值或传递参数。
+
+```rust
+fn add(x: i32, y: i32) -> i32 {
+    x + y
+}
+
+fn do_add(x: i32, y: i32, f: fn(i32, i32) -> i32) {
+    f(x, y);
+}
+
+fn main() {
+    let f = add;
+    do_add(1, 2, f);
+}
+```
+
+由于函数类型具有 `Sized` trait，因此可以直接返回函数指针。
+
+```rust
+fn ret_fn() -> fn(i32) -> i32 {
+    fn bar(n: i32) -> i32 {
+        n + 1
+    }
+    bar
 }
 ```
 
@@ -1989,19 +2002,61 @@ let z = &x;
 
 ### 闭包作为参数和返回值
 
-Rust 需要在编译期知道返回类型的大小，而匿名的闭包的类型是未知的，因此只能作为 trait 才能把闭包当作参数或返回值，有效 trait 为：`FnOnce`、`FnMut` 和 `Fn`。
+可以将函数指针作为参数和返回值，闭包同样也可以。不同于函数，闭包虽然也实现了 `Sized` trait，但函数的 `fn` 是一个类型，而闭包的 `Fn` 是一个 trait，因此只能作为 trait 才能把闭包当作参数或返回值，有效 trait 为：`FnOnce`、`FnMut` 和 `Fn`。
 
-此外，当返回一个闭包时，必须使用 `move` 关键字，因为在离开函数作用域时，任何通过引用捕获的值都会被丢弃。
+当返回一个闭包时，必须使用 `move` 关键字，因为在离开函数作用域时，任何通过引用捕获的值都会被丢弃。
 
 ```rust
-fn get_and_ret_fn<F: Fn(String) -> String>(f: F) -> impl Fn() {
+fn get_and_ret_closure<F: Fn(String) -> String>(f: F) -> impl Fn() {
     move || println!("{}", f("Fn".to_string()))
 }
 
 fn main() {
-    let f = get_and_ret_fn(|s| s);
+    let f = get_and_ret_closure(|s| s);
     f();
 }
+```
+
+作为 trait 返回时，若为动态 trait 对象，也需要放在如 `Box<dyn T>` 这类指针中。
+
+```rust
+fn ret_closure(flag: bool) -> Box<dyn Fn(i32) -> i32> {
+    if flag {
+        Box::new(|x| x + 1)
+    } else {
+        Box::new(|x| x + 2)
+    }
+}
+```
+
+由于函数指针实现了 `FnOnce`、`FnMut` 和 `Fn`，因此一个接受闭包作为参数的函数就一定能够接受一个函数指针，但反过来就不一定。
+
+如 `map` 方法接受一个闭包：
+
+```rust
+let list = vec![1, 2, 3];
+let list: Vec<String> = list.iter().map(|i| i.to_string()).collect();
+```
+
+但也可以把函数指针作为 `map` 的参数来替代闭包：
+
+```rust
+let list: Vec<String> = list.iter().map(ToString::to_string).collect();
+```
+
+在枚举中，含有关联值的变体也是一个构造函数，可以该构造函数当作参数来传递。
+
+```rust
+enum Status {
+    Value(i32),
+    Stop,
+}
+
+// 函数指针
+let list: Vec<Status> = (0..10).map(Status::Value).collect();
+
+// 闭包
+let list: Vec<Status> = (0..10).map(|i| Status::Value(i)).collect();
 ```
 
 ### 闭包原理
@@ -2048,123 +2103,6 @@ impl<'a> FnOnce<()> for Closure<'a> {
 
 ```rust
 f(Closure { s: s, t: &t });
-```
-
-## 高级函数和闭包
-
-### 函数指针
-
-可以向函数传递闭包，也可以向函数传递常规函数。和闭包的 `Fn` 不同，函数类型为 `fn`，也被称为**函数指针**。通过函数指针可以将函数作为另一个函数的参数。
-
-指定参数为函数指针的语法和闭包类似：
-
-```rust
-fn add(x: i32, y: i32) -> i32 {
-    x + y
-}
-
-fn do_add((x, y): (i32, i32), f: fn(i32, i32) -> i32) -> i32 {
-    f(x, y)
-}
-
-fn main() {
-    let result = do_add((1, 2), add);
-    assert_eq!(3, result);
-}
-```
-
-`do_add` 中的 `f` 被指定为一个接受两个 `i32` 参数并返回 `i32` 的 `fn`。然后就可以将函数名 `add` 作为参数传递。
-
-不同于闭包，`fn` 是一个类型而不是一个 trait，所以直接指定 `fn` 作为参数而不是声明一个带有 `Fn` 作为 trait bound 的泛型参数。
-
-函数指针实现了所有三个闭包 trait（`FnOnce`、`FnMut` 和 `Fn`），所以函数指针可以传递给一个接受闭包为参数的函数，但是反过来就不一定，因此尽量将定义闭包为参数。
-
-只接受 `fn` 而不接受闭包的情况的例子是与不存在闭包的外部代码交互，如 C 的函数可以接受函数作为参数，但 C 没有闭包。
-
-一个例子是 `map` 方法，它接受一个闭包：
-
-```rust
-let list = vec![1, 2, 3];
-let list: Vec<String> = list.iter().map(|i| i.to_string()).collect();
-```
-
-但也可以把函数作为 `map` 的参数来代替闭包：
-
-```rust
-let list: Vec<String> = list.iter().map(ToString::to_string).collect();
-```
-
-这里必须完全限定语法，因为存在多个叫做 `to_string` 的函数。这里使用了定义于 `ToString` trait 的 `to_string` 函数，标准库为所有实现了 `Display` 的类型实现了这个 trait。
-
----
-
-在枚举中，含有值的枚举成员名也是一个构造函数。可以使用这些构造函数作为实现了闭包 trait 的函数指针。
-
-```rust
-enum Status {
-    Value(i32),
-    Stop,
-}
-
-// 函数指针
-let list: Vec<Status> = (0..10).map(Status::Value).collect();
-
-// 闭包
-let list: Vec<Status> = (0..10).map(|i| Status::Value(i)).collect();
-```
-
-这里创建了 `Status::Value` 实例，并把构造函数传递给 `map`，这和使用闭包得到的结果是相同的。
-
-### 返回函数或闭包
-
-对于返回 trait 的情况，可使用实现了该 trait 的具体类型作为返回值。闭包虽然也是一个 trait，但并不是一个在编译期就能确定大小的类型，即是 `?Sized` 的，因此要返回闭包，必须利用指针。同时对于非闭包的 trait 也只能返回一个在编译期就能确定的类型，不能直接返回所有实现了该 trait 的类型，要实现动态 trait，同样也需要放在指针后面。
-
-例如这段代码就不能编译：
-
-```rust
-// 错误
-fn ret_closure() -> dyn Fn(i32) -> i32 {
-    |x| x + 1
-}
-```
-
-通过使用动态分发的 trait 对象则可以编译：
-
-```rust
-// 正确
-fn ret_closure() -> Box<dyn Fn(i32) -> i32> {
-    Box::new(|x| x + 1)
-}
-```
-
-非闭包类型的 trait 要返回动态分发的 trait 对象，也使用这种方法：
-
-```rust
-trait Foo {}
-
-struct A;
-struct B;
-impl Foo for A {}
-impl Foo for B {}
-
-fn ret_dyn_trait(flag: bool) -> Box<dyn Foo> {
-    if flag {
-        Box::new(A {})
-    } else {
-        Box::new(B {})
-    }
-}
-```
-
-函数指针由于是一个指针，大小是确定的，因此可以直接返回：
-
-```rust
-fn ret_fn() -> fn(i32) -> i32 {
-    fn bar(n: i32) -> i32 {
-        n + 1
-    }
-    bar
-}
 ```
 
 # 6 错误处理
