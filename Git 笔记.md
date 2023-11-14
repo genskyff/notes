@@ -408,6 +408,12 @@ git log --stat
 git log --since="2023-09-24 00:00:00" --until="2023-09-24 23:59:59"
 ```
 
+查看所有提交的总变化行数：
+
+```shell
+git log --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "Added lines: %s\nRemoved lines: %s\nTotal lines: %s\n", add, subs, loc }'
+```
+
 # 4 分支管理
 
 每次提交，Git 都把它们串成一条时间线，这条时间线就是一个分支。当只有一条分支时，默认为`main` 分支。`HEAD` 不是指向提交，而是指向 `main`，而 `main` 才指向提交，因此 `HEAD` 指向的是当前分支，可以将当前分支的别名看作 `HEAD`。
