@@ -508,7 +508,7 @@ foo = ["utils/foo"]
 [alias]
 [build]
 [http]
-[registries.<name>]
+[source.<name>]
 [target.<cfg>]
 ```
 
