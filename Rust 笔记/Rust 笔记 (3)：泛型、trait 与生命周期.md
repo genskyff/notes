@@ -42,17 +42,17 @@ enum Result<T, E> {
 
 ### 泛型函数
 
+函数参数 `x`、`y` 的类型是占位符 `T`。
+
 ```rust
-fn add<T>(a: T, b: T) -> T {
-    a + b
+fn add<T>(x: T, y: T) -> T {
+    x + y
 }
 ```
 
-
-
 ### 泛型实现
 
-对结构体也可以实现泛型方法：
+对于泛型实现，也可以应用在关联函数和方法中。
 
 ```rust
 struct Point<T> {
@@ -61,13 +61,17 @@ struct Point<T> {
 }
 
 impl<T> Point<T> {
+    fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+
     fn get(&self) -> (&T, &T) {
         (&self.x, &self.y)
     }
 }
 
 fn main() {
-    let p = Point { x: 1, y: 2 };
+    let p = Point::new(1, 2);
     assert_eq!((&1, &2), p.get());
 }
 ```
@@ -106,8 +110,6 @@ impl<T> Point<T> {
 }
 ```
 
----
-
 结构体定义中的泛型类型参数并不总是与结构体方法签名中使用的泛型是同一类型：
 
 ```rust
@@ -136,8 +138,6 @@ fn main() {
 `p1` 为一个有 `i32` 类型的 `Point`，`p2` 为一个 `char` 类型的 `Point`。在 `p1` 上以 `p2` 作为参数调用 `mixup` 会返回一个 `p3`，它含有一个 `i32` 类型的 `x`，和一个 `char` 类型的 `y`。
 
 泛型参数 `T` 和 `U` 声明于 `impl` 之后，与结构体定义相对应，而泛型参数 `N` 和 `M` 声明于 `mixup` 之后，只与方法本身对应。
-
-
 
 ### 泛型 trait
 
