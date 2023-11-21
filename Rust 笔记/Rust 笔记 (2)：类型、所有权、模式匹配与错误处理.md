@@ -2168,7 +2168,7 @@ let f = match std::fs::File::open("hello.txt") {
 
 `File::open` 会打开一个文件，并返回一个 `Result<T, E>`。`T` 为 `std::fs::File`，`E` 为 `std::io::Error`。
 
-## 匹配多种错误
+## 匹配错误
 
 大部分情况下并不是任何错误都将程序 panic，而是根据错误类型来进行不同的处理方式。
 
