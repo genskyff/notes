@@ -140,23 +140,21 @@ fn main() {
 泛型 trait 的定义也是类似的，其中的函数或方法也同样可以有自己的泛型参数。
 
 ```rust
-pub trait MyTrait<T> {
+trait MyTrait<T> {
     fn foo<U>(&self, n: U) -> T;
 }
 ```
 
 ## 泛型性能
 
-Rust 通过在编译时进行泛型代码的**单态化**来保证效率。单态化是一个通过填充编译时使用的具体类型，将通用代码转换为特定代码的过程。因此使用泛型参数的代码相比使用具体类型并没有任何速度上的损失。
+Rust 通过在编译时进行泛型代码的**单态化**来保证效率。单态化是一个通过填充编译时使用的具体类型，将通用代码转换为特定代码的过程。编译器会对每个实例编译成具体类型的代码，因此使用泛型没有运行时开销，但容易造成二进制膨胀。
 
-如一个 `Option` 枚举的值，编译器会对这些代码进行单态化：
+如 `Option<T>` 的值有 `i32` 和 `f64` 两种，因此编译器会将 `Option<T>` 展开为 `Option_i32` 和 `Option_f64`，并将泛型定义替换为这两个具体定义。
 
 ```rust
-let integer = Some(5);
-let float = Some(5.0);
+let integer = Some(1);
+let float = Some(1.0);
 ```
-
-`Option<T>` 的值有 `i32` 和 `f64` 两种类型，因此编译器会将 `Option<T>` 展开为 `Option_i32` 和 `Option_f64`，并将泛型定义替换为这两个具体定义。
 
 生成的单态化代码类似为：
 
@@ -172,14 +170,18 @@ enum Option_f64 {
 }
 
 fn main() {
-    let integer = Option_i32::Some(5);
-    let float = Option_f64::Some(5.0);
+    let integer = Option_i32::Some(1);
+    let float = Option_f64::Some(1.0);
 }
 ```
 
-编译器会将每个实例编译为具体类型的代码，因此使用泛型没有运行时开销，但容易造成二进制膨胀。
-
 # 2 trait
+
+## trait 定义
+
+## trait 实现
+
+## trait 对象
 
 ## 何为 trait
 
