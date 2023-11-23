@@ -179,27 +179,32 @@ fn main() {
 
 ## trait 定义
 
-类型的方法用于描述行为，多个类型若具有相同或类似的行为，则可将这些行为提取组合成一个共享的集合。通过 trait 定义共享行为，并为需要的类型实现这些 trait，从而达到组合的目的。
+类型的方法用于描述行为，多个类型若具有相同或类似的行为，则可将这些行为提取并组合成一个共享的集合。通过 trait 声明共享行为，并为需要的类型实现这些 trait，从而达到组合的目的。
 
-如一篇文章和一则新闻，虽然某些属性不同，但都是文字类型，且都能够被总结成摘要，因此可以使用 trait 定义，将摘要这个行为抽象出来，形成一个统一的签名，然后各自再去针对此签名实现方法。
+通过 `trait` 来声明，然后添加所需要的函数或方法签名。
 
 ```rust
-trait Summary {
-    fn summarize(&self) -> String;
+trait MyTrait {
+    fn foo(x: i32, y: u32) -> i32;
+    fn bar(&self) -> String;
 }
 ```
 
-使用 `trait` 关键字来声明，然后添加这个 trait 所需要行为的方法签名。
+trait 与结构体和枚举一样，也可以定义用于共享的常量。
 
-每一个实现这个 trait 的类型都需要提供其自定义行为的方法体，编译器也会确保任何实现 `Summary` trait 的类型都拥有与这个签名的定义完全一致的方法。trait 中可以有多个方法：一行一个方法签名且都以分号结尾。
+```rust
+trait MyTrait {
+    const MAX: u32 = 10;
+}
+```
 
-### trait 结构体和枚举中的常量
+## trait 实现
 
-结构体、枚举和 trait 也可以与常量字段成员一起提供，可用于需要在共享常量的情况。如有一个 Circle trait，这个 trait 被不同的圆形类型实现，因此可以将一个 PI 常量添加到 Circle  trait 中。
+要为其它类型实现该 trait，就必须实现 trait 中包含的所有函数或方法，且签名必须一致。就必须遵循该签名。与结构体和枚举的实现类似，使用 `impl` 和 `for` 定义，同时也可以使用其中共享的常量。
 
 ```rust
 trait Circular {
-    const PI: f64 = 3.14;
+    const PI: f64 = std::f64::consts::PI;
     fn area(&self) -> f64;
 }
 
@@ -210,64 +215,6 @@ struct Circle {
 impl Circular for Circle {
     fn area(&self) -> f64 {
         Circle::PI * self.rad * self.rad
-    }
-}
-```
-
-同样，结构体和枚举也能使用常量：
-
-```rust
-enum Item {
-    One,
-    Two,
-}
-
-struct Food {
-    count: usize,
-}
-
-impl Item {
-    const DEFAULT_COUNT: u32 = 5;
-}
-
-impl Food {
-    const FAVORITE_FOOD: &str = "Cake";
-}
-```
-
-## trait 实现
-
-定义了 trait 中方法的签名后，之后其它类型要实现该方法，就必须遵循该签名。在结构体中使用 `for` 关键字表示为了某结构体实现该 trait。
-
-```rust
-struct Article {
-    title: String,
-    author: String,
-    tag: String,
-}
-
-impl Summary for Article {
-    fn summarize(&self) -> String {
-        format!(
-            "title: {}, author: {}, tag: {}",
-            self.title, self.author, self.tag
-        )
-    }
-}
-
-struct News {
-    title: String,
-    journalist: String,
-    office: String,
-    date: (u32, u32, u32),
-}
-
-impl Summary for News {
-    fn summarize(&self) -> String {
-        format!(
-            "title: {}, journalist: {}, office: {}, date: {}/{}/{}",
-            self.title, self.journalist, self.office, self.date.0, self.date.1, self.date.2
-        )
     }
 }
 ```
