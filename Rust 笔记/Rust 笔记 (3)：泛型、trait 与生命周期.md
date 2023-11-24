@@ -194,13 +194,15 @@ trait 与结构体和枚举一样，也可以定义用于共享的常量。
 
 ```rust
 trait MyTrait {
-    const MAX: u32 = 10;
+    const MAX: u32;
 }
 ```
 
 ## trait 实现
 
-要为其它类型实现该 trait，就必须实现 trait 中包含的所有函数或方法，且签名必须一致。就必须遵循该签名。与结构体和枚举的实现类似，使用 `impl` 和 `for` 定义，同时也可以使用其中共享的常量。
+要为其它类型实现该 trait，就必须定义 trait 中包含的所有项（除非有默认实现），且签名必须一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
+
+如计算圆和椭圆的面积是相似的，都利用相同的常量 `PI`，只是计算方法略有不同，因此定义两种类型和共享的 trait，并在 trait 中定义常量。
 
 ```rust
 trait Circular {
@@ -209,43 +211,33 @@ trait Circular {
 }
 
 struct Circle {
-    rad: f64,
+    radius: f64,
+}
+
+struct Ellipse {
+    a: f64,
+    b: f64,
 }
 
 impl Circular for Circle {
     fn area(&self) -> f64 {
-        Circle::PI * self.rad * self.rad
+        Circle::PI * self.radius * self.radius
     }
 }
+
+impl Circular for Ellipse {
+    fn area(&self) -> f64 {
+        Ellipse::PI * self.a * self.b
+    }
+}
+
+fn main() {
+    let c = Circle { radius: 1.0 };
+    let e = Ellipse { a: 1.0, b: 2.0 };
+    println!("{}", c.area());
+    println!("{}", e.area());
+}
 ```
-
-两个结构的方法签名相同，但是实现不同，接着在 main 中调用：
-
-```rust
-let a = Article {
-    title: "Hello World".to_string(),
-    author: "Alice".to_string(),
-    tag: "Default".to_string(),
-};
-
-let n = News {
-    title: "A Big News".to_string(),
-    journalist: "HK Journalist".to_string(),
-    office: "Daily Planet".to_string(),
-    date: (2022, 1, 1),
-};
-
-println!("{}", a.summarize());
-println!("{}", n.summarize());
-```
-
-trait 通常作为外部 crate 而使用，如把上面对 trait 的定义和实现放在 *lib.rs* 中，并加上 `pub` 关键字，然后在 *main.rs* 中使用 `use` 导入。
-
-```rust
-use crate_name::{Article, News, Summary};
-```
-
-其他 crate 也可以将 `Summary` trait 引入作用域以便为其自己的类型实现该 trait。实现 trait 时需要注意的一个限制是，**只有当至少一个 trait 或者要实现 trait 的类型位于 crate 的本地作用域时，才能为该类型实现 trait**。如可以为一个本地的 struct 实现一个外部的 trait，或为一个外部的 struct 实现一个本地的 trait。但是不能为一个外部的 struct 实现一个外部的 trait。这条规则确保了其他人编写的代码不会破坏自己的代码，反之亦然。若没有这条规则，两个 crate 可以分别对相同类型实现相同的 trait，编译器将不知道应该使用哪一个实现。
 
 ### 默认实现
 
@@ -284,6 +276,16 @@ impl Summary for Article {
 `summarize` 方法会调用 `summarize_author` 方法，然后在实现中定义该方法。对 `News` 的实例调用 `summarize` 方法，其默认实现会调用重新定义后 `summarize_author` 方法。
 
 >   类型必须实现所有 trait 中所有声明的方法，除非这个方法有默认实现。
+
+### 孤儿规则
+
+trait 通常作为外部 crate 而使用，如把上面对 trait 的定义和实现放在 *lib.rs* 中，并加上 `pub` 关键字，然后在 *main.rs* 中使用 `use` 导入。
+
+```rust
+use crate_name::{Article, News, Summary};
+```
+
+其他 crate 也可以将 `Summary` trait 引入作用域以便为其自己的类型实现该 trait。实现 trait 时需要注意的一个限制是，**只有当至少一个 trait 或者要实现 trait 的类型位于 crate 的本地作用域时，才能为该类型实现 trait**。如可以为一个本地的 struct 实现一个外部的 trait，或为一个外部的 struct 实现一个本地的 trait。但是不能为一个外部的 struct 实现一个外部的 trait。这条规则确保了其他人编写的代码不会破坏自己的代码，反之亦然。若没有这条规则，两个 crate 可以分别对相同类型实现相同的 trait，编译器将不知道应该使用哪一个实现。
 
 ## trait 对象
 
