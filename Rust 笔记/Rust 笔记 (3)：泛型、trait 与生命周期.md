@@ -179,7 +179,7 @@ fn main() {
 
 ## trait 定义
 
-类型的方法用于描述行为，多个类型若具有相同或类似的行为，则可将这些行为提取并组合成一个共享的集合。通过 trait 声明共享行为，并为需要的类型实现这些 trait，从而达到组合的目的。
+类型的方法用于描述行为，多个类型若具有相同或类似的行为，则可将这些行为抽象成一个共享的集合。通过 trait 声明共享行为，并为需要的类型实现这些 trait。
 
 通过 `trait` 来声明，然后添加所需要的函数或方法签名。
 
@@ -190,28 +190,28 @@ trait MyTrait {
 }
 ```
 
-trait 与结构体和枚举一样，也可以定义用于共享的常量。
+trait 与结构体和枚举一样，也可定义用于共享的常量。
 
 ```rust
 trait MyTrait {
-    const MAX: u32;
+    const NUM: u32;
 }
 ```
 
 ## trait 实现
 
-要为其它类型实现该 trait，就必须定义 trait 中包含的所有项（除非有默认实现），且签名必须一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
+要为其它类型实现该 trait，就必须定义 trait 中声明的所有项（除非有默认实现），且签名一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
 
-如计算圆和椭圆的面积是相似的，都利用相同的常量 `PI`，只是计算方法略有不同，因此定义两种类型和共享的 trait，并在 trait 中定义常量。
+如计算圆和椭圆的面积是相似的，都利用相同的常量 `PI`，只是计算方法略有不同，因此可以将这个两种类型的行为抽象为一个 trait。
 
 ```rust
 trait Circular {
-    const PI: f64 = std::f64::consts::PI;
+    const PI: f64;
     fn area(&self) -> f64;
 }
 
 struct Circle {
-    radius: f64,
+    r: f64,
 }
 
 struct Ellipse {
@@ -220,19 +220,23 @@ struct Ellipse {
 }
 
 impl Circular for Circle {
+    const PI: f64 = std::f64::consts::PI;
+    
     fn area(&self) -> f64 {
-        Circle::PI * self.radius * self.radius
+        Circle::PI * self.r * self.r
     }
 }
 
 impl Circular for Ellipse {
+    const PI: f64 = std::f64::consts::PI;
+    
     fn area(&self) -> f64 {
         Ellipse::PI * self.a * self.b
     }
 }
 
 fn main() {
-    let c = Circle { radius: 1.0 };
+    let c = Circle { r: 1.0 };
     let e = Ellipse { a: 1.0, b: 2.0 };
     println!("{}", c.area());
     println!("{}", e.area());
