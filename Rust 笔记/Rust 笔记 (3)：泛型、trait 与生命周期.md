@@ -200,9 +200,9 @@ trait MyTrait {
 
 ## trait 实现
 
-要为其它类型实现该 trait，就必须定义 trait 中声明的所有项（除非有默认实现），且签名一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
+要为其它类型实现该 trait，就必须实现 trait 中声明的所有项（除非有默认实现），且签名一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
 
-如计算圆和椭圆的面积是相似的，都利用相同的常量 `PI`，只是计算方法略有不同，因此可以将这个两种类型的行为抽象为一个 trait。
+如计算圆和椭圆的面积是相似的，都利用相同的常量 `PI`，只是计算方法略有不同，因此可以将这两个类型的行为抽象为一个 trait。
 
 ```rust
 trait Circular {
@@ -221,7 +221,6 @@ struct Ellipse {
 
 impl Circular for Circle {
     const PI: f64 = std::f64::consts::PI;
-    
     fn area(&self) -> f64 {
         Circle::PI * self.r * self.r
     }
@@ -229,7 +228,6 @@ impl Circular for Circle {
 
 impl Circular for Ellipse {
     const PI: f64 = std::f64::consts::PI;
-    
     fn area(&self) -> f64 {
         Ellipse::PI * self.a * self.b
     }
@@ -245,41 +243,70 @@ fn main() {
 
 ### 默认实现
 
-可以在定义 trait 时定义默认方法，当某个类型在实现该 trait 时，可以选择重新定义并覆盖默认方法，或者不进行定义而使用默认方法。
-
-如在 `Summary` trait 中声明并定义一个 `summarize_full` 方法用于输出详细摘要：
+当声明 trait 时，若其中的项具有默认实现，则为类型实现该 trait 时可不实现该项或重新定义并覆盖默认实现。
 
 ```rust
-fn summarize_full(&self) {
-    println!("Implementation is pending...");
+trait MyTrait {
+    const NUM: u32 = 10;
+    fn print_num(&self) {
+        println!("{}", Self::NUM);
+    }
+}
+
+struct Foo;
+struct Bar;
+
+impl MyTrait for Foo {}
+impl MyTrait for Bar {
+    fn print_num(&self) {
+        println!("{}", Self::NUM + 1);
+    }
+}
+
+fn main() {
+    let s1 = Foo;
+    let s2 = Bar;
+    s1.print_num();
+    s2.print_num();
 }
 ```
 
-而 `Article` 和 `News` 并没有实现该方法，因此会调用默认实现，当然也可以重新定义并覆盖默认方法，但覆盖后不能再调用默认方法。可以选择让一个类型调用默认方法，而另一个类型选择重新实现该方法。
-
-默认实现还允许调用相同 trait 中的其他方法，哪怕这些方法没有默认实现：
+为 trait 实现默认方法时，是无法通过 `self` 获得字段信息的：
 
 ```rust
-pub trait Summary {
-    fn summarize_author(&self) -> String;
-    fn summarize(&self) {
-        println!("Read more from {}", self.summarize_author())
+trait MyTrait {
+    fn get(&self) -> i32 {
+        self.n  // 错误
     }
 }
-pub struct Article {
-    pub author: String,
+
+struct Foo {
+    n: i32
 }
 
-impl Summary for Article {
-    fn summarize_author(&self) -> String {
-        format!("@{}", self.author)
+impl MyTrait for Foo {}
+```
+
+但默认实现可以调用 trait 中的其它方法，哪怕这些方法没有默认实现，因此可以通过这种方式来间接访问 `self` 中的字段。
+
+```rust
+trait MyTrait {
+    fn get_n(&self) -> i32;
+    fn get(&self) -> i32 {
+        self.get_n()
+    }
+}
+
+struct Foo {
+    n: i32,
+}
+
+impl MyTrait for Foo {
+    fn get_n(&self) -> i32 {
+        self.n
     }
 }
 ```
-
-`summarize` 方法会调用 `summarize_author` 方法，然后在实现中定义该方法。对 `News` 的实例调用 `summarize` 方法，其默认实现会调用重新定义后 `summarize_author` 方法。
-
->   类型必须实现所有 trait 中所有声明的方法，除非这个方法有默认实现。
 
 ### 孤儿规则
 
