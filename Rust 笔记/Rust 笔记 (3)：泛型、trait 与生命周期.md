@@ -310,102 +310,15 @@ impl MyTrait for Foo {
 
 ### 孤儿规则
 
-trait 通常作为外部 crate 而使用，如把上面对 trait 的定义和实现放在 *lib.rs* 中，并加上 `pub` 关键字，然后在 *main.rs* 中使用 `use` 导入。
+trait 通常作为外部包导入到本地作用域使用：
 
 ```rust
-use crate_name::{Article, News, Summary};
+use some_crate::SomeTrait;
 ```
 
-其他 crate 也可以将 `Summary` trait 引入作用域以便为其自己的类型实现该 trait。实现 trait 时需要注意的一个限制是，**只有当至少一个 trait 或者要实现 trait 的类型位于 crate 的本地作用域时，才能为该类型实现 trait**。如可以为一个本地的 struct 实现一个外部的 trait，或为一个外部的 struct 实现一个本地的 trait。但是不能为一个外部的 struct 实现一个外部的 trait。这条规则确保了其他人编写的代码不会破坏自己的代码，反之亦然。若没有这条规则，两个 crate 可以分别对相同类型实现相同的 trait，编译器将不知道应该使用哪一个实现。
+实现 trait 时有一条被称为**孤儿规则**的限制：**trait 或为该 trait 实现的类型两者至少有一个位于本地作用域**。如可为一个本地类型实现一个外部的 trait，或为一个外部类型实现一个本地 trait，但不能为一个外部类型实现一个外部 trait。这条规则确保本地代码不会被外部实现所破坏，否则两个外部包都可以分别对相同类型实现相同的 trait，那么这两个实现就会冲突。
 
-## trait 对象
-
-对于 trait 对象，有如下特征：
-
--   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 对象的大小无法确定；
--   使用 trait 对象时，总是使用引用的方式：
-    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
-    -   一个指针指向具体类型的实例；
-    -   另一个指针指向一个虚表 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，直接从 `vtable` 中找到方法并调用。
-    -   trait 对象的引用方式有多种，对于 `trait T`，其 trait 对象类型的引用可以是 `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等。
-
-```rust
-trait Person {
-    fn run(&self);
-}
-
-struct Student {
-    name: String
-}
-
-struct Teacher {
-    name: String
-}
-
-impl Person for Student {
-    fn run(&self) {
-        println!("Student: {}", self.name);
-    }
-}
-
-impl Person for Teacher {
-    fn run(&self) {
-        println!("Teacher: {}", self.name);
-    }
-}
-
-fn main() {
-    let stu = Student { name: "alice".to_string() };
-    let tec = Teacher { name: "bob".to_string() };
-
-    let p1: &dyn Person = &stu;
-    let p2: &dyn Person = &tec;
-
-    p1.run();
-    p2.run();
-}
-```
-
-在上面这段代码的内存布局如下图。
-
-![动态 trait 对象内存布局](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202307242214983.png)
-
-`stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `trait Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
-
-`vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在程序的 `.rodata` 段上保存 `vtable`。
-
-`vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也因此会损失一定的性能。
-
-在返回 impl Trail 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
-
-```rust
-fn get_person(swtich: bool) -> Box<dyn Person> {
-    if swtich {
-        Box::new(Student { name: "Alice".to_string() })
-    } else {
-        Box::new(Teacher { name: "Bob".to_string() })
-    }
-}
-```
-
-### trait 对象安全
-
-只有对象安全的 trait 才可以组成 trait 对象，当 trait 的方法满足以下要求时才是对象安全的：
-
--   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型；
--   方法没有任何泛型类型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
--   trait 不能拥有静态方法：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
-
-下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
-
-```rust
-// 错误
-struct Person {
-    student: Box<dyn Clone>,
- }
-```
-
-
+## trait 约束
 
 ### trait 作为参数
 
@@ -577,6 +490,93 @@ fn get_info(swtich: bool) -> impl Summary {
 ```
 
 因为 `impl trait` 工作方式的限制，这段代码不能通过编译。
+
+## trait 对象
+
+对于 trait 对象，有如下特征：
+
+-   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 对象的大小无法确定；
+-   使用 trait 对象时，总是使用引用的方式：
+    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
+    -   一个指针指向具体类型的实例；
+    -   另一个指针指向一个虚表 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，直接从 `vtable` 中找到方法并调用。
+    -   trait 对象的引用方式有多种，对于 `trait T`，其 trait 对象类型的引用可以是 `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等。
+
+```rust
+trait Person {
+    fn run(&self);
+}
+
+struct Student {
+    name: String
+}
+
+struct Teacher {
+    name: String
+}
+
+impl Person for Student {
+    fn run(&self) {
+        println!("Student: {}", self.name);
+    }
+}
+
+impl Person for Teacher {
+    fn run(&self) {
+        println!("Teacher: {}", self.name);
+    }
+}
+
+fn main() {
+    let stu = Student { name: "alice".to_string() };
+    let tec = Teacher { name: "bob".to_string() };
+
+    let p1: &dyn Person = &stu;
+    let p2: &dyn Person = &tec;
+
+    p1.run();
+    p2.run();
+}
+```
+
+在上面这段代码的内存布局如下图。
+
+![动态 trait 对象内存布局](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202307242214983.png)
+
+`stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `trait Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
+
+`vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在程序的 `.rodata` 段上保存 `vtable`。
+
+`vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也因此会损失一定的性能。
+
+在返回 impl Trail 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
+
+```rust
+fn get_person(swtich: bool) -> Box<dyn Person> {
+    if swtich {
+        Box::new(Student { name: "Alice".to_string() })
+    } else {
+        Box::new(Teacher { name: "Bob".to_string() })
+    }
+}
+```
+
+### trait 对象安全
+
+只有对象安全的 trait 才可以组成 trait 对象，当 trait 的方法满足以下要求时才是对象安全的：
+
+-   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型；
+-   方法没有任何泛型类型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
+-   trait 不能拥有静态方法：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
+
+下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
+
+```rust
+// 错误
+struct Person {
+    student: Box<dyn Clone>,
+ }
+```
 
 
 
