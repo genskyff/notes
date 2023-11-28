@@ -184,7 +184,7 @@ fn main() {
 通过 `trait` 来声明，然后添加所需要的函数或方法签名。
 
 ```rust
-trait MyTrait {
+trait T {
     fn foo(x: i32, y: u32) -> i32;
     fn bar(&self) -> String;
 }
@@ -193,7 +193,7 @@ trait MyTrait {
 trait 与结构体和枚举一样，也可定义用于共享的常量。
 
 ```rust
-trait MyTrait {
+trait T {
     const NUM: u32;
 }
 ```
@@ -246,7 +246,7 @@ fn main() {
 当声明 trait 时，若其中的项具有默认实现，则为类型实现该 trait 时可不实现该项或重新定义并覆盖默认实现。
 
 ```rust
-trait MyTrait {
+trait T {
     const NUM: u32 = 10;
     fn print_num(&self) {
         println!("{}", Self::NUM);
@@ -256,8 +256,8 @@ trait MyTrait {
 struct Foo;
 struct Bar;
 
-impl MyTrait for Foo {}
-impl MyTrait for Bar {
+impl T for Foo {}
+impl T for Bar {
     fn print_num(&self) {
         println!("{}", Self::NUM + 1);
     }
@@ -274,7 +274,7 @@ fn main() {
 为 trait 实现默认方法时，是无法通过 `self` 获得字段信息的：
 
 ```rust
-trait MyTrait {
+trait T {
     fn get(&self) -> i32 {
         self.n  // 错误
     }
@@ -284,13 +284,13 @@ struct Foo {
     n: i32
 }
 
-impl MyTrait for Foo {}
+impl T for Foo {}
 ```
 
 但默认实现可以调用 trait 中的其它方法，哪怕这些方法没有默认实现，因此可以通过这种方式来间接访问 `self` 中的字段。
 
 ```rust
-trait MyTrait {
+trait T {
     fn get_n(&self) -> i32;
     fn get(&self) -> i32 {
         self.get_n()
@@ -301,7 +301,7 @@ struct Foo {
     n: i32,
 }
 
-impl MyTrait for Foo {
+impl T for Foo {
     fn get_n(&self) -> i32 {
         self.n
     }
@@ -314,15 +314,15 @@ trait 通常作为外部包导入到本地作用域使用：
 
 ```rust
 // lib.rs
-pub trait MyTrait {
+pub trait T {
     fn foo();
 }
 
 // main.rs
-use my_crate::MyTrait;
+use some_crate::T;
 
 struct Foo;
-impl MyTrait for Foo {
+impl T for Foo {
     fn foo() {
         todo!()
     }
@@ -361,7 +361,7 @@ fn main() {
 
 **函数签名中的参数和返回值不是指具体类型**，而是通过 `impl Trait` 指定，表示任何实现了该 trait 的类型。**实际传递的参数和返回值依然是具体的类型，而不是一个 trait。**
 
-传递一个实现了该 trait 的类型的引用：
+还可以传递一个实现了该 trait 的类型的引用：
 
 ```rust
 fn foo(f: &impl T) {}
@@ -371,6 +371,7 @@ fn bar(f: &mut impl T) {}
 对于返回值，只适用于返回单一类型的情况，因为类型必须在编译期就确定下来，不能返回一个不确定的类型。
 
 ```rust
+trait T {}
 struct Foo;
 struct Bar;
 impl T for Foo {}
@@ -390,23 +391,23 @@ fn ret_t(flag: bool) -> impl T {
 
 ## trait 约束
 
-`impl Trait` 实际上是 `trait bound` 这种形式的语法糖，`notify` 方法还可以这样定义：
+`impl Trait` 实际上是 trait 约束的语法糖，实际上可以写为泛型参数的形式：
 
 ```rust
-fn notify<T: Summary>(item: &T) {
-    println!("Info: {}", item.summarize());
+fn get_t<F: T>(f: impl T) {
+    f.foo();
 }
 ```
 
-`trait bound` 与泛型参数声明在一起，表示该泛型被约束为实现了 `Summary` trait 的类型。
+trait 约束 与泛型参数声明在一起，表示该泛型被约束为实现了 `Summary` trait 的类型。
 
-`impl trait` 适用于短小的例子，`trait bound` 则适用于更复杂的场景。
+`impl Trait` 适用于短小的例子，trait 约束 则适用于更复杂的场景。
 
 ```rust
 fn notify(item1: &impl Summary, item2: &impl Summary, item3: &impl Summary) {}
 ```
 
-若采用 `impl trait` 则会显得十分冗长，这时可以使用 `trait bound`：
+若采用 `impl Trait` 则会显得十分冗长，这时可以使用 trait 约束：
 
 ```
 fn notify<T: Summary>(item1: &T, item2: &T, item3: &T) {}
@@ -561,7 +562,7 @@ fn main() {
 
 `vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也因此会损失一定的性能。
 
-在返回 impl Trail 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
+在返回 trait 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
 
 ```rust
 fn get_person(swtich: bool) -> Box<dyn Person> {
@@ -589,8 +590,6 @@ struct Person {
     student: Box<dyn Clone>,
  }
 ```
-
-
 
 ## 常见 trait
 
