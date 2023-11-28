@@ -313,28 +313,84 @@ impl MyTrait for Foo {
 trait 通常作为外部包导入到本地作用域使用：
 
 ```rust
-use some_crate::SomeTrait;
-```
+// lib.rs
+pub trait MyTrait {
+    fn foo();
+}
 
-实现 trait 时有一条被称为**孤儿规则**的限制：**trait 或为该 trait 实现的类型两者至少有一个位于本地作用域**。如可为一个本地类型实现一个外部的 trait，或为一个外部类型实现一个本地 trait，但不能为一个外部类型实现一个外部 trait。这条规则确保本地代码不会被外部实现所破坏，否则两个外部包都可以分别对相同类型实现相同的 trait，那么这两个实现就会冲突。
+// main.rs
+use my_crate::MyTrait;
 
-## trait 约束
-
-### trait 作为参数
-
-可以使用 trait 来接受多种不同类型的参数。`Article` 和 `News` 类型都实现了 `Summary` trait，可以定义一个函数 `notify` 来调用其参数 `item` 上的 `summarize` 方法，该参数是实现了 `Summary` trait 的某种类型，为此可以使用 `impl trait` 语法。
-
-```rust
-fn notify(item: &impl Summary) {
-    println!("Info: {}", item.summarize());
+struct Foo;
+impl MyTrait for Foo {
+    fn foo() {
+        todo!()
+    }
 }
 ```
 
-对于 `item` 参数，指定了 `impl` 关键字和 trait 名称，而不是具体的类型。该参数支持任何实现了指定 trait 的类型。在 `notify` 函数中，可以调用任何来自 `Summary` trait 的方法，如 `summarize`。因此可以传递任何 `Article` 或 `News` 的实例来调用 `notify`。任何其它如 `String` 或 `i32` 的类型调用该函数都不能编译，因为它们没有实现 `Summary` trait。
+实现 trait 时有一条被称为**孤儿规则**的限制：**trait 或为该 trait 实现的类型，两者至少有一个位于本地作用域**。如可为一个本地类型实现一个外部的 trait，或为一个外部类型实现一个本地 trait，但不能为一个外部类型实现一个外部 trait。这条规则确保本地代码不会被外部实现所破坏，否则两个外部包都可以分别对相同类型实现相同的 trait，那么这两个实现就会冲突。
 
-### trait 约束
+## trait 作为参数和返回值
 
-`impl trait` 实际上是 `trait bound` 这种形式的语法糖，`notify` 方法还可以这样定义：
+trait 也可以作为函数参数和返回值。
+
+```rust
+trait T {
+    fn foo(&self) {
+        println!("Foo");
+    }
+}
+
+struct Foo;
+impl T for Foo {}
+
+fn get_t(f: impl T) {
+    f.foo();
+}
+
+fn ret_t() -> impl T {
+    Foo
+}
+
+fn main() {
+    get_t(Foo);
+    ret_t().foo();
+}
+```
+
+**函数签名中的参数和返回值不是指具体类型**，而是通过 `impl Trait` 指定，表示任何实现了该 trait 的类型。**实际传递的参数和返回值依然是具体的类型，而不是一个 trait。**
+
+传递一个实现了该 trait 的类型的引用：
+
+```rust
+fn foo(f: &impl T) {}
+fn bar(f: &mut impl T) {}
+```
+
+对于返回值，只适用于返回单一类型的情况，因为类型必须在编译期就确定下来，不能返回一个不确定的类型。
+
+```rust
+struct Foo;
+struct Bar;
+impl T for Foo {}
+impl T for Bar {}
+
+fn ret_t(flag: bool) -> impl T {
+    // 错误
+    if flag {
+        Foo
+    } else {
+        Bar
+    }
+}
+```
+
+`Foo` 和 `Bar` 即使都实现了 `T` trait，但实际上是不同的类型，因此使用 `impl Trait` 的方式是无法编译的。
+
+## trait 约束
+
+`impl Trait` 实际上是 `trait bound` 这种形式的语法糖，`notify` 方法还可以这样定义：
 
 ```rust
 fn notify<T: Summary>(item: &T) {
@@ -356,7 +412,7 @@ fn notify(item1: &impl Summary, item2: &impl Summary, item3: &impl Summary) {}
 fn notify<T: Summary>(item1: &T, item2: &T, item3: &T) {}
 ```
 
-### 指定多个 trait bound
+### 指定多个 trait 约束
 
 如果 `notify` 需要显示 `item` 的格式化形式，同时也要使用 `summarize` 方法，那么 `item` 就需要同时实现两个不同的 trait：`Display` 和 `Summary`。
 
@@ -369,7 +425,7 @@ fn notify(item: &(impl Summary + Display)) {}
 fn notify<T: Summary + Display>(item: &T) {}
 ```
 
-### 简化 trait bound
+### 简化 trait 约束
 
 当有多个泛型参数时，则会有很长的 trait bound 信息：
 
@@ -387,7 +443,7 @@ where
 {}
 ```
 
-### 使用 trait bound 修复函数
+### 使用 trait 约束修复函数
 
 有一个泛型函数，用于从数组中获取最大值并返回：
 
@@ -446,50 +502,6 @@ let p2 = Pair::new(('a', 1), ('b', 2));
 p1.cmp_display();
 p2.cmp_display();    // 报错
 ```
-
-### 返回 impl trait
-
-可以在返回值中使用 `impl trait` 语法，来返回实现了某个 trait 的类型：
-
-```rust
-fn get_info() -> impl Summary {
-    Article {
-        title: "Hello World".to_string(),
-        author: "Alice".to_string(),
-        tag: "Default".to_string(),
-    }
-}
-```
-
-该函数返回某个实现了 `Summary` trait 的类型，但是调用方不确定其具体的类型。
-
->   因为返回值的是具体类型，而不是返回一个 trait。因此只能使用 `impl trait` 语法，不能使用 `trait bound` 语法。
-
-这只适用于返回单一类型的情况，如将返回值类型指定为 `impl Summary`，因此要么返回 `Article`，要么返回 `News`，而不能返回一个不确定的类型，即使都实现了该 trait。
-
->   通过单态化生成的代码会执行静态分发，在编译期就确定了类型。
-
-```rust
-// 错误
-fn get_info(swtich: bool) -> impl Summary {
-    if swtich {
-        Article {
-            title: "Hello World".to_string(),
-            author: "Alice".to_string(),
-            tag: "Default".to_string(),
-        }
-    } else {
-        News {
-            title: "A Big News".to_string(),
-            journalist: "HK Journalist".to_string(),
-            office: "Daily Planet".to_string(),
-            date: (2022, 1, 1),
-        }
-    }
-}
-```
-
-因为 `impl trait` 工作方式的限制，这段代码不能通过编译。
 
 ## trait 对象
 
