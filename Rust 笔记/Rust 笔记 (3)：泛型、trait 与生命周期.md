@@ -184,7 +184,7 @@ fn main() {
 通过 `trait` 来声明，然后添加所需要的函数或方法签名。
 
 ```rust
-trait T {
+trait MyTrait {
     fn foo(x: i32, y: u32) -> i32;
     fn bar(&self) -> String;
 }
@@ -193,7 +193,7 @@ trait T {
 trait 与结构体和枚举一样，也可定义用于共享的常量。
 
 ```rust
-trait T {
+trait MyTrait {
     const NUM: u32;
 }
 ```
@@ -246,7 +246,7 @@ fn main() {
 当声明 trait 时，若其中的项具有默认实现，则为类型实现该 trait 时可不实现该项或重新定义并覆盖默认实现。
 
 ```rust
-trait T {
+trait MyTrait {
     const NUM: u32 = 10;
     fn print_num(&self) {
         println!("{}", Self::NUM);
@@ -256,8 +256,8 @@ trait T {
 struct Foo;
 struct Bar;
 
-impl T for Foo {}
-impl T for Bar {
+impl MyTrait for Foo {}
+impl MyTrait for Bar {
     fn print_num(&self) {
         println!("{}", Self::NUM + 1);
     }
@@ -274,7 +274,7 @@ fn main() {
 为 trait 实现默认方法时，是无法通过 `self` 获得字段信息的：
 
 ```rust
-trait T {
+trait MyTrait {
     fn get(&self) -> i32 {
         self.n  // 错误
     }
@@ -284,13 +284,13 @@ struct Foo {
     n: i32
 }
 
-impl T for Foo {}
+impl MyTrait for Foo {}
 ```
 
 但默认实现可以调用 trait 中的其它方法，哪怕这些方法没有默认实现，因此可以通过这种方式来间接访问 `self` 中的字段。
 
 ```rust
-trait T {
+trait MyTrait {
     fn get_n(&self) -> i32;
     fn get(&self) -> i32 {
         self.get_n()
@@ -301,7 +301,7 @@ struct Foo {
     n: i32,
 }
 
-impl T for Foo {
+impl MyTrait for Foo {
     fn get_n(&self) -> i32 {
         self.n
     }
@@ -314,15 +314,15 @@ trait 通常作为外部包导入到本地作用域使用：
 
 ```rust
 // lib.rs
-pub trait T {
+pub trait MyTrait {
     fn foo();
 }
 
 // main.rs
-use some_crate::T;
+use my_crate::MyTrait;
 
 struct Foo;
-impl T for Foo {
+impl MyTrait for Foo {
     fn foo() {
         todo!()
     }
@@ -336,20 +336,20 @@ impl T for Foo {
 trait 也可以作为函数参数和返回值。
 
 ```rust
-trait T {
+trait MyTrait {
     fn foo(&self) {
         println!("Foo");
     }
 }
 
 struct Foo;
-impl T for Foo {}
+impl MyTrait for Foo {}
 
-fn get_t(f: impl T) {
+fn get_t(f: impl MyTrait) {
     f.foo();
 }
 
-fn ret_t() -> impl T {
+fn ret_t() -> impl MyTrait {
     Foo
 }
 
@@ -364,20 +364,22 @@ fn main() {
 还可以传递一个实现了该 trait 的类型的引用：
 
 ```rust
-fn foo(f: &impl T) {}
-fn bar(f: &mut impl T) {}
+fn foo(f: &impl MyTrait) {}
+fn bar(f: &mut impl MyTrait) {}
 ```
 
-对于返回值，只适用于返回单一类型的情况，因为类型必须在编译期就确定下来，不能返回一个不确定的类型。
+作为参数时，实际上和泛型类似，对不同的实现了该 trait 的类型，都会进行单态化，因此在编译期就可确定类型。
+
+作为返回值时，只适用于返回单一类型的情况。因为无法在编译期就能确定返回类型，所以无法进行单态化。
 
 ```rust
-trait T {}
+trait MyTrait {}
 struct Foo;
 struct Bar;
-impl T for Foo {}
-impl T for Bar {}
+impl MyTrait for Foo {}
+impl MyTrait for Bar {}
 
-fn ret_t(flag: bool) -> impl T {
+fn ret_t(flag: bool) -> impl MyTrait {
     // 错误
     if flag {
         Foo
@@ -387,19 +389,41 @@ fn ret_t(flag: bool) -> impl T {
 }
 ```
 
-`Foo` 和 `Bar` 即使都实现了 `T` trait，但实际上是不同的类型，因此使用 `impl Trait` 的方式是无法编译的。
+`Foo` 和 `Bar` 即使都实现了 `MyTrait`，但实际上是不同的类型，因此使用 `impl Trait` 方式是无法确定返回值的。
 
 ## trait 约束
 
-`impl Trait` 实际上是 trait 约束的语法糖，实际上可以写为泛型参数的形式：
+`impl Trait` 实际上是 trait 约束的语法糖，当作为参数时，实际上可以写为泛型参数的形式：
 
 ```rust
-fn get_t<F: T>(f: impl T) {
-    f.foo();
+trait MyTrait {}
+
+// 两者等价
+fn foo(t: impl MyTrait) {}
+fn bar<T: MyTrait>(t: T) {}
+```
+
+泛型参数 `T` 表示任何实现了 `MyTrait` 的类型，编译器会为每个不同的类型进行单态化。
+
+对于返回类型，则无法写成这种形式：
+
+```rust
+trait MyTrait {}
+struct Foo;
+impl MyTrait for Foo {}
+
+// 可以这样写
+fn foo() -> impl MyTrait {
+    Foo
+}
+
+// 不可以这样写
+fn foo<T: MyTrait>() -> T {
+    Foo
 }
 ```
 
-trait 约束 与泛型参数声明在一起，表示该泛型被约束为实现了 `Summary` trait 的类型。
+因为 `T` 本质上是一个泛型参数，代表返回任意实现了 `MyTrait` 的类型，这个类型在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型，但对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型很可能是另外定义的 `Bar`。
 
 `impl Trait` 适用于短小的例子，trait 约束 则适用于更复杂的场景。
 
