@@ -252,11 +252,11 @@ let s2: &str = "bar"
     -   指向切片的指针额外存储了切片的元素数量；
     -   指向 trait 对象的指针额外存储了 vtable 的地址。
 -   DST 可以作为实参来传递给有 `?Sized` 约束的泛型类型参数。当关联类型的声明有 `?Sized` 约束时，也可以被用于关联类型定义；
--   默认情况下，任何类型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束；
+-   默认情况下，任何泛型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束；
 -   与泛型类型参数不同，trait 定义中的默认约束为 `Self: ?Sized`，因此可以为 DST 实现 trait；
--   结构体最后一个字段可以为 DST，这使得该结构体也是一个 DST。
+-   结构体的最后一个字段可以为 DST，这让该结构体也是一个 DST。
 
->   变量、函数参数、常量和静态项必须是 `Sized`。
+>   静态项、常量、变量和函数参数必须是 `Sized`。
 
 ## never 类型
 
@@ -376,13 +376,14 @@ fn main() {
 
 ## 字符串
 
-Rust 中主要有 `str` 和 `String` 两种字符串类型，其中 `str` 是原生类型，存储在栈上，`String` 存储在堆上。这两种值的表示方法与 `[u8]` 相同，且都保证数据是有效的 UTF-8 序列。由于 `str` 是一个 DST，具有 `?Sized` trait，因此只能通过指针类型实例化并使用，如 `&str`。
+Rust 中主要有 `str` 和 `String` 两种字符串类型，其中 `str` 是原生类型，存储在栈上，`String` 存储在堆上。这两种值的表示方法与 `[u8]` 相同，且都保证数据是有效的 UTF-8 序列。由于 `str` 是一个 DST，具有 `?Sized` trait，因此只能通过指针类型间接使用，如 `&str` 和 `Box<str>`。
 
 ```rust
 let s1: &str = "hello";  // 实际上会被推导为 &'static str
 let s2: &'static str = "world";
 let s3: String = String::from("haha");
 let s4: &str = &s3;
+let s5: Box<str> = String::from("hehe").into_boxed_str();
 ```
 
 `&str` 和 `String`：

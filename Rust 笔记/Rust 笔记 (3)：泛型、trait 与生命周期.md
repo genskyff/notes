@@ -429,16 +429,14 @@ fn foo<T: MyTrait>() -> T {
 
 ### 多个 trait bound
 
-如果 `notify` 需要显示 `item` 的格式化形式，同时也要使用 `summarize` 方法，那么 `item` 就需要同时实现两个不同的 trait：`Display` 和 `Summary`。
-
-可以通过 `+` 语法实现：
+可以通过 `+` 来同时指定多个 trait，表示该类型要同时实现这些 trait：
 
 ```rust
 // impl trait
-fn notify(item: &(impl Summary + Display)) {}
+fn foo(t: &(impl PartialEq + PartialOrd)) {}
 
 // trait bound
-fn notify<T: Summary + Display>(item: &T) {}
+fn bar<T: PartialEq + PartialOrd>(t: &T) {}
 ```
 
 ### 简化 trait bound
@@ -480,7 +478,7 @@ where
 
 在没有对泛型参数 `T` 进行约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait bound 再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
 
-### 使用 trait 有条件地实现方法
+### 使用 trait bound 有条件地实现方法
 
 通过使用带有 trait bound 的泛型参数的 `impl` 块，可以有条件地只为那些实现了特定 trait 的类型实现方法。
 
