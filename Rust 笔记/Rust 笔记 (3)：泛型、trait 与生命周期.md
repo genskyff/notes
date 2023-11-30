@@ -50,7 +50,7 @@ fn add<T>(x: T, y: T) -> T {
 }
 ```
 
->   由于没有对泛型 `T` 设置 trait 约束，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
+>   由于没有对泛型 `T` 设置 trait bound，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
 
 ### 泛型实现
 
@@ -391,21 +391,23 @@ fn ret_t(flag: bool) -> impl MyTrait {
 
 `Foo` 和 `Bar` 即使都实现了 `MyTrait`，但实际上是不同的类型，因此使用 `impl Trait` 方式是无法确定返回值的。
 
-## trait 约束
+## trait bound
 
-`impl Trait` 实际上是 trait 约束的语法糖，当作为参数时，实际上可以写为泛型参数的形式：
+`impl Trait` 实际上是 `trait bound` 的语法糖，当作为参数时，实际上可以写为泛型参数的形式：
 
 ```rust
 trait MyTrait {}
 
-// 两者等价
-fn foo(t: impl MyTrait) {}
-fn bar<T: MyTrait>(t: T) {}
+// impl trait
+fn foo(a: &impl MyTrait, b: &impl MyTrait, c: &impl MyTrait) {}
+
+// trait bound
+fn foo<T: MyTrait>(a: &T, b: &T, c: &T) {}
 ```
 
-泛型参数 `T` 表示任何实现了 `MyTrait` 的类型，编译器会为每个不同的类型进行单态化。
+泛型参数 `T` 被约束为任何实现了 `MyTrait` 的类型，编译器会为每个不同的类型进行单态化。同时这种形式可以简化声明。
 
-对于返回类型，则无法写成这种形式：
+**对于返回类型，则无法写成这种形式：**
 
 ```rust
 trait MyTrait {}
@@ -423,21 +425,9 @@ fn foo<T: MyTrait>() -> T {
 }
 ```
 
-因为 `T` 本质上是一个泛型参数，代表返回任意实现了 `MyTrait` 的类型，这个类型在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型，但对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型很可能是另外定义的 `Bar`。
+因为 `T` 本质上是一个泛型参数，代表返回任意实现了 `MyTrait` 的类型，这个类型在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型，但对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型可能不是 `Foo`。
 
-`impl Trait` 适用于短小的例子，trait 约束 则适用于更复杂的场景。
-
-```rust
-fn notify(item1: &impl Summary, item2: &impl Summary, item3: &impl Summary) {}
-```
-
-若采用 `impl Trait` 则会显得十分冗长，这时可以使用 trait 约束：
-
-```
-fn notify<T: Summary>(item1: &T, item2: &T, item3: &T) {}
-```
-
-### 指定多个 trait 约束
+### 多个 trait bound
 
 如果 `notify` 需要显示 `item` 的格式化形式，同时也要使用 `summarize` 方法，那么 `item` 就需要同时实现两个不同的 trait：`Display` 和 `Summary`。
 
@@ -446,13 +436,14 @@ fn notify<T: Summary>(item1: &T, item2: &T, item3: &T) {}
 ```rust
 // impl trait
 fn notify(item: &(impl Summary + Display)) {}
+
 // trait bound
 fn notify<T: Summary + Display>(item: &T) {}
 ```
 
-### 简化 trait 约束
+### 简化 trait bound
 
-当有多个泛型参数时，则会有很长的 trait bound 信息：
+当有多个泛型参数时，则会有很长的 `trait bound` 信息：
 
 ```rust
 fn foo<T: Clone + Display, U: Clone + Debug>(t: &T, u: &U) {}
@@ -468,7 +459,7 @@ where
 {}
 ```
 
-### 使用 trait 约束修复函数
+### 使用 trait bound 修复函数
 
 有一个泛型函数，用于从数组中获取最大值并返回：
 
@@ -487,7 +478,7 @@ where
 }
 ```
 
-在没有对泛型参数 `T` 做出约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait bound 再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
+在没有对泛型参数 `T` 进行约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait bound 再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
 
 ### 使用 trait 有条件地实现方法
 
