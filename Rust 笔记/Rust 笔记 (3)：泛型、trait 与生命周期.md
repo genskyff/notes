@@ -436,51 +436,30 @@ fn foo<T: MyTrait>() -> T {
 fn foo(t: &(impl PartialEq + PartialOrd)) {}
 
 // trait 约束
-fn bar<T: PartialEq + PartialOrd>(t: &T) {}
+fn foo<T: PartialEq + PartialOrd>(t: &T) {}
 ```
 
-### 简化约束
+### where 子句
 
-当有多个泛型参数时，则会有很长的 trait 约束信息：
+当有多个泛型参数时，会有很长的 trait 约束信息：
 
 ```rust
-fn foo<T: Clone + Display, U: Clone + Debug>(t: &T, u: &U) {}
+fn foo<T: Copy + PartialEq, U: Copy + PartialEq>(t: &T, u: &U) {}
 ```
 
-可以通过 `where` 从句来简化：
+可以通过 `where` 子句来简化：
 
 ```rust
 fn foo<T, U>(t: &T, u: &U)
 where
-    T: Clone + Display,
-    U: Clone + Debug,
+    T: Copy + PartialEq,
+    U: Copy + PartialEq,
 {}
 ```
 
-### 使用约束修复函数
+### 条件实现
 
-有一个泛型函数，用于从数组中获取最大值并返回：
-
-```rust
-fn get_max<T>(v: &[T]) -> T
-where
-    T: PartialOrd + Copy,
-{
-    let mut max = v[0];
-    for &i in v {
-        if max < i {
-            max = i;
-        }
-    }
-    max
-}
-```
-
-在没有对泛型参数 `T` 进行约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait 约束再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
-
-### 使用约束有条件地实现方法
-
-通过使用带有 trait 约束的泛型参数的 `impl` 块，可以有条件地只为那些实现了特定 trait 的类型实现方法。
+在为泛型类型实现时，利用 trait 约束可以有条件地为只实现了这些 trait 的类型实现。
 
 ```rust
 struct Pair<T> {
@@ -496,26 +475,22 @@ impl<T> Pair<T> {
 
 impl<T> Pair<T>
 where
-    T: PartialOrd + Display,
+    T: Copy + PartialOrd,
 {
-    fn cmp_display(&self) {
-        if self.x > self.y {
-            println!("x: {}", self.x);
-        } else {
-            println!("y: {}", self.y);
-        }
+    fn cmp(&self) -> bool {
+        self.x > self.y
     }
+}
+
+fn main() {
+    let p1 = Pair::new(1, 2);
+    let p2 = Pair::new("foo".to_string(), "bar".to_string());
+    p1.cmp();
+    p2.cmp(); // 错误
 }
 ```
 
-`new` 方法没有对 `T` 做限制，因为它始终返回一个 `Pair<T>` 实例，而只有实现了 `PartialOrd` 和 `Display` trait 的 `Pair<T>` 实例才能调用 `cmp_display` 方法，否则就会报错，因为该方法需要比较和显示数据，没有实现这两种 trait 的实例则无法做到。
-
-```rust
-let p1 = Pair::new(3, 4);
-let p2 = Pair::new(('a', 1), ('b', 2));
-p1.cmp_display();
-p2.cmp_display();    // 报错
-```
+第一个实现中的 `new` 方法没有对 `T` 做限制，因此能被任何 `Pair` 实例调用。第二个实现中的 `cmp` 方法只能被实现了 `Copy` 和 `PartialOrd` 的 `Pair` 实例调用。
 
 ## trait 对象
 
