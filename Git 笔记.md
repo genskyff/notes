@@ -265,7 +265,7 @@ doc/**/*.pdf
 
 >   所有 `.gitignore` 文件规则会合并生效。
 
-## 比较文件
+## 比较差异
 
 比较工作区中和暂存区之间的差异：
 
@@ -413,6 +413,26 @@ git log --since="2023-09-24 00:00:00" --until="2023-09-24 23:59:59"
 ```shell
 git log --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "Added lines: %s\nRemoved lines: %s\nTotal lines: %s\n", add, subs, loc }'
 ```
+
+### 临时切换
+
+`checkout` 和 `switch` 命令也可以用来临时切换到某个历史提交的状态。
+
+```shell
+# 临时切换到某个提交
+git checkout [--detach] <commit>
+git switch --detach <commit>
+
+# 切换回当前分支最新的提交
+git checkout <branch>
+git switch <branch>
+```
+
+`--detach` 作用是将 HEAD 分离到指定的提交。这表示会离开当前分支，并且 HEAD 指向一个特定的提交，而不是分支的最新提交。这样的好处是：
+
+-   **临时查看历史提交**：要查看或测试历史中的某个特定提交时，但又不想离开当前的分支。
+-   **进行实验性的更改**：HEAD 在分离状态下，可以进行修改而不影响任何分支；
+-   **构建或其它临时任务**：基于特定的提交进行构建或运行一些脚本，而不想改变当前分支的状态。
 
 # 4 分支管理
 
