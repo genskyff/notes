@@ -50,7 +50,7 @@ fn add<T>(x: T, y: T) -> T {
 }
 ```
 
->   由于没有对泛型 `T` 设置 trait bound，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
+>   由于没有对泛型 `T` 设置 trait 约束，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
 
 ### 泛型实现
 
@@ -391,17 +391,17 @@ fn ret_t(flag: bool) -> impl MyTrait {
 
 `Foo` 和 `Bar` 即使都实现了 `MyTrait`，但实际上是不同的类型，因此使用 `impl Trait` 方式是无法确定返回值的。
 
-## trait bound
+## trait 约束
 
-`impl Trait` 实际上是 `trait bound` 的语法糖，当作为参数时，实际上可以写为泛型参数的形式：
+`impl Trait` 实际上是 **trait 约束**的语法糖，当作为参数时，实际上可以写为泛型参数的形式：
 
 ```rust
 trait MyTrait {}
 
-// impl trait
+// impl Trait
 fn foo(a: &impl MyTrait, b: &impl MyTrait, c: &impl MyTrait) {}
 
-// trait bound
+// trait 约束
 fn foo<T: MyTrait>(a: &T, b: &T, c: &T) {}
 ```
 
@@ -427,21 +427,21 @@ fn foo<T: MyTrait>() -> T {
 
 因为 `T` 本质上是一个泛型参数，代表返回任意实现了 `MyTrait` 的类型，这个类型在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型，但对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型可能不是 `Foo`。
 
-### 多个 trait bound
+### 多个约束
 
-可以通过 `+` 来同时指定多个 trait，表示该类型要同时实现这些 trait：
+可以通过 `+` 来同时指定多个 trait 约束，表示该类型要同时实现这些 trait：
 
 ```rust
-// impl trait
+// impl Trait
 fn foo(t: &(impl PartialEq + PartialOrd)) {}
 
-// trait bound
+// trait 约束
 fn bar<T: PartialEq + PartialOrd>(t: &T) {}
 ```
 
-### 简化 trait bound
+### 简化约束
 
-当有多个泛型参数时，则会有很长的 `trait bound` 信息：
+当有多个泛型参数时，则会有很长的 trait 约束信息：
 
 ```rust
 fn foo<T: Clone + Display, U: Clone + Debug>(t: &T, u: &U) {}
@@ -457,7 +457,7 @@ where
 {}
 ```
 
-### 使用 trait bound 修复函数
+### 使用约束修复函数
 
 有一个泛型函数，用于从数组中获取最大值并返回：
 
@@ -476,11 +476,11 @@ where
 }
 ```
 
-在没有对泛型参数 `T` 进行约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait bound 再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
+在没有对泛型参数 `T` 进行约束时，此代码不能通过编译，因为不是所有的类型都能实现比较操作，因此使用 `where` 子句将类型限制在实现了 `PartialOrd` trait 的类型上，当函数使用 `<` 运算符比较两个 `T` 类型的值时，会调用该 trait 的一个默认方法来实现比较。使用 trait 约束再次限制为实现了 `Copy` trait 的类型，这样就限制 `T` 为任何存储在栈上如 `i32`、`char` 这样的简单数据类型。
 
-### 使用 trait bound 有条件地实现方法
+### 使用约束有条件地实现方法
 
-通过使用带有 trait bound 的泛型参数的 `impl` 块，可以有条件地只为那些实现了特定 trait 的类型实现方法。
+通过使用带有 trait 约束的泛型参数的 `impl` 块，可以有条件地只为那些实现了特定 trait 的类型实现方法。
 
 ```rust
 struct Pair<T> {
@@ -1097,7 +1097,7 @@ let dog = <Dog as Animal>::name();
 
 ### 父 trait 
 
-可以定义一个依赖另一个 trait 的 trait 定义：要求实现该 trait 的类型，也必须实现其上依赖的 trait。父 trait 可以通过 trait bound 语法来指定多个
+可以定义一个依赖另一个 trait 的 trait 定义：要求实现该 trait 的类型，也必须实现其上依赖的 trait。父 trait 可以通过 trait 约束来指定多个
 
 ```rust
 use std::fmt::{self, Display};
@@ -1519,7 +1519,7 @@ fn ret_str() -> &'static str {}
 fn ret_str<'a>() -> &'a str {}
 ```
 
-## 结合泛型类型参数、trait bound 和生命周期
+## 结合泛型类型参数、trait 约束和生命周期
 
 ```rust
 fn longest_info<'a, T>(s1: &'a str, s2: &'a str, info: T) -> &'a str
