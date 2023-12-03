@@ -425,7 +425,7 @@ fn foo<T: MyTrait>() -> T {
 }
 ```
 
-因为 `T` 本质上是一个泛型参数，在语义上表示返回任意实现了 `MyTrait` 的类型。这个类型在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型。对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型可能不是 `Foo`，而 `impl Trait` 在语义上表示始终返回一个确定的类型。
+因为 `T` 本质上是一个泛型参数，在语义上表示返回任意实现了 `MyTrait` 的类型。这个类型动态的，并在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型。对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型可能不是 `Foo`，而 `impl Trait` 在语义上表示始终返回一个确定的类型。
 
 ### 多个约束
 
@@ -494,14 +494,16 @@ fn main() {
 
 ## trait 对象
 
+虽然不能返回一个动态的 trait，但是若包装成一个 trait 对象，则可实现 trait 的**动态分发**。
+
 对于 trait 对象，有如下特征：
 
 -   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 对象的大小无法确定；
 -   使用 trait 对象时，总是使用引用的方式：
     -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
     -   一个指针指向具体类型的实例；
-    -   另一个指针指向一个虚表 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，直接从 `vtable` 中找到方法并调用。
-    -   trait 对象的引用方式有多种，对于 `trait T`，其 trait 对象类型的引用可以是 `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等。
+    -   另一个指针指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法。当调用方法时，将在运行时查找并调用，因此这种方式会牺牲一定的性能；
+    -   trait 对象的引用方式有多种： `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等。
 
 ```rust
 trait Person {
@@ -544,31 +546,35 @@ fn main() {
 
 ![动态 trait 对象内存布局](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202307242214983.png)
 
-`stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `trait Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
+`stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
 
 `vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在程序的 `.rodata` 段上保存 `vtable`。
 
 `vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也因此会损失一定的性能。
 
-在返回 trait 时，由于单态化的限制，只能返回确定的 trait，但是通过动态分发，可以返回不确定的 trait。
+在返回 trait 时，由于单态化的限制，只能返回确定的 trait，但通过动态分发，可以返回不确定的 trait。
 
 ```rust
 fn get_person(swtich: bool) -> Box<dyn Person> {
     if swtich {
-        Box::new(Student { name: "Alice".to_string() })
+        Box::new(Student {
+            name: "Alice".to_string(),
+        })
     } else {
-        Box::new(Teacher { name: "Bob".to_string() })
+        Box::new(Teacher {
+            name: "Bob".to_string(),
+        })
     }
 }
 ```
 
 ### trait 对象安全
 
-只有对象安全的 trait 才可以组成 trait 对象，当 trait 的方法满足以下要求时才是对象安全的：
+只有对象安全的 trait 才可以组成 trait 对象，当 trait 中的函数或方法满足以下条件时才是对象安全的：
 
 -   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型；
--   方法没有任何泛型类型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
--   trait 不能拥有静态方法：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
+-   不能含有泛型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
+-   不能拥有关联函数：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
 
 下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
 
@@ -576,7 +582,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
 // 错误
 struct Person {
     student: Box<dyn Clone>,
- }
+}
 ```
 
 ## 常见 trait
