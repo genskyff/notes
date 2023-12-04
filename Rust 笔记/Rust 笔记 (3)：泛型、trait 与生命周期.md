@@ -498,7 +498,7 @@ fn main() {
 
 对于 trait 对象，有如下特征：
 
--   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 对象的大小无法确定；
+-   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 的对象大小无法确定；
 -   使用 trait 对象时，总是使用引用的方式：
     -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小；
     -   一个指针指向具体类型的实例；
@@ -603,7 +603,7 @@ let p2 = Person::default();
 let p3 = Person { age: 20, ..Default::default() };
 ```
 
-### Debug
+### Debug 和 Display
 
 `std::fmt::Debug`：格式化打印调试字符串。
 
@@ -614,8 +614,6 @@ struct Person {
     age: u32,
 }
 ```
-
-### Display
 
 `std::fmt::Display`：格式化打印用户字符串。
 
@@ -637,7 +635,7 @@ impl fmt::Display for Person {
 ### PartialEq 和 Eq
 
 -   `std::cmp::PartialEq`：部分值相等关系；
--   `std::cmp::PartialOrd`：部分值顺序关系。
+-   `std::cmp::Eq`：完全相等关系。
 
 ```rust
 #[derive(PartialEq, Eq)]
@@ -648,7 +646,7 @@ struct Point(i32, i32);
 
 ### PartialOrd 和 Ord
 
--   `std::cmp::Eq`：完全相等关系；
+-   `std::cmp::PartialOrd`：部分顺序关系；
 -   `std::cmp::Ord`：完全顺序关系。
 
 ```rust
@@ -660,8 +658,8 @@ struct Point(i32, i32);
 
 ### Clone 和 Copy
 
--   `std::clone::Clone`：能显式复制；
--   `std::marker::Copy`：能隐式复制。
+-   `std::clone::Clone`：克隆语义；
+-   `std::marker::Copy`：复制语义。
 
 ```rust
 #[derive(Clone, Copy)]
@@ -670,11 +668,9 @@ struct Point(i32, i32);
 
 >   要实现 `Copy`，必须同时实现 `Clone`。
 
-### Iterator 和 IntoIterator
+### Iterator
 
-`std::iter::Iterator`：定义迭代器；
-
-`std::iter::IntoIterator`：转换为迭代器。
+`std::iter::Iterator`：定义迭代器。
 
 ```rust
 struct Counter {
@@ -686,7 +682,6 @@ impl Iterator for Counter {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.count += 1;
-
         if self.count <= 5 {
             Some(self.count)
         } else {
@@ -695,18 +690,11 @@ impl Iterator for Counter {
     }
 }
 
-impl<'a> IntoIterator for &'a Counter {
-    type Item = usize;
-    type IntoIter = std::iter::Take<std::ops::RangeFrom<usize>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        (0..).take(self.count)
+fn main() {
+    let c = Counter { count: 2 };
+    for i in c {
+        println!("{i}");
     }
-}
-
-let c = Counter { count: 2 };
-for i in &c {
-    println!("{i}");
 }
 ```
 
@@ -714,7 +702,7 @@ for i in &c {
 
 `std::hash::Hash`：可散列的类型。
 
-实现了 `Hash` trait 的类型可通过 `Hasher` 的实例进行 `hash` 化。如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
+实现了 `Hash` 的类型可通过 `Hasher` 的实例进行哈希化。如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
 
 ```rust
 #[derive(PartialEq, Eq, Hash)]
@@ -724,58 +712,66 @@ let mut map = HashMap::new();
 map.insert(Point(1, 2), 1);
 ```
 
->   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`。
+>   -   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`；
 >
->   若所有字段都实现了 `Hash` trait，则可通过 `derive` 派生 `Hash`，产生的哈希值将是在每个字段上调用 `hash` 函数的值的组合。
+>   -   若所有字段都实现了 `Hash`，则可通过 `derive` 派生 `Hash`，产生的哈希值将是在每个字段上调用哈希函数得到结果的组合。
 
 ### 运算符重载
 
-Rust 中的操作符均为某个 trait 方法的语法糖，有一系列用于运算符重载的 trait，可以方便的为类型实现各种运算操作，这些运算符如 `a + b`，都会在编译的过程中会被转换为 `a.add(b)`。
+Rust 中的操作符均为某个 trait 方法的语法糖，有一系列用于运算符重载的 trait，可以方便的为类型实现各种运算操作，如 `a + b` 表达式会在编译的过程中会被转换为 `a.add(b)`。
 
--   `std::ops::Add`：定义加法；
--   `std::ops::Sub`：定义减法；
--   `std::ops::Mul`：定义乘法；
--   `std::ops::Div`：定义除法。
+`std::ops::{Add, Sub, Mul, Div, Rem}`：定义加减乘除取余；
 
 ```rust
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::Add;
 
+#[derive(PartialEq, Eq, Debug)]
 struct Point(i32, i32);
 
 impl Add for Point {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self::Output {
-        Self(self.0 + other.0, self.1 + other.1)
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 
-impl Sub for Point {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self::Output {
-        Self(self.0 - other.0, self.1 - other.1)
-    }
-}
-
-impl Mul for Point {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self::Output {
-        Self(self.0 * other.0, self.1 * other.1)
-    }
-}
-
-impl Div for Point {
-    type Output = Self;
-
-    fn div(self, other: Self) -> Self::Output {
-        Self(self.0 / other.0, self.1 / other.1)
-    }
+fn main() {
+    let p1 = Point(1, 2);
+    let p2 = Point(3, 4);
+    assert_eq!(Point(4, 6), p1 + p2);
 }
 ```
 
-此外还有许多其它运算符的 trait，具体可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
+`std::ops::{Index, IndexMut}`：定义不可变和可变索引：
+
+```rust
+use std::ops::Index;
+
+enum Axis {
+    X,
+    Y,
+}
+struct Point(i32, i32);
+
+impl Index<Axis> for Point {
+    type Output = i32;
+
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.0,
+            Axis::Y => &self.1,
+        }
+    }
+}
+
+fn main() {
+    let p = Point(1, 2);
+    assert_eq!(2, p[Axis::Y]);
+}
+```
+
+>   更多关于运算符重载的 trait，可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
 
 ## 高级 trait
 
@@ -860,11 +856,11 @@ counter.next();
 
 而通过关联类型，则无需标注类型，因为不能多次实现这个 trait，其实现必须提供一个类型来替代关联类型占位符。
 
-### 默认泛型类型参数和运算符重载
+### 默认泛型参数
 
-当使用泛型类型参数时，可以指定一个默认的具体类型。若默认类型就足够的话，就无需为具体类型实现 trait。在声明泛型类型时通过使用 `<PlaceholderType = ConcreteType>` 语法为泛型类型指定默认类型。
+当使用泛型参数时，可以指定一个默认的具体类型。若默认类型就足够的话，就无需为具体类型实现 trait。在声明泛型时通过使用 `<PlaceholderType = ConcreteType>` 语法为泛型类型指定默认类型。
 
-默认泛型类型参数多用于运算符重载，Rust 并不允许创建自定义运算符或重载任意运算符，但可以通过实现 `std::ops` 中的 trait 来进行运算符重载。
+默认泛型参数多用于运算符重载，Rust 并不允许创建自定义运算符或重载任意运算符，但可以通过实现 `std::ops` 中的 trait 来进行运算符重载。
 
 如在 `Point` 结构体上实现 `Add` trait 来重载 `+` 运算符：
 
@@ -1380,7 +1376,7 @@ fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str {}
 
 ## 方法定义中的生命周期注解
 
-当为带有生命周期的结构体实现方法时，其语法类似泛型类型参数的语法。结构体字段的生命周期必须总是在 `impl` 关键字之后声明并在结构体名称之后被使用，因为这些生命周期是结构体类型的一部分。`impl` 块里的方法签名中，引用可能与结构体字段中的引用相关联，也可能是独立的。
+当为带有生命周期的结构体实现方法时，其语法类似泛型参数的语法。结构体字段的生命周期必须总是在 `impl` 关键字之后声明并在结构体名称之后被使用，因为这些生命周期是结构体类型的一部分。`impl` 块里的方法签名中，引用可能与结构体字段中的引用相关联，也可能是独立的。
 
 ```rust
 struct User<'a> {
@@ -1498,7 +1494,7 @@ fn ret_str() -> &'static str {}
 fn ret_str<'a>() -> &'a str {}
 ```
 
-## 结合泛型类型参数、trait 约束和生命周期
+## 结合泛型参数、trait 约束和生命周期
 
 ```rust
 fn longest_info<'a, T>(s1: &'a str, s2: &'a str, info: T) -> &'a str
@@ -1514,7 +1510,7 @@ where
 }
 ```
 
-`longest_info` 函数泛型参数 `info`，它被限制为任何实现了 `Display` trait 的类型。因为生命周期也是泛型，所以生命周期参数 `'a` 和泛型类型参数 `T` 都位于函数名后的同一尖括号列表中，且生命周期参数必须位于第一个。
+`longest_info` 函数泛型参数 `info`，它被限制为任何实现了 `Display` trait 的类型。因为生命周期也是泛型，所以生命周期参数 `'a` 和泛型参数 `T` 都位于函数名后的同一尖括号列表中，且生命周期参数必须位于第一个。
 
 ## 生命周期转换
 
