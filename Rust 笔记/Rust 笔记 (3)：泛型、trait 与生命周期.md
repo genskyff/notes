@@ -585,7 +585,7 @@ struct Person {
 }
 ```
 
-## 常见 trait
+## 常用 trait
 
 ### Default
 
@@ -1072,37 +1072,24 @@ let dog = <Dog as Animal>::name();
 
 ### 父 trait 
 
-可以定义一个依赖另一个 trait 的 trait 定义：要求实现该 trait 的类型，也必须实现其上依赖的 trait。父 trait 可以通过 trait 约束来指定多个
+定义 trait 时可以指定依赖的 trait：要为类型实现该 trait，这些依赖的 trait 也必须实现。
 
 ```rust
-use std::fmt::{self, Display};
-
-trait Foo: Display {
+trait Foo: Clone + PartialEq {
     fn bar(&self) -> i32;
 }
 
+#[derive(Clone, PartialEq)]
 struct Wrap(i32);
-
-impl Foo for Wrap {
-    fn bar(&self) -> i32 {
-        todo!()
-    }
-}
-
-impl Display for Wrap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
-    }
-}
 ```
 
-`Wrap` 要实现 `Foo` trait，就必须也实现 `Display` trait。
+`Wrap` 要实现 `Foo`，就必须实现 `Clone` 和 `PartialEq`。
 
-### newtype 模式
+### newtype
 
-在实现 trait 时，需要遵循**孤儿原则**，即不能为外部类型实现外部 trait。要绕开这个限制的方法是使用 **newtype 模式**，即把外部类型封装起来。
+由于在实现 trait 时需要遵循**孤儿规则**，要绕开这个限制的方法是使用 **newtype**，即把外部类型封装起来。
 
-如想要在 `Vec<T>` 上实现 `Display`，因为 `Display` trait 和 `Vec<T>` 都定义于外部，所以创建一个包含 `Vec<T>` 实例的 `Wrap` 结构体，然后就可以 `Wrap` 上实现 `Display` 并使用 `Vec<T>` 的值。
+如要在 `Vec<T>` 上实现 `Display`，因为 `Display` 和 `Vec<T>` 都定义于外部，所以创建一个包含 `Vec<T>` 实例的 `Wrap` 结构体，然后就可以 `Wrap` 上实现 `Display` 并使用 `Vec<T>` 的值。
 
 ```rust
 use std::fmt::{self, Display};
@@ -1116,12 +1103,12 @@ impl Display for Wrap {
 }
 
 fn main() {
-    let w = Wrap(vec![String::from("hello"), String::from("world")]);
+    let w = Wrap(vec!["foo".to_string(), "bar".to_string()]);
     println!("w = {}", w);
 }
 ```
 
-这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本未封装类型的方法都不能使用，但也可以隐藏内部细节，只向外提供 API。
+这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本被封装类型的方法都不能使用，但也可以隐藏内部细节，只向外提供 API。
 
 # 3 生命周期
 
