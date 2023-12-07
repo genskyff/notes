@@ -891,6 +891,52 @@ fn main() {
 
 这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本被封装类型的方法都不能使用，但也可以隐藏内部细节，只向外提供 API。
 
+### Turbofish
+
+如 `::<T, U>` 的形式为 **Turbofish** 语法，通常在以下情况使用：
+
+-   明确指定泛型类型时；
+-   明确指定 trait 的关联类型时；
+-   无法进行类型推断时。
+
+```rust
+trait ValueWrap {
+    type Value1;
+    type Value2;
+
+    fn new(v1: Self::Value1, v2: Self::Value2) -> Self;
+}
+
+struct Holder<T, U> {
+    value: (T, U),
+}
+
+impl<T, U> ValueWrap for Holder<T, U> {
+    type Value1 = T;
+    type Value2 = U;
+
+    fn new(v1: Self::Value1, v2: Self::Value2) -> Self {
+        Holder { value: (v1, v2) }
+    }
+}
+
+fn wrap<T, U>(a: T, b: U) -> Vec<(T, U)> {
+    vec![(a, b)]
+}
+
+fn main() {
+    let h1 = Holder::new(1, 2);
+    let h2: Holder<i32, u32> = Holder::new(1, 2);
+    let h3 = Holder::<i32, u32>::new(1, 2);
+
+    let v1 = wrap(1, 2);
+    let v2: Vec<(i32, u32)> = wrap::<i32, u32>(1, 2);
+    let v3 = wrap::<i32, u32>(1, 2);
+}
+```
+
+其中 `h1` 和 `v1` 的类型为自动推断，`h2`、`h3` 与 `v2`、`v3` 则明确指定了关联类型和泛型参数类型。
+
 ## 常用 trait
 
 ### Default
