@@ -698,9 +698,9 @@ fn main() {
 
 ### main 函数
 
-一个含有 `main` 函数的源文件就是一个二进制 Crate。`main` 函数不能有参数，不能对其声明任何 trait 约束或生命周期约束，且返回类型必须实现 `Termination` trait。
+一个含有 `main` 函数的源文件就是一个二进制 Crate。`main` 函数不能有参数，不能对其声明任何 trait 约束或生命周期约束，且返回类型必须实现 `Termination`。
 
-标准库中实现了 `Termination` trait 的类型为：
+标准库中实现了 `Termination` 的类型为：
 
 -   `()`
 -   `!`
@@ -1797,7 +1797,7 @@ fn test_add() {
 
 -   `debug_assert_ne!`：与 `assert_ne!` 相同，但仅在非优化构建中起作用；
 
-接受两个参数的断言如 `assert_eq!` 和 `assert_ne!` 在底层分别使用了 `==` 和 `!=`。当断言失败时，程序会 panic，并且会使用调试格式打印其参数，因此比较的值必需实现了 `PartialEq` 和 `Debug` trait。
+接受两个参数的断言如 `assert_eq!` 和 `assert_ne!` 在底层分别使用了 `==` 和 `!=`。当断言失败时，程序会 panic，并且会使用调试格式打印其参数，因此比较的值必需实现了 `PartialEq` 和 `Debug`。
 
 ### 自定义失败信息
 
@@ -1834,7 +1834,7 @@ fn test_div_by_0() {
 
 ### 使用 Result
 
-除了在测试失败时 panic，测试函数可以返回实现了 `Termination` trait 的类型，如 `Result<(), E>`，这样就可以使用 `?` 来返回结果。
+除了在测试失败时 panic，测试函数可以返回实现了 `Termination` 的类型，如 `Result<(), E>`，这样就可以使用 `?` 来返回结果。
 
 ```rust
 pub fn div(x: i32, y: i32) -> Result<(), String> {

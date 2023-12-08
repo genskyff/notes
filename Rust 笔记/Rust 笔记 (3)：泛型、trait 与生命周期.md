@@ -591,7 +591,7 @@ struct Person {
 
 **关联类型**是将类型占位符与 trait 相关联，这样 trait 函数或方法签名中就可以使用这些占位符。trait 的实现会指定相应的具体类型，这样就可定义使用多种类型的 trait。
 
-如标准库中的 `Iterator` trait，含有一个 `Item` 的关联类型来替代遍历的值的类型。
+如标准库中的 `Iterator`，含有一个 `Item` 的关联类型来替代遍历的值的类型。
 
 ```rust
 pub trait Iterator {
@@ -753,7 +753,7 @@ impl Add<Meters> for Millis {
 
 两个 trait 可以声明相同的函数或方法，两个类型也可以同时实现同一个 trait，因此当调用这些同名方法时，需要明确使用哪一个。
 
-`Pilot` 和 `Wizard` trait 都有方法 `fly`，接着在一个本身已经实现了名为 `fly` 方法的类型 `Human` 上实现这两个 trait，每一个 `fly` 方法都进行了不同的操作。
+`Pilot` 和 `Wizard` 都有方法 `fly`，接着在一个本身已经实现了名为 `fly` 方法的类型 `Human` 上实现这两个 trait，每一个 `fly` 方法都进行了不同的操作。
 
 ```rust
 trait Pilot {
@@ -799,7 +799,7 @@ fn main() {
 
 当 trait 中含有关联函数时，则无法传递 `self`，除非使用**完全限定语法**。
 
-`Dog` 上实现了关联函数 `name`，也实现了 `Animal` trait。
+`Dog` 上实现了关联函数 `name`，也实现了 `Animal`。
 
 ```rust
 trait Animal {
@@ -1512,7 +1512,7 @@ where
 }
 ```
 
-`longest_info` 函数泛型参数 `info`，它被限制为任何实现了 `Display` trait 的类型。因为生命周期也是泛型，所以生命周期参数 `'a` 和泛型参数 `T` 都位于函数名后的同一尖括号列表中，且生命周期参数必须位于第一个。
+`longest_info` 函数泛型参数 `info`，它被限制为任何实现了 `Display` 的类型。因为生命周期也是泛型，所以生命周期参数 `'a` 和泛型参数 `T` 都位于函数名后的同一尖括号列表中，且生命周期参数必须位于第一个。
 
 ## 生命周期转换
 
@@ -1542,7 +1542,7 @@ fn main() {
 
 -   `T: 'a`：在 `T` 中的**所有**引用都必须比生命周期 `'a` 活得更长；
 
--   `T: A + 'a`：`T` 类型必须实现 `A` trait，并且在 `T` 中的**所有**引用都必须比 `'a` 活得更长。
+-   `T: A + 'a`：`T` 类型必须实现 `A`，并且在 `T` 中的**所有**引用都必须比 `'a` 活得更长。
 
 ```rust
 struct Ref<'a, T: 'a>(&'a T);
