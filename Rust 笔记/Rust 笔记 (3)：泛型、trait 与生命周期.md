@@ -835,9 +835,9 @@ fn main() {
 let dog = Animal::name();
 ```
 
-因为 `Animal::name` 没有 `self` 参数，可能会有其它类型也实现了 `Animal`，因此编译器无法计算出所需的是哪一个实现。
+因为 `Animal::name` 没有 `self` 参数，可能会有其它类型也实现了 `Animal`，因此编译器无法知道是哪个实现。
 
-为了消歧义需要使用**完全限定语法**，来指定 `Dog` 上 `Animal` trait 实现中的 `name` 函数。：
+为了消歧义需要使用**完全限定语法**，来指定 `Dog` 上 `Animal` 实现中的 `name` 函数。：
 
 ```rust
 let dog = <Dog as Animal>::name();
@@ -891,9 +891,9 @@ fn main() {
 
 这样做的缺陷是，因为 `Wrap` 是一个新类型，所以原本被封装类型的方法都不能使用，但也可以隐藏内部细节，只向外提供 API。
 
-### Turbofish
+### turbofish
 
-如 `::<T, U>` 的形式为 **Turbofish** 语法，通常在以下情况使用：
+如 `::<T, U>` 的形式为 **turbofish** 语法，通常在以下情况使用：
 
 -   明确指定泛型类型时；
 -   明确指定 trait 的关联类型时；
