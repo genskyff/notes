@@ -637,7 +637,7 @@ impl Iterator<usize> for Counter {
 }
 ```
 
-当 trait 有泛型参数时，就可以通过改变泛型参数的具体类型来多次实现这个 trait，因为 `Counter` 还可以是其他类型。
+当 trait 有泛型参数时，就可以通过改变泛型参数的具体类型来多次实现这个 trait，因为 `Counter` 还可以是其它类型。
 
 ```rust
 impl Iterator<i64> for Counter {
