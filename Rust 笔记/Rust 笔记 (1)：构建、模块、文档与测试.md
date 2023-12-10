@@ -1234,6 +1234,7 @@ members = ["foo", "foo-*", "bar/*"]
 # Cargo.toml
 [workspace]
 members = ["frontend"]
+resolver = "2"
 
 [workspace.package]
 authors = ["someone"]
