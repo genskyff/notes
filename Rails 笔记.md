@@ -5,10 +5,10 @@
 rails new blog
 
 # 启动项目
-rails server
+rails s
 
 # 生成控制器
-rails generate controller Articles index
+rails g controller Articles index
 
 # 删除控制器（但不删除路由）
 rails destroy controller Articles
@@ -17,16 +17,16 @@ rails destroy controller Articles
 rails destroy controller Articles index
 
 # 生成模型
-rails generate model Article title:string body:text
+rails g model Article title:string body:text
 
 # 删除模型
 rails destroy model Article
 
 # 生成脚手架
-rails generate scaffold Article title:string body:text
+rails g scaffold Article title:string body:text
 
 # 生成集成测试
-rails generate integration_test site_layout
+rails g integration_test site_layout
 
 # 应用迁移
 rails db:migrate
@@ -38,10 +38,10 @@ rails db:rollback
 rails db:migrate VERSION=0
 
 # 打开控制台
-rails console
+rails c
 
 # 以沙箱打开控制台（不会对现有数据产生影响）
-rails console --sandbox
+rails c --sandbox
 
 # 查看路由
 rails routes
