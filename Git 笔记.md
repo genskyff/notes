@@ -379,8 +379,10 @@ git add <new>
 `log` 命令用来查看提交历史：
 
 ```shell
-git log --oneline --abbrev-commit --graph
+git log <branch> --oneline --abbrev-commit --graph
 ```
+
+-   可选指定分支的历史；
 
 -   `--oneline` 选项表示以一行的形式简洁输出结果；
 
@@ -1000,7 +1002,7 @@ git stash clear
 ### 使用 cherry-pick
 
 ```shell
-git cherry-pick <commit>
+git cherry-pick <commit>[..<end_commit>]
 ```
 
 指定的 `commit id` 对应的更改就会应用到当前分支，并作为一个新的提交，这个新的提交是专门为当前分支创建的，与原始分支中的提交是分开的。
@@ -1016,7 +1018,7 @@ git cherry-pick <commit>
 ### 注意事项
 
 -   解决冲突：和合并操作一样，`cherry-pick` 也可能导致冲突；
--   依赖关系：若一个提交依赖于其它提交，则单独挑选该提交可能会导致问题，需要确保所有依赖都已经存在于目标分支中。
+-   依赖关系：若一个提交依赖于其它提交，则单独挑选该提交可能会导致问题，需要将依赖的提交都挑选出来。
 
 ## 标识前缀
 
