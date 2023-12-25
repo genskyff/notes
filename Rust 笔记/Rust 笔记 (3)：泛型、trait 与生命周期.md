@@ -346,10 +346,104 @@ impl MyTrait for Foo {
 
 ### 为引用实现
 
-为类型实现了 trait 并不意味着同时为该类型的不可变和可变引用也实现了该 trait。
+为类型 `T` 实现了 trait 并不意味着 `&T` 和 `&mut T` 也实现了该 trait。
 
 ```rust
+trait MyTrait {
+    fn get_name(self);
+}
 
+#[derive(Clone)]
+struct User {
+    name: String,
+}
+
+impl MyTrait for User {
+    fn get_name(self) {
+        println!("name: {}", self.name);
+    }
+}
+
+fn main() {
+    let u = User {
+        name: String::from("Alice"),
+    };
+    let u_ref = &u.clone();
+
+    u.get_name();
+    u_ref.get_name();  // 错误
+}
+```
+
+因为方法期望接收一个 `self` 类型，但实际上是 `&self`，因此类型不匹配。同时为不可变和可变引用实现，这样就可以在 `&self` 和 `&mut self` 上调用该 trait 的方法了。
+
+```rust
+impl MyTrait for &User {
+    fn get_name(self) {
+        println!("name from ref: {}", self.name);
+    }
+}
+
+impl MyTrait for &mut User {
+    fn get_name(self) {
+        println!("name from ref mut: {}", self.name);
+    }
+}
+```
+
+由于 Rust 的自动引用和解引用功能，当 trait 中方法接收的参数为 `&self` 时，即使没有为 `&T` 实现，也可以在 `&T` 上使用 trait 中的方法，但 `&mut T` 则不行。
+
+```rust
+trait MyTrait {
+    fn get_name(&self);
+}
+
+struct User {
+    name: String,
+}
+
+impl MyTrait for User {
+    fn get_name(&self) {
+        println!("name: {}", self.name);
+    }
+}
+
+fn main() {
+    let u = User {
+        name: String::from("Alice"),
+    };
+    let u_ref = &u;
+
+    u.get_name();
+    u_ref.get_name();  // 可以调用
+}
+```
+
+由于自动引用和解引用的机制，因此实际上等于调用：
+
+```rust
+(&u).get_name();
+u_ref.get_name();
+```
+
+这种情况下为 `&T` 也实现该 trait，则方法相当于期望接收一个 `&&T`：
+
+```rust
+impl MyTrait for &User {
+    fn get_name(&self) {
+        println!("name from ref: {}", self.name);
+    }
+}
+
+fn main() {
+    let u = User {
+        name: String::from("Alice"),
+    };
+    let u_ref = &u;
+
+    u.get_name();
+    (&u_ref).get_name();
+}
 ```
 
 ### 孤儿规则
