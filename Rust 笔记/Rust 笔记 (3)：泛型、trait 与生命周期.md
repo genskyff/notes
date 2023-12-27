@@ -1496,31 +1496,29 @@ static mut MUT_NUM: i32 = 20;
 
 ### 匿名生命周期
 
-如有一个封装了 `&str` 的结构体：
+在**函数或实现**中使用生命周期参数时，若能够被编译器自动推断，则无需显式标注，这些生命周期会被自动赋予匿名生命周期 `'_`。匿名生命周期可以简化代码，避免大量的显式标注，提高可读性。
+
+如对 `Wrap` 的实现进行显式标注：
 
 ```rust
-struct StrWrap<'a>(&'a str);
+struct Wrap<'a>(&'a str);
 
-impl<'a> StrWrap<'a> {
-    fn new(s: &'a str) -> StrWrap<'a> {
-        StrWrap(s)
+impl<'a> Wrap<'a> {
+    fn new(s: &'a str) -> Wrap<'a> {
+        Wrap(s)
     }
 }
 ```
 
-这里有很多的 `'a`，为了消除这些噪音，可以使用匿名生命周期 `'_`：
+实现中的 `'a` 是能够被自动推断的，使用 `'_` 表示在此处使用省略的生命周期，并明确 `Wrap` 包含一个引用。
 
 ```rust
-struct StrWrap<'a>(&'a str);
-
-impl StrWrap<'_> {
-    fn new(s: &str) -> StrWrap<'_> {
-        StrWrap(s)
+impl Wrap<'_> {
+    fn new(s: &str) -> Wrap<'_> {
+        Wrap(s)
     }
 }
 ```
-
-`'_` 表示在此处使用省略的生命周期，并明确 `StrWrap` 包含一个引用，而无需通过标注所有的生命周期来知道。
 
 `'_` 的具体含义取决于上下文，而对于每个`'_`，会产生一个新的生命周期：
 
