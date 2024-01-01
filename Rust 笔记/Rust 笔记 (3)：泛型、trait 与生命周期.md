@@ -711,17 +711,33 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
 只有对象安全的 trait 才可以组成 trait 对象，当 trait 中的函数或方法满足以下条件时才是对象安全的：
 
 -   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型；
+
+    ```rust
+    // 错误，Clone 返回的是 Self
+    fn foo(v: Box<dyn Clone>) {}
+    ```
+
 -   不能含有泛型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定；
+
+    ```rust
+    trait Foo {
+        fn foo<T>(&self) -> T;
+    }
+
+    // 错误，trait 方法含有泛型参数
+    fn bar(v: Box<dyn Foo>) {}
+    ```
+
 -   不能拥有关联函数：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接受 `&self`。
 
-下列代码编译会报错，因为 `Clone` 返回的是 `Self`。
-
-```rust
-// 错误
-struct Person {
-    student: Box<dyn Clone>,
-}
-```
+    ```rust
+    trait Foo {
+        fn foo();
+    }
+    
+    // 错误，trait 含有关联函数
+    fn bar(v: Box<dyn Foo>) {}
+    ```
 
 ## 高级 trait
 
@@ -1507,21 +1523,21 @@ impl<'a> User<'a> {
 
 ### 静态生命周期
 
-静态生命周期 `'static` 表示在**整个程序运行期间**都有效。由于字符串字面值被直接储存在二进制文件的只读区块中，因此所有的字符串字面值都隐式地具有 `'static` 生命周期。
+静态生命周期 `'static` 表示在**整个程序运行期间**都有效。如字符串字面值被直接储存在二进制文件的只读区块中，因此所有的字符串字面值都隐式地具有 `'static` 生命周期。
 
 ```rust
-let r;
+let outer;
 {
-    let s = "foo";
-    r = s;
-    r = &s; // 错误
+    let inner = "foo";
+    outer = inner;
+    outer = &inner; // 错误
 }
-println!("{r}");
+println!("{outer}");
 ```
 
-`s` 虽然在离开作用域后会失效，但其指向的是字符串字面值，因此其类型为 `'static str`，该值赋给 `r` 后其内存并不会一起被释放，因此 `r` 的值一定有效。
+`inner` 虽然在离开作用域后会失效，但其指向的是字符串字面值，因此其类型为 `'static str`，该值赋给 `outer` 后其内存并不会一起被释放，因此 `outer` 的值一定有效。
 
-但若获得的是一个 `&s`，那么实际上是一个 `s` 本身的引用，即 `r` 会被推断为 `&&str` 类型，该引用会在作用域外失效（即使该引用所指向的字符串依旧有效），因此不能通过编译。
+但若获得的是一个 `&inner`，那么实际上是一个 `inner` 本身的引用，即 `outer` 会被推断为 `&&str` 类型，该引用会在作用域外失效（即使该引用所指向的字符串依旧有效），因此不能通过编译。
 
 使用 `static` 创建的变量也同样具有 `'static` 生命周期：
 
@@ -1532,9 +1548,137 @@ static mut MUT_NUM: i32 = 20;
 
 >   `static` 变量可以声明为 `mut`，但只能在 `unsafe` 块中进行访问和修改。
 
+---
+
+要理解 `'static` 生命周期，需要区分类型和实例的生命周期。`'static` 生命周期通常关联于引用或借用，但也可以适用于类型。
+
+-   **类型的 `'static` 资格**：当类型没有包含任何非 `'static` 引用字段时，该类型**能夠**拥有 `'static` 生命周期，但不代表类型的所有实例都具有 `'static` 生命周期；
+-   **实例的生命周期**：类型的具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域。
+-   **`'static` 生命周期的实例**：要让具有 `'static` 资格的类型的实例拥有 `'static` 生命周期，需要在一个静态上下文中创建它，如声明为全局静态变量。
+
+对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn T + 'static>`是等价的。
+
+```rust
+struct Res<'a> {
+    val: &'a str,
+}
+
+impl<'a> Res<'a> {
+    fn new(val: &'a str) -> Self {
+        Res { val }
+    }
+}
+
+struct Wrap<'a> {
+    name: &'a str,
+    callback: Option<Box<dyn Fn(&str) -> Res>>,
+}
+
+impl<'a> Wrap<'a> {
+    fn new(name: &'a str) -> Self {
+        Self {
+            name,
+            callback: None,
+        }
+    }
+
+    // 错误
+    fn set(&mut self, f: impl Fn(&str) -> Res) {
+        self.callback = Some(Box::new(f));
+    }
+}
+
+fn main() {
+    let mut wrap = Wrap::new("foo");
+
+    wrap.set(|val| {
+        println!("callback: {val}");
+        Res::new(val)
+    });
+
+    if let Some(f) = wrap.callback {
+        println!("res: {}", f(wrap.name).val);
+    }
+}
+```
+
+`set` 方法有错误，是因为在 `Wrap` 的 `callback` 中，有一个 trait 对象，因此实际上是一个具有 `'static` 生命周期的闭包。
+
+```rust
+// 等同于
+struct Wrap<'a> {
+    name: &'a str,
+    callback: Option<Box<dyn Fn(&str) -> Res + 'static>>,
+}
+```
+
+闭包的特殊之处是可以捕获环境的值，而一个 `'static` 闭包捕获的值不一定具有 `'static` 生命周期。
+
+```rust
+// 无捕获值，依然是 'static 闭包，正确
+w.set(|val| {
+    println!("callback: {val}");
+    Res::new(val)
+});
+
+// 有捕获值，local 不是 'static，那么闭包也不再是 'static，错误
+let local = String::from("local");
+
+w.set(|val| {
+    println!("callback: {val}");
+    println!("local: {local}");
+    Res::new(val)
+});
+
+// 将捕获值 move 进闭包中，依然是 'static 闭包，正确
+let local = String::from("local");
+
+w.set(move |val| {
+    println!("callback: {val}");
+    println!("local: {local}");
+    Res::new(val)
+});
+```
+
+若必须捕获环境值的引用，那么只能给闭包标注一个新的生命周期：
+
+```rust
+struct Wrap<'a, 'b> {
+    name: &'a str,
+    callback: Option<Box<dyn Fn(&str) -> Res + 'b>>,
+}
+
+impl<'a, 'b> Wrap<'a, 'b> {
+    fn new(name: &'a str) -> Self {
+        Self {
+            name,
+            callback: None,
+        }
+    }
+
+    fn set(&mut self, f: impl Fn(&str) -> Res + 'b) {
+        self.callback = Some(Box::new(f));
+    }
+}
+```
+
+这样一来就复杂了许多，且 `local` 必须放在 `wrap` 前面：
+
+```rust
+// 正确
+let local = String::from("local");
+let mut wrap = Wrap::new("foo");
+
+// 错误
+let mut wrap = Wrap::new("foo");
+let local = String::from("local");
+```
+
+这是因为在最后进行析构时，变量是按照创建的逆序进行析构的。如果将 `local` 后面，那么 `local` 会先进行析构，此时 `wrap` 依旧持有 `local` 的引用，在进行 `drop` 时可能会有操作其持有数据的可能性，那么引用就失效了。
+
 ### 匿名生命周期
 
-在**函数或实现**中使用生命周期参数时，若能够被编译器自动推断，则无需显式标注，这些生命周期会被自动赋予匿名生命周期 `'_`。匿名生命周期可以简化代码，避免大量的显式标注，提高可读性。
+在**函数或实现**中使用生命周期参数时，若能够被编译器自动推断，则无需显式标注，这些生命周期会被自动赋予匿名生命周期 `'_`，实际上这也是一种生命周期省略。匿名生命周期可以简化代码，避免大量的显式标注，提高可读性。
 
 如对 `Wrap` 的实现进行显式标注：
 
@@ -1767,7 +1911,7 @@ fn main() {
 
 泛型参数 `T: U` 的含义：
 
--   `T` 是 `U` 的子类型，`U` 是 `T` 的超类型；
+-   `T` 是 `U` 的子类型，`U` 是 `T` 的父类型；
 -   任何使用 `U` 的地方，都能够使用 `T`。
 
 对于生命周期这种泛型，`'a: 'b` 的含义：
@@ -1783,21 +1927,46 @@ fn main() {
 
 ```rust
 // 'a 被替换成了 'static
-let subtype: &(for<'a> fn(&'a str) -> &'a str) = &((|x| x) as fn(&_) -> &_);
-let supertype: &(fn(&'static str) -> &'static str) = subtype;
+let sub: &(for<'a> fn(&'a str) -> &'a str) = &((|x| x) as fn(&_) -> &_);
+let super: &(fn(&'static str) -> &'static str) = sub;
 
 // trait 对象也是类似的
-let subtype: &(dyn for<'a> Fn(&'a str) -> &'a str) = &|x| x;
-let supertype: &(dyn Fn(&'static str) -> &'static str) = subtype;
+let sub: &(dyn for<'a> Fn(&'a str) -> &'a str) = &|x| x;
+let super: &(dyn Fn(&'static str) -> &'static str) = sub;
 
 // 使用高阶生命周期来代替另一个
-let subtype: &(for<'a, 'b> fn(&'a str, &'b str)) = &((|x, y| {}) as fn(&_, &_));
-let supertype: &for<'c> fn(&'c str, &'c str) = subtype;
+let sub: &(for<'a, 'b> fn(&'a str, &'b str)) = &((|x, y| {}) as fn(&_, &_));
+let super: &for<'c> fn(&'c str, &'c str) = sub;
 ```
 
 ### 型变
 
+`'static` 是 `'a` 的子类型暗示了 `&'static T` 是 `&'a T` 的子类型，这实际上是一种型变。
 
+```rust
+fn assign<T>(input: &mut T, val: T) {
+    *input = val;
+}
+
+fn main() {
+    let mut foo = "foo"; // 'static
+    {
+        let bar = String::from("bar"); // 'a
+        assign(&mut foo, &bar);
+    }
+    println!("{foo}"); // 错误
+}
+```
+
+`assign` 用于将 `foo` 的值改为 `bar`，这会导致 UAF 错误。这里 `input` 实际接收的类型为 `&'static mut T`，`val` 为 `&'a str`
+
+型变是泛型相对其参数具有的属性。泛型在它的某个参数上的*型变*是描述该参数的子类型化去如何影响此泛型类型的子类型化。
+
+-   如果 `T` 是 `U` 的一个子类型意味着 `F<T>` 是 `F<U>` 的一个子类型（即子类型化“通过(passes through)”），则 `F<T>` 在 `T` 上是*协变的(covariant)*。
+-   如果 `T` 是 `U` 的一个子类型意味着 `F<U>` 是 `F<T>` 的一个子类型，则 `F<T>` 在 `T` 上是*逆变的(contravariant)*。
+-   其他情况下（即不能由参数类型的子类型化关系推导出此泛型的型变关系），`F<T>` 在 `T` 上是的*不变的(invariant)*。
+
+类型的型变关系由下表中的规则自动确定：
 
 ## 深入生命周期
 
