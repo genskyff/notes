@@ -739,7 +739,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
     fn bar(v: Box<dyn Foo>) {}
     ```
 
-## 高级 trait
+## trait 进阶
 
 ### 关联类型
 
@@ -1519,6 +1519,22 @@ impl<'a> User<'a> {
 }
 ```
 
+实现中的生命周期根据标注的位置不同，可以相互独立：
+
+```rust
+impl<'a> User {
+    fn get_name(&'a self) -> &'a str {
+        &self.name
+    }
+
+    fn get_name2<'b>(&'b self) -> &'b str {
+        &self.name
+    }
+}
+```
+
+`get_name` 方法的生命周期 `'a` 是与整个 `User` 实例的生命周期相关联的，而 `get_name2` 方法的生命周期 `'b` 只与特定方法调用的上下文相关联。
+
 ## 特殊生命周期
 
 ### 静态生命周期
@@ -2120,4 +2136,52 @@ fn borrow_forever<'b>(&'b mut self) -> &'a str {
 ```
 
 ### 高阶 trait 约束
+
+要描述闭包 trait 约束上的生命周期就有些复杂，如下对 `F` 的约束就无法通过添加泛型参数来标注：
+
+```rust
+struct Closure<F> {
+    args: (String, String),
+    func: F,
+}
+
+impl<F> Closure<F>
+// where F: Fn<?>(&? str, &? str) -> &? str
+where F: Fn(&str, &str) -> &str,
+{
+    fn call(&self) -> &str {
+        (self.func)(&self.args.0, &self.args.1)
+    }
+}
+```
+
+`Fn` 是一个 trait，无法使用 `<'a>` 来标注生命周期参数，且对于闭包而言，每一个闭包都是一个单独的类型，传入闭包的生命周期是不固定的。
+
+要描述这样的生命周期，需要用到高阶 trait 约束（Higher-Ranked Trait Bound，HRTB），HRTB 主要用在接收函数指针或闭包的函数中。
+
+```rust
+for<'a> F: Fn(&'a str, &'a str) -> &'a str
+// 或
+F: for<'a> Fn(&'a str, &'a str) -> &'a str
+```
+
+`for<'a>` 表示 `call` 可以接受**任何**生命周期 `'a` 的引用，即无论 `self` 中引用的生命周期是什么，`call` 都能正确处理。
+
+```rust
+fn get_fn1(f: for<'a> fn(&'a str, &'a str) -> &'a str) {
+    todo!()
+}
+
+fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
+    todo!()
+}
+```
+
+-   `get_fn1` 使用 HRTB，`f` 可以接受**任何**生命周期 `'a` 的引用，这使其更加灵活，处理不同长度引用的函数指针或闭包都可以传递给 `get_fn1`；
+-   `get_fn2` 在函数本身上声明了生命周期参数 `'a`。这意味着传递给 `get_fn2` 的函数必须能够接受**特定**生命周期 `'a` 的引用。这里的 `'a` 是由 `get_fn2` 的调用者确定的，因此所有涉及的引用都必须具有相同的生命周期。
+
+对于包含生命周期的闭包对象，也需要使用 HRTB：
+```rust
+let clo: &dyn for<'a> Fn(&'a str) -> &'a str = &|s: &str| s;
+```
 
