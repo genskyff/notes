@@ -1943,30 +1943,90 @@ let super: &for<'c> fn(&'c str, &'c str) = sub;
 
 `'static` 是 `'a` 的子类型暗示了 `&'static T` 是 `&'a T` 的子类型，这实际上是一种型变。
 
+**型变**是通过泛型参数来定义引用之间子类型关系的概念，分为三种：
+
+-   若 `T` 是 `U` 的子类型，且 `F<T>` 是 `F<U>` 子类型，则称 `F<T>` 在 `T` 上是**协变的**；
+-   若 `T` 是 `U` 的子类型，且 `F<U>` 是 `F<T>` 的子类型，则称 `F<T>` 在 `T` 上是**逆变的**；
+-   若不能由参数类型的子类型化关系推断出泛型的型变关系，则称 `F<T>` 在 `T` 上是**不变的**。
+
+类型的型变关系由下表中的规则自动确定：
+
+| 类型                         | 在 `'a` 上的型变 | 在 `T` 上的型变 | 在 `U` 上的型变 |
+| ---------------------------- | ---------------- | --------------- | --------------- |
+| `&'a T`                      | 协变             | 协变            |                 |
+| `&'a mut T`                  | 协变             | 不变            |                 |
+| `dyn T + 'a`                 | 协变             | 不变            |                 |
+| `*const T`                   |                  | 协变            |                 |
+| `*mut T`                     |                  | 不变            |                 |
+| `[T]` 和 `[T; n]`            |                  | 协变            |                 |
+| `fn(T) -> U`                 |                  | 逆变            | 协变            |
+| `Box<T>` 和 `Vec<T>`         |                  | 协变            |                 |
+| `UnsafeCell<T>` 和 `Cell<T>` |                  | 不变            |                 |
+| `PhantomData<T>`             |                  | 协变            |                 |
+
+下面这段代码不能编译：
+
 ```rust
 fn assign<T>(input: &mut T, val: T) {
     *input = val;
 }
 
 fn main() {
-    let mut foo = "foo"; // 'static
+    let mut outer = "foo";               // 'static
     {
-        let bar = String::from("bar"); // 'a
-        assign(&mut foo, &bar);
+        let inner = String::from("bar"); // 'a
+        assign(&mut outer, &inner);
     }
-    println!("{foo}"); // 错误
+    println!("{outer}"); // 错误
 }
 ```
 
-`assign` 用于将 `foo` 的值改为 `bar`，这会导致 UAF 错误。这里 `input` 实际接收的类型为 `&'static mut T`，`val` 为 `&'a str`
+将值赋给同一类型是可以的，因此 `assign` 的实现没有错误，但问题在于外部作用域使用了内部作用域创建的值，这会导致 UAF 错误。深入分析可以发现传递了两个参数，分别是 `&mut &'static str` 和 `&'a str`，由于 `&mut T` 在 `T` 上是不变的，所以不能对第一个参数进行子类型化，因此 `T` 必须是 `&'static str`。
 
-型变是泛型相对其参数具有的属性。泛型在它的某个参数上的*型变*是描述该参数的子类型化去如何影响此泛型类型的子类型化。
+Rust 中的逆变非常少，仅用于函数参数，对于 `fn(T) -> U`：
 
--   如果 `T` 是 `U` 的一个子类型意味着 `F<T>` 是 `F<U>` 的一个子类型（即子类型化“通过(passes through)”），则 `F<T>` 在 `T` 上是*协变的(covariant)*。
--   如果 `T` 是 `U` 的一个子类型意味着 `F<U>` 是 `F<T>` 的一个子类型，则 `F<T>` 在 `T` 上是*逆变的(contravariant)*。
--   其他情况下（即不能由参数类型的子类型化关系推导出此泛型的型变关系），`F<T>` 在 `T` 上是的*不变的(invariant)*。
+```rust
+fn store_get_str<'a>(s: &'a str) -> &'a str;
+fn store_get_static(s: &'static str) -> &'static str;
+```
 
-类型的型变关系由下表中的规则自动确定：
+对参数类型 `T`，`&'static str` 是 `&'a str` 的子类型，但对于函数来说，一个接收 `&'static str` 作为参数的函数，也可以接收 `&'a str` 作为参数，因此函数在 `T` 上是一个逆变，但是对返回值类型 `U`，一个返回 `&'a str` 函数也可以返回 `&'static str`，因此函数在 `U` 上是一个协变。
+
+---
+
+结构体、枚举、联合体和元组类型的型变关系是通过其字段类型的型变关系来决定的，如结构体 `Foo` 有一个泛型参数 `T`，且在字段 `a` 中使用了 `T`，那么 `Foo` 对 `T` 的型变与 `a` 对 `T` 的型变完全相同。
+
+然而当 `T` 被多个字段使用时：
+
+-   若 `T` 所有使用的位置都是协变的，则 `Foo` 在 `T` 上是协变的；
+-   若 `T` 所有使用的位置都是逆变的，则 `Foo` 在 `T` 上是逆变的；
+-   否则，`Foo` 在 `T` 上是不变的。
+
+```rust
+use std::cell::Cell;
+
+struct Foo<'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mix> {
+    a: &'a A,           // 对 'a 和 A 是协变的
+    b: &'b mut B,       // 对 'b 是协变的，对 B 是不变的
+
+    c: *const C,        // 对 C 是协变的
+    d: *mut D,          // 对 D 是不变的
+
+    e: E,               // 对 E 是协变的
+    f: Vec<F>,          // 对 F 是协变的
+    g: Cell<G>,         // 对 G 是不变的
+
+    h1: H,              // 本来对 H 是协变的
+    h2: Cell<H>,        // 最终对 H 是不变的
+
+    i: fn(In) -> Out,   // 对 In 是逆变的，对 Out 是协变的
+
+    j1: fn(Mix),        // 本来对 Mixed 是逆变的
+    j2: Mix,            // 最终对 Mixed 是不变的
+}
+```
+
+>   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Rust 参考手册](https://minstrel1977.gitee.io/rust-reference/subtyping.html)。
 
 ## 深入生命周期
 
@@ -2011,7 +2071,7 @@ fn ret_len(s: &str) -> usize {
 fn ret_str<'a>() -> &'a str;
 ```
 
-对于 `ret_static_str`，`s` 是一个字符串字面值，因此具有 `'static` 生命周期，因此可以手动标注 `'static` 或者 `'a`。
+对于 `ret_static_str`，`s` 是一个字符串字面值，因此具有 `'static` 生命周期，由于函数在返回值上是协变的，因此可以手动标注 `'static` 或者 `'a`。
 
 ```rust
 fn ret_static_str() -> &'static str;
@@ -2019,12 +2079,45 @@ fn ret_static_str() -> &'static str;
 fn ret_static_str<'a>() -> &'a str;
 ```
 
-
-
-
-
 ### 永久借用
 
+```rust
+struct User<'a> {
+    name: &'a str,
+}
 
+impl<'a> User<'a> {
+    fn borrow(&'a self) -> &'a str {
+        self.name
+    }
 
-### 高阶生命周期
+    fn borrow_forever(&'a mut self) -> &'a str {
+        self.name
+    }
+}
+
+fn main() {
+    let mut u = User { name: "foo" };
+    u.borrow_forever();
+    u.borrow(); // 错误
+}
+```
+
+`borrow` 和 `borrow_forever` 最终都只是进行了不可变借用，根据借用规则，不可变借用可以同时存在，但是这里却报错。即使把 `borrow_forever` 看作可变借用，但是借用只会持续到最后一次使用为止，那么 `borrow` 应该也能进行不可变借用，但实际上这时 `u` 依然被可变借用了。
+
+这是因为 `borrow_forever` 发生了**永久借用**。当看到像 `&'a mut T<'a>` 这种声明，就代表是一个永久借用，因为这代表永远借用自己：被借用的对象生命周期为 `'a`，而借用也同样为 `'a`。因此该可变借用在 `T<'a>` 的生命周期中一直存在，那么根据借用规则，存在一个可变借用，自然就不再允许其它借用了。
+
+`borrow` 实际上接收 `&'a User<'a>`，而 `&'a` 对 `'a` 是协变的， `User<'a>` 对 `'a` 是也协变的，因此先变成 `&'a User<'b>`，最后对 `'a` 再变成 `&'b User<'b>`，这样就变成了临时借用。
+
+`borrow_forever` 实际上接收 `&'a mut User<'a>`，虽然 `&'a` 对 `'a` 是协变的，但是对 `User<'a>` 是不变的，因此生命周期没有缩短，最终变成了永久借用。
+
+要避免这种情况，只需要手动标注 `&'b mut T`：
+
+```rust
+fn borrow_forever<'b>(&'b mut self) -> &'a str {
+    self.name
+}
+```
+
+### 高阶 trait 约束
+
