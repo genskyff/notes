@@ -1,6 +1,6 @@
 # 1 类型转换
 
-## 原生类型转换
+## 基本类型转换
 
 
 
@@ -138,85 +138,19 @@ m.iter_mut().for_each(|x| *x += 1);
 
 ## 迭代适配器
 
-`Iterator` trait 中定义了另一类方法，称为**迭代器适配器**，可以将当前迭代器转换为不同类型的迭代器。可以链式调用多个迭代器适配器，但因为所有的迭代器都是惰性的，需要调用一个消耗适配器方法以获取迭代器适配器调用的结果。
+`Iterator` trait 中定义了另一类方法，称为**迭代适配器**，可以将当前迭代器转换为不同类型的迭代器。可以链式调用多个迭代器适配器，但因为所有的迭代器都是惰性的，需要调用一个消耗适配器方法以获取迭代器适配器调用的结果。
 
-`zip` 将迭代器和另一个迭代器组合为一个新的迭代器，其中每个元素都是一个元组，元组的第一个项来自第一个迭代器，第二个项来自第二个迭代器。
+`zip` 将迭代器和另一个迭代器组合为一个新的迭代器
 
-```rust
-let v1 = vec![1, 2, 3];
-let v2 = vec![2, 3, 4];
-let v3: Vec<_> = v1.iter().zip(v2.iter()).collect();
-assert_eq!(vec![(&1, &2), (&2, &3), (&3, &4)], v3);
-```
+`map` 是一个典型的迭代器适配器，它接受一个闭包作为参数，使用闭包来调用每个元素以生成新的迭代器。但是由于没有调用任何消耗适配器，因此它实际什么也不做，因此会得到一个警告。
 
----
+可以调用 `collect` 方法
 
-`map` 是一个典型的迭代器适配器，它接受一个闭包作为参数，使用闭包来调用每个元素以生成新的迭代器。
+`filter` 
 
-```rust
-let v = vec![1, 2, 3, 4, 5];
-let v_add_one = v.iter().map(|x| x + 1);  // 得到一个警告
-```
+`filter_map` 
 
-这里的闭包创建了一个新的迭代器，对 vector 中的每个元素都加一，但是由于没有调用任何消耗适配器，因此它实际什么也不做，因此会得到一个警告。
-
-可以调用 `collect` 方法，这个方法会消耗迭代器并将结果打包到一个集合中：
-
-```rust
-let v_add_one: Vec<_> = v.iter().map(|x| x + 1).collect();
-```
-
-由于 `collect` 方法可以打包为任意类型，因此需要显式标注集合的类型，但集合里面的元素类型可以推断出来。
-
----
-
-`filter` 接受一个返回值为 `bool` 的闭包作为参数，获取迭代器的每个元素作用于闭包。若闭包返回 `true`，则该元素将会包含在 `filter` 创建的新迭代器中，否则从迭代器中过滤掉该元素。
-
-```rust
-let v = 1..100;
-let v_filter: Vec<_> = v.filter(|x| x % 3 == 0).collect();
-```
-
-`v` 是一个 1 到 99 的元素序列，同样也是一个迭代器，类型是 `Range<i32>`，`filter` 获取迭代器的每一个元素，然后将为 3 的倍数的元素放入新的迭代器。
-
-`filter_map` 接受一个返回值为 `Option<T>` 的闭包，并过滤掉值为 `None` 的元素。这可以同时过滤和产生新的迭代器，可使 `filter` 和 `map` 的链更加简洁。
-
-```rust
-let v = ["1", "2", "three", "4", "zero"];
-
-// 两个作用相同
-let result: Vec<_> = v.iter()
-    .filter_map(|e| e.parse::<i32>().ok())
-    .collect();
-let result2: Vec<_> = v.iter()
-    .map(|e| e.parse::<i32>())
-    .filter(|e| e.is_ok())
-    .map(|e| e.unwrap())
-    .collect();
-
-assert_eq!(result, vec![1, 2, 4]);
-assert_eq!(result, result2);
-```
-
----
-
-迭代器方法 `flatten` 和 `flat_map` 可以创建一个扁平化嵌套结构的迭代器，但后者还会像 `map` 一样在创建时对元素进行额外的操作。
-
-```rust
-let words = ["alpha", "beta", "gamma"];
-
-// 两个作用相同
-let merged: String = words.iter()
-    .flat_map(|s| s.chars())
-    .collect();
-let merged2: String = words.iter()
-    .map(|s| s.chars())
-    .flatten()
-    .collect();
-
-assert_eq!(merged, "alphabetagamma");
-assert_eq!(merged, merged2);
-```
+迭代器方法 `flatten` 和 `flat_map` 
 
 此外还有比较常用的 `take`、`take_while`、`skip` 等迭代器适配器。
 
