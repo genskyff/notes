@@ -22,30 +22,26 @@
 
 # 2 迭代器
 
-## 用迭代器处理元素序列
+**迭代器**可以对**元素序列**进行处理，能够遍历序列元素，且无需索引来记录序列位置。
 
-**迭代器**可以对元素序列进行处理，它负责遍历序列中的每一项并决定何时结束的逻辑。当使用迭代器时，无需重新实现这些逻辑。
-
-迭代器是**惰性的**，即在调用方法使用迭代器之前都不会有效果：
+迭代器是**惰性的**，在调用消耗迭代器的方法之前，所有生成迭代器的方法都不会有效果：
 
 ```rust
 let v = vec![1, 2, 3, 4, 5];
-let v_iter = v.iter();        // v_iter 在实际调用之上的方法前没有任何效果
+let v_iter = v.iter();  // 在调用消耗适配器的方法前没有任何效果
 ```
 
-创建迭代器后，可以使用用多种方式来利用，如使用 for 循环来遍历：
+迭代器可通过如 for 循环来遍历：
 
 ```rust
-for i in v_iter {
-    println!("{}", i);
+for e in v_iter {
+    println!("{e}");
 }
 ```
 
-当不使用时迭代器来进行遍历时，可能会需要一个索引来记录位置，还需要担心可能超出索引的使用，但使用迭代器则没有这种顾虑，提高了灵活性。
-
 ## Iterator trait 
 
-迭代器都实现了标准库中的 `Iterator` trait：
+迭代器都实现了标准库中的 `Iterator`：
 
 ```rust
 pub trait Iterator {
@@ -57,36 +53,32 @@ pub trait Iterator {
 
 `type Item` 和 `Self::Item` 定义了 trait 的**关联类型**，这个 `Item` 类型被用作 `next` 方法的返回值类型，即 `Item` 类型是迭代器返回元素的类型。
 
-`next` 是 `Iterator` 实现者被要求定义的唯一方法。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
-
-可以直接调用迭代器的 `next` 方法：
+要实现 `Iterator  `，必须实现 `next`。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
 
 ```rust
-fn iterator_demonstration() {
-    let v = vec![1, 2, 3];
-    let mut v_iter = v1.iter();
-    assert_eq!(v_iter.next(), Some(&1));
-    assert_eq!(v_iter.next(), Some(&2));
-    assert_eq!(v_iter.next(), Some(&3));
-    assert_eq!(v_iter.next(), None);
-}
+let v = vec![1, 2, 3];
+let mut v_iter = v.iter();
+assert_eq!(v_iter.next(), Some(&1));
+assert_eq!(v_iter.next(), Some(&2));
+assert_eq!(v_iter.next(), Some(&3));
+assert_eq!(v_iter.next(), None);
 ```
 
-`iter` 方法生成一个不可变引用的迭代器，因此从 `next` 调用中得到的值是 vector 的不可变引用。而 `v_iter` 需要是可变的，因为在迭代器上调用 `next` 方法改变了迭代器中用来记录序列位置的状态。即**消耗**了迭代器，每一个 `next` 调用都会从迭代器中消耗一个项。
+`iter` 生成一个不可变引用的迭代器，调用 `next` 会从 `Vec<T>` 中得到 `&T`。而 `v_iter` 需要是可变的，因为在迭代器上调用 `next` 方法改变了迭代器内部用来记录序列位置的状态，每一个 `next` 调用都会从迭代器中消耗一个项，即**消耗**了迭代器。
 
->   -   使用 `for` 循环时无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，它在内部不断调用 `next` 获取元素；
->
->   | 简化形式                      | 等价                                 | 访问级别   |
->   | ----------------------------- | ------------------------------------ | ---------- |
->   | `for item in collection`      | `for item in collection.into_iter()` | 拥有所有权 |
->   | `for item in &collection`     | `for item in collection.iter()`      | 只读       |
->   | `for item in &mut collection` | `for item in collection.iter_mut()`  | 读 / 写    |
->
->   -   只有在类型具有集合语义时，才有必要实现 `Iterator` trait，如对单元类型 `()` 实现是无意义的。
+使用 `for` 循环无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，其内部会不断调用 `next` 来获取元素。
+
+| 简化形式             | 等价                        | 访问级别   |
+| -------------------- | --------------------------- | ---------- |
+| `for e in list`      | `for e in list.into_iter()` | 拥有所有权 |
+| `for e in &list`     | `for e in list.iter()`      | 只读       |
+| `for e in &mut list` | `for e in list.iter_mut()`  | 读 / 写    |
+
+>   只有在类型具有集合语义时，才有必要实现 `Iterator`，如对 `i32` 或 `()` 实现是无意义的。
 
 ## IntoIterator trait
 
-若类型实现了 `IntoIterator` trait，就可以为该类型生成迭代器，即可以把该类型转换为迭代器，从而能够调用迭代器方法。
+若类型实现了 `IntoIterator`，就可为该类型生成迭代器，从而能够调用迭代器方法。
 
 生成迭代器的方法有三种：
 
@@ -94,15 +86,15 @@ fn iterator_demonstration() {
 -   `iter`：返回元素序列的不可变引用的迭代器；
 -   `iter_mut`：返回元素序列的可变引用的迭代器。
 
-`Iterator` 和 `IntoIterator` trait 的关系：
+`Iterator` 和 `IntoIterator` 的关系：
 
--   实现了 `Iterator ` trait 的就是迭代器，不需要转换即可使用迭代器方法；
--   实现了 `IntoIterator` trait 的可通过  `into_iter()` 方法转换为迭代器；
--   若类型 `T` 实现了 `Iterator ` trait，那么就不能为 `T` 再实现 `IntoIterator` trait，因为 `T` 本身就是一个迭代器，不需要转换，但可以为 `&T` 或 `&mut T` 实现 `IntoIterator` trait。
+-   实现了 `Iterator ` 的就是迭代器，不需要转换即可使用迭代器方法；
+-   实现了 `IntoIterator` 的可通过  `into_iter()` 方法转换为迭代器；
+-   若类型 `T` 实现了 `Iterator `，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现。
 
 ## 消耗适配器
 
-`Iterator` trait 有一系列由标准库提供默认实现方法，一些方法在其定义中调用了 `next` 方法，这也是要实现 `Iterator` trait 则必须实现 `next` 方法的原因。
+`Iterator` 有一系列由标准库提供默认实现方法，一些方法在其定义中调用了 `next` 方法，这也是要实现 `Iterator` trait 则必须实现 `next` 方法的原因。
 
 这些调用 `next` 的方法被称为**消耗适配器**，因为调用它们会消耗迭代器，即会获取迭代器的所有权。如 `Iterator` trait 的默认实现方法中的 `sum` 方法。此方法获取迭代器的所有权并反复调用 `next` 来遍历迭代器，每遍历一个项，便会将其加到一个总和并在迭代结束时返回总和。
 
