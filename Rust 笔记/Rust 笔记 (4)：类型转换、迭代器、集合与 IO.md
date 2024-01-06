@@ -4,19 +4,19 @@
 
 
 
-## From\<T\> 和 Into\<T\>
+## From 和 Into
+
+### FromStr、ToString 和 Display
 
 
 
-## TryFrom\<T\> 和 TryInto\<T\>
+## TryFrom 和 TryInto
 
 
 
-## AsRef\<T\> 和 AsMut\<T\>
+## AsRef 和 AsMut
 
 
-
-## FromStr、ToString 和 Display
 
 
 
@@ -39,21 +39,21 @@ for e in v_iter {
 }
 ```
 
-## Iterator trait 
+## 迭代器 trait
 
-迭代器都实现了标准库中的 `Iterator`：
+### Iterator
+
+迭代器都实现了标准库中的 `Iterator`，其中 `Item` 定义了该 trait 的**关联类型**，即迭代器返回元素的类型。
 
 ```rust
 pub trait Iterator {
     type Item;
     fn next(&mut self) -> Option<Self::Item>;
-    // --snip--
+    // -- snip --
 }
 ```
 
-`type Item` 和 `Self::Item` 定义了 trait 的**关联类型**，这个 `Item` 类型被用作 `next` 方法的返回值类型，即 `Item` 类型是迭代器返回元素的类型。
-
-要实现 `Iterator  `，必须实现 `next`。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
+要实现 `Iterator  ` 就必须实现 `next`。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
 
 ```rust
 let v = vec![1, 2, 3];
@@ -64,7 +64,7 @@ assert_eq!(v_iter.next(), Some(&3));
 assert_eq!(v_iter.next(), None);
 ```
 
-`iter` 生成一个不可变引用的迭代器，调用 `next` 会从 `Vec<T>` 中得到 `&T`。而 `v_iter` 需要是可变的，因为在迭代器上调用 `next` 方法改变了迭代器内部用来记录序列位置的状态，每一个 `next` 调用都会从迭代器中消耗一个项，即**消耗**了迭代器。
+`iter` 生成一个不可变引用的迭代器，调用 `next` 会从 `Vec<T>` 中得到 `&T`。而 `v_iter` 需要是可变的，因为在迭代器上调用 `next` 方法改变了迭代器内部用来记录序列位置的状态。
 
 使用 `for` 循环无需使 `v_iter` 可变，因为 `for` 循环会获取 `v_iter` 的所有权并使 `v_iter` 可变。`for` 实际上是一个语法糖，其内部会不断调用 `next` 来获取元素。
 
@@ -76,7 +76,7 @@ assert_eq!(v_iter.next(), None);
 
 >   只有在类型具有集合语义时，才有必要实现 `Iterator`，如对 `i32` 或 `()` 实现是无意义的。
 
-## IntoIterator trait
+### IntoIterator
 
 若类型实现了 `IntoIterator`，就可为该类型生成迭代器，从而能够调用迭代器方法。
 
@@ -94,57 +94,48 @@ assert_eq!(v_iter.next(), None);
 
 ## 消耗适配器
 
-`Iterator` 有一系列由标准库提供默认实现方法，一些方法在其定义中调用了 `next` 方法，这也是要实现 `Iterator` trait 则必须实现 `next` 方法的原因。
-
-这些调用 `next` 的方法被称为**消耗适配器**，因为调用它们会消耗迭代器，即会获取迭代器的所有权。如 `Iterator` trait 的默认实现方法中的 `sum` 方法。此方法获取迭代器的所有权并反复调用 `next` 来遍历迭代器，每遍历一个项，便会将其加到一个总和并在迭代结束时返回总和。
+`Iterator` 中有一系列由标准库提供默认实现方法，一些方法在其定义中调用了 `next` 方法，这也是要实现 `Iterator` 就必须实现 `next` 的原因。这些调用 `next` 的方法被称为**消耗适配器**，因为会从迭代器中消耗元素。
 
 ```rust
 let v = vec![1, 2, 3, 4, 5];
 let v_iter = v.iter();
-let total: i32 = v_iter.sum();
+let total= v_iter.sum::<u32>();
 v_iter;    // 此处 v_iter 已失效
 ```
 
-迭代器方法 `fold`，它接受两个参数，一个初始值和一个带有两个参数的闭包，闭包的两个参数为累加器和迭代器元素，闭包返回累加器在下一次迭代中的值，最后该方法返回累加器的值。
+>   某些消耗适配器方法不一定会消耗完所有的元素，或在消耗完后会把迭代器重置到最开始的状态，因此迭代器在之后还可以继续使用。
 
-```rust
-let v = vec![1, 2, 3, 4, 5];
-let add_sum = v.iter().fold(0, |acc, x| acc + x);
-let mul_sum = v.iter().fold(1, |acc, x| acc * x);
-println!("add_sum = {}, mul_sum = {}", add_sum, mul_sum);
-```
+常见消耗适配器方法：
 
-使用 `fold` 方法可以方便地计算累加和与元素乘积。与其相似的还有 `reduce` 方法，但只接受一个闭包参数，并把迭代器的第一个元素作为初始值，返回一个 `Option<T>`，当迭代器为空时，返回 `None`。
+-   `count`、`sum`、`last`、`nth`
+-   `fold`、`reduce`、`product`
+-   `position`、`find`、`all`、`any`
+-   `max`、`max_by`、`min`、`min_by`
+-   `for_each`、`partition`、`collect`
 
-```rust
-let v: Vec<i32> = vec![];
-assert_eq!(None, v.into_iter().reduce(|acc, x| acc + x));
-```
-
-使用 `for_each` 方法可以立即对每个元素进行操作，且不返回值。
-
-```rust
-let mut m = [0; 10];
-m.iter_mut().for_each(|x| *x += 1);
-```
+>   更多关于消耗适配器的方法，可参考 [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
 
 ## 迭代适配器
 
-`Iterator` trait 中定义了另一类方法，称为**迭代适配器**，可以将当前迭代器转换为不同类型的迭代器。可以链式调用多个迭代器适配器，但因为所有的迭代器都是惰性的，需要调用一个消耗适配器方法以获取迭代器适配器调用的结果。
+`Iterator` 中还有另一类方法，称为**迭代适配器**，可以将当前迭代器转换为不同类型的迭代器。可以链式调用多个迭代器适配器，但因为所有的迭代器都是惰性的，需要调用一个消耗适配器方法以获取迭代器适配器的结果。
 
-`zip` 将迭代器和另一个迭代器组合为一个新的迭代器
+```rust
+let v = vec![1, 2, 3, 4, 5];
+let v_iter = v.iter();
+let r = v_iter
+    .filter(|&&e| e > 3)
+    .map(|e| e * 2)
+    .sum::<i32>();
+assert_eq!(r, 18);
+```
 
-`map` 是一个典型的迭代器适配器，它接受一个闭包作为参数，使用闭包来调用每个元素以生成新的迭代器。但是由于没有调用任何消耗适配器，因此它实际什么也不做，因此会得到一个警告。
+常见迭代适配器方法：
 
-可以调用 `collect` 方法
+-   `map`
+-   `take`
+-   
 
-`filter` 
-
-`filter_map` 
-
-迭代器方法 `flatten` 和 `flat_map` 
-
-此外还有比较常用的 `take`、`take_while`、`skip` 等迭代器适配器。
+>   更多关于迭代适配器的方法，可参考 [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
 
 ## 自定义迭代器
 
