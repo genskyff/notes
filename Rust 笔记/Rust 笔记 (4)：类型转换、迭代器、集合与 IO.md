@@ -107,10 +107,14 @@ v_iter;    // 此处 v_iter 已失效
 
 常见消耗适配器方法：
 
--   `count`、`sum`、`last`、`nth`
+-   `next`、`last`、`nth`
+-   `count`、`sum`
 -   `fold`、`reduce`、`product`
--   `position`、`find`、`all`、`any`
+-   `position`、`rposition`、`find`、`find_map`
+-   `all`、`any`
 -   `max`、`max_by`、`min`、`min_by`
+-   `cmp`、`partial_cmp`
+-   `eq`、`ne`、`ge`、`gt`、`le`、`lt`
 -   `for_each`、`partition`、`collect`
 
 >   更多关于消耗适配器的方法，可参考 [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
@@ -131,97 +135,70 @@ assert_eq!(r, 18);
 
 常见迭代适配器方法：
 
--   `map`
--   `take`
--   
+-   `map`、`map_while`
+-   `filter`、`filter_map`
+-   `flatten`、`flat_map`
+-   `take`、`take_while`
+-   `skip`、`skip_while`
+-   `fuse`、`step_by`
+-   `chain`、`zip`、`unzip`
+-   `enumerate`、`rev`、`cycle`
+-   `cloned`、`copied`
+-   `inspect`、`by_ref`
 
 >   更多关于迭代适配器的方法，可参考 [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
 
 ## 自定义迭代器
 
-可以通过在 vector 上调用 `into_iter`、`iter` 或 `iter_mut` 来创建一个迭代器，也可以用标准库中其他的集合类型创建迭代器，如哈希 map，但还可以实现 `Iterator` trait 来自定义迭代器。
-
-自定义迭代器唯一要求就是实现 `next` 方法，定义后就可以使用所有其他由 `Iterator` trait 中拥有默认实现的方法。
-
-设有一个只会从 1 数到 5 的迭代器，首先创建一个结构体来存放值，并定义 `new` 来返回一个新的迭代器：
+自定义迭代器唯一要求就是实现 `next`：
 
 ```rust
 struct Counter {
-    count: i32,
+    count: u8,
 }
 
 impl Counter {
-    fn new() -> Self {
-        Self { count: 0 }
+    fn new(count: u8) -> Self {
+        Self { count }
     }
 }
-```
 
-然后在 `Counter` 结构体上实现 `Iterator` trait：
-
-```rust
 impl Iterator for Counter {
-    type Item = i32;
+    type Item = u8;
+
     fn next(&mut self) -> Option<Self::Item> {
+        self.count += 1;
         if self.count < 5 {
-            self.count += 1;
             Some(self.count)
         } else {
             None
         }
     }
 }
-```
 
-将迭代器的关联类型 `Item` 设置为 `i32`，表示迭代器会返回 `i32` 值集合。若 `count` 值小于 5，`next` 会返回封装在 `Some` 中的当前值，否则返回 `None`。
-
-### 使用 next 方法
-
-一旦实现了 `Iterator` trait，就有了一个迭代器，可以直接调用 `next` 方法：
-
-```rust
-let mut counter = Counter::new();
-assert_eq!(counter.next(), Some(1));
-assert_eq!(counter.next(), Some(2));
-assert_eq!(counter.next(), Some(3));
-assert_eq!(counter.next(), Some(4));
-assert_eq!(counter.next(), Some(5));
-assert_eq!(counter.next(), None);
-```
-
-调用 `next` 方法，会改变迭代器内部的状态，因此要将迭代器声明为 `mut`。
-
-### 返回迭代器
-
-对实现了 `Iterator` trait 的类型而言，返回一个 `Self` 就相当于返回一个 `impl Iterator`，因此 `Counter` 的 `new` 函数也可以写为如下形式。
-
-```rust
-fn new() -> impl Iterator<Item = i32> {
-    Self { count: 0 }
+fn main() {
+    let mut counter = Counter::new(0);
+    assert_eq!(Some(1), counter.next());
+    assert_eq!(Some(4), counter.by_ref().last());
+    assert_eq!(None, counter.next());
 }
 ```
 
-### 结合迭代器方法
+### 返回迭代器
 
-通过定义 `next` 方法实现 `Iterator` trait，就可以使用标准库定义的拥有默认实现的 `Iterator` trait 方法了。
-
-这里结合 `zip`、`map` 和 `filter` 这三个迭代器适配器。设一个 `Counter` 通过 `zip` 方法与另一个 `Counter` 组合，然后传递给 `map` 方法使两个迭代器的元素相乘，最后使用 `filter` 方法只保留结果为 3 的倍数的元素，然后调用 `sum` 方法计算这个新生成的迭代器的各元素之和。
+对实现了 `Iterator` 的类型而言，返回一个 `Self` 就相当于返回一个 `impl Iterator`。
 
 ```rust
-let counter = Counter::new();
-let result: i32 = counter
-    .zip(Counter::new().skip(1))
-    .map(|(a, b)| a * b)
-    .filter(|x| x % 3 == 0)
-    .sum();
-assert_eq!(18, result);
+impl Counter {
+    fn new(count: u8) -> impl Iterator<Item = <Self as Iterator>::Item> {
+        Self { count }
+    }
+}
 ```
-
-`skip` 方法创建一个忽略前 N 个元素的迭代器。`zip` 只产生四对值，理论上第五对值 `(5, None)` 从未被产生，因为 `zip` 在任一输入的迭代器返回 `None` 时也返回 `None`。由于 `zip` 返回一个元组，`map` 方法的闭包利用模式匹配了两个值，并将它们相乘。
 
 # 3 集合
 
-Rust 标准库中有一系列被称为**集合**的数据结构。一般的数据类型都代表一个特定的值，但集合可以包含多个值。不同于内建的数组和元组类型，这些集合指向的数据是储存在堆上的，其数据的数量不必在编译时就已知，且可以随着程序的运行动态增长或缩小。
+Rust 标准库中有一系列被称为**集合**的数据结构。一般的数据类型都代表一个特定的值，但集合可以包含多个值。不同于内建的数组和元组类型，这些集合指向的数据是储存在堆上的，可以在运行时动态变化。
 
 标准库 `std::collections` 中含有最常见的通用数据结构，分为四大类：
 
@@ -230,95 +207,55 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 -   Sets：`HashSet`、`BTreeSet`
 -   Misc：`BinaryHeap`
 
-其中广泛使用的三种集合：
+其中最广泛使用的四种集合：
 
--   vector 允许顺序地储存数量可变的值；
--   字符串是字符的集合；
--   HashMap 允许将值与一个特定的键相关联。
+-   `Vec`：顺序存储的动态数组；
+-   `String`：顺序存储的 UTF-8 字符序列；
+-   `HashMap`：无序存储的键值对，其中键是唯一的；
+-   `HashSet`：无序存储的唯一值。
 
-## vector
+## Vec
 
-vector 允许在一个单独的数据结构中储存多于一个的值，它们在内存中相邻地排列，且类型相同。
+`Vec<T>` 用于在一个数据结构中存储多个类型相同的值。
 
 ### 创建
 
-使用 `new` 函数来创建长度为 0 的 vector。
+通过 `new` 或宏来创建。
 
 ```rust
-// 由于没有初始化，需要类型注解
-let v: Vec<i32> = Vec::new();
-```
-
-可以使用宏来创建并初始化 `Vec`，因为有了初始值，所以可以推断出类型。
-
-```rust
-let v1 = vec![1, 2, 3];
-let v2 = vec![0; 5];
-```
-
-vector 在其离开作用域时会被释放，并丢弃所有元素：
-
-```rust
-{
-    let v = vec![1, 2, 3];
-}   // v 被丢弃
+let v1: Vec<i32> = Vec::new();
+let v2: Vec<i32> = vec![];
+let v3 = vec![1, 2, 3];
+let v4 = vec![0; 5];
 ```
 
 ### 读取
 
-使用索引或者 `get` 方法读取 vector 的值：
-
-```rust
-let mut v = vec![1, 2, 3];
-let v2 = &v[1];
-match v.get(1) {
-    Some(i) => println!("{i}"),
-    None => println!("None")
-}
-```
-
-有两种读取方式的原因是，当尝试获取超过索引范围的值时处理不同：
+通过索引或 `get` 来读取指定值。
 
 ```rust
 let v = vec![1, 2, 3];
-let e1 = &v[10];
-let e2 = v.get(10);
+assert_eq!(&v[2], v.get(2).unwrap());
 ```
 
-对于 `[]` 方法，当引用一个不存在的元素时 Rust 会造成 panic。而 `get` 方法返回一个 `Option<T>`，当被传递了一个数组外的索引时，它不会 panic 而是返回 `None`。
+这两种方式对获取值的行为不同：
 
----
+-   索引：返回一个值，当超出索引范围时会 panic；
+-   `get`：返回一个 `Option`，当超出索引范围时返回 `None`。
 
-使用 `for` 来遍历 vector 中每一个元素：
-
-```rust
-let mut v = vec![1, 2, 3];
-for i in &v {
-    println!("{i}");
-}
-
-// 遍历时修改
-for i in &mut v {
-    *i += 1;
-    println!("{i}");
-}
-```
-
-若在遍历时没有使用 vector 的引用，那么就会发生移动，此后不能再使用该 vector。
+`Vec` 实现了 `Index`、`IndexMut` 和 `IntoIterator`，也就可以通过切片或迭代遍历读取值。
 
 ```rust
-for i in v {}
-// v 被移动，此处不能使用
-```
-
----
-
-vector 也是可以 slice 的，使用 `&` 或 `as_slice` 方法获得一个 slice：
-
-```rust
-let v = vec![1, 2, 3, 4, 5];
-let s = &v[..3];
+let v = vec![1, 2, 3];
+let s = &v[1..];
 let s2 = v.as_slice();
+
+for i in s2 {
+    println!("{i}");
+}
+
+let mut v2 = vec![1, 2, 3];
+assert!(v2.iter_mut().map(|e| *e * 2).eq(vec![2, 4, 6]));
 ```
 
 ### 更新
@@ -429,23 +366,7 @@ assert_eq!(v.len(), 10);
 assert_eq!(v.capacity(), 10);
 ```
 
-### 存储枚举
-
-vector 只能储存相同类型的值，当需要在 vector 中储存不同类型值时，可以使用枚举，因为枚举值被认为是同一个类型。
-
-```rust
-enum ShoesSize {
-    Cm(f64),
-    Eur(i32)
-}
-
-let sizes = vec![
-    ShoesSize::Cm(27.5),
-    ShoesSize:Eur(43)
-];
-```
-
-## 字符串
+## String
 
 Rust 只有一种字符串类型：`&str`，即字符串 slice，它是一些储存在别处的 UTF-8 编码字符串数据的引用。
 
@@ -824,7 +745,7 @@ let iter = "A few words".split_whitespace();
 assert_eq!(iter.collect::<Vec<&str>>(), ["A", "few", "words"]);
 ```
 
-## 哈希 map
+## HashMap
 
 `HashMap` 类型储存了一个键类型 `K` 对应一个值类型 `V` 的映射。它通过 **Hash 函数**来实现映射，决定如何将键和值放入内存中。可以用于需要任何类型作为键来寻找数据的情况，而不是像 vector 那样通过索引。同时具有类似 vector 的性质，如长度、容量和重新分配。
 
@@ -1035,6 +956,10 @@ let map2 = HashMap::from([("a", 2), ("b", 3)]);
 map1.extend(map2);
 assert_eq!(HashMap::from([("a", 2), ("b", 3)]), map1);
 ```
+
+## HashSet
+
+
 
 # 4 IO
 
