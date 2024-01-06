@@ -1066,6 +1066,42 @@ mod a {
 }
 ```
 
+### 可见性级别
+
+除了最常见的通过 `pub` 来控制可见性外，还可以指定作用域内的可见性：
+
+-   `pub(self)`：默认值，仅在当前模块可见；
+
+-   `pub`：完全公开；
+-   `pub(crate)`：仅 Crate 内可见；
+-   `pub(super)`：上级模块中可见；
+-   `pub(in path)`：指定的路径中可见。
+
+```rust
+pub fn call() {
+    a::crate_visible();
+}
+
+pub mod a {
+    pub(crate) fn crate_visible() {
+        b::a_visible();
+        b::c::a_visible_from_c();
+    }
+
+    pub mod b {
+        pub(super) fn a_visible() {}
+
+        pub mod c {
+            pub(in crate::a) fn a_visible_from_c() {
+                c_visible();
+            }
+
+            pub(self) fn c_visible() {}
+        }
+    }
+}
+```
+
 ### use 关键字
 
 使用绝对路径或相对路径是冗长和重复的，使用 `use` 关键字一次性将路径引入作用域。
