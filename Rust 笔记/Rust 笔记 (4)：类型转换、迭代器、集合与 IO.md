@@ -483,23 +483,6 @@ for (key, value) in &scores {
 }
 ```
 
-`len` 和 `capacity` 方法来查看长度和容量：
-
-```rust
-println!("{}", scores.len());
-println!("{}", scores.capacity());
-```
-
-`shrink_to_fit` 方法减小容量以匹配当前长度：
-
-```rust
-let mut map: HashMap<i32, i32> = HashMap::with_capacity(100);
-map.insert(1, 2);
-map.insert(3, 4);
-map.shrink_to_fit();
-assert!(map.capacity() >= 2);
-```
-
 `keys` 和 `values` 方法分别返回一个键和值的迭代器：
 
 ```rust
@@ -572,44 +555,17 @@ for word in text.split_whitespace() {
 println!("{:?}", map);
 ```
 
----
+`clear`、`is_empty`
 
-`clear` 方法清空哈希 map，`is_empty` 方法判断是否为空：
-
-```rust
-let mut map = HashMap::from([("a", 1)]);
-map.clear();
-assert!(map.is_empty());
-```
-
-`remove` 和 `remove_entry` 方法删除指定键。前者若存在指定键，则返回对应的值，后者若存在指定键，则返回对应的键和值组成的元组：
-
-```rust
-let mut map = HashMap::from([("a", 1)]);
-assert_eq!(map.remove("a"), Some(1));
-assert_eq!(map.remove("a"), None);
-map.insert("a", 1);
-assert_eq!(map.remove_entry("a"), Some(("a", 1)));
-assert_eq!(map.remove("a"), None);
-```
-
-### 合并
-
-`extend` 方法将另一个 HashMap 的键值对添加到目标 HashMap 中。若存在重复的键，则目标 HashMap 中的值将被覆盖。
-
-```rust
-let mut map1 = HashMap::from([("a", 1)]);
-let map2 = HashMap::from([("a", 2), ("b", 3)]);
-
-map1.extend(map2);
-assert_eq!(HashMap::from([("a", 2), ("b", 3)]), map1);
-```
+`remove`、`remove_entry`
 
 >   更多关于 `HashMap` 的方法，可参考 [HashMap in std::collections](https://doc.rust-lang.org/std/collections/struct.HashMap.html#implementations)。
 
 ## HashSet
 
 ### CRUD
+
+
 
 >   更多关于 `HashSet` 的方法，可参考 [HashSet in std::collections](https://doc.rust-lang.org/std/collections/struct.HashSet.html#implementations)。
 
