@@ -239,26 +239,59 @@ let arr = [0; 5];
 arr[10];  // panic
 ```
 
-## 动态大小类型
+### 引用类型
 
-在编译时就已知大小的类型为**固定大小类型**，具有 `Sized`；在运行时才知道大小的类型为**动态大小类型**（Dynamically Sized Types，DST），具有 `?Sized`。如切片 `[T]` 和 trait 对象 `dyn Trait` 都是 DST，这种类型都不能直接使用，**必须通过指针或引用来间接使用**，如 `&[T]`、`&dyn Trait` 或 `Box<dyn Trait>` 等。
+引用表示拥有某个值的借用，包含两种类型：
+
+-   `&T`：不可变引用；
+
+-   `&mut T`：可变引用。
+
+引用是一个对齐的且非 `null` 指针，且指向包含有效值 `T` 的内存。在值上使用 `&` 或 `&mut`，以及 `ref` 或 `ref mut` 模式可获得该值的借用。
 
 ```rust
-let s1: str = "foo";  // 错误
-let s2: &str = "bar"
+let n1 = 1;
+let rn1 = &n1;
+let mut n2 = 2;
+let rn2 = &mut n2;
+
+*rn2 = *rn1;
 ```
 
--   指向 DST 的指针大小是固定的，且为指向 `Sized` 的指针大小的两倍：
-    -   指向切片的指针额外存储了切片的元素数量；
-    -   指向 trait 对象的指针额外存储了 vtable 的地址。
--   DST 可以作为实参来传递给有 `?Sized` 约束的泛型类型参数。当关联类型的声明有 `?Sized` 约束时，也可以被用于关联类型定义；
--   默认情况下，任何泛型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束；
--   与泛型类型参数不同，trait 定义中的默认约束为 `Self: ?Sized`，因此可以为 DST 实现 trait；
--   结构体的最后一个字段可以为 DST，这让该结构体也是一个 DST。
+### 原始指针类型
 
->   静态项、常量、变量和函数参数必须是 `Sized`。
+原始指针包含两种类型：
 
-## never 类型
+-   `*const T`：不可变原始指针；
+
+-   `*mut T`：可变原始指针。
+
+原始指针可以是未对齐的或为 `null`。当使用 `*` 解引用原始指针时，必须对齐且非 `null`，因此对原始指针**进行解引用是不安全的**。
+
+```rust
+let n1 = 1;
+let pn1: *const i32 = &n1;
+let mut n2 = 2;
+let pn2: *mut i32 = &mut n2;
+
+unsafe {
+    *pn2 = *pn1;
+}
+```
+
+### 单元类型
+
+单元类型只有一个值 `()`，在没有其它有意义的值可以返回时使用。任何没有显式返回值的表达式、函数和以 `;` 结束地语句都隐式地返回 `()`。
+
+```rust
+// 都返回 ()
+fn foo() -> () {}
+fn bar() {}
+exp();
+()
+```
+
+### never 类型
 
  `!` 为 **never 类型**，主要用于在函数永不返回时充当返回值，这类函数也被称为**发散函数**。
 
@@ -301,6 +334,25 @@ fn loop_with_match(val: bool) {
 let x = loop {};
 let y: u32 = x;
 ```
+
+## 动态大小类型
+
+在编译时就已知大小的类型为**固定大小类型**，具有 `Sized`；在运行时才知道大小的类型为**动态大小类型**（Dynamically Sized Types，DST），具有 `?Sized`。如切片 `[T]` 和 trait 对象 `dyn Trait` 都是 DST，这种类型都不能直接使用，**必须通过指针或引用来间接使用**，如 `&[T]`、`&dyn Trait` 或 `Box<dyn Trait>` 等。
+
+```rust
+let s1: str = "foo";  // 错误
+let s2: &str = "bar"
+```
+
+-   指向 DST 的指针大小是固定的，且为指向 `Sized` 的指针大小的两倍：
+    -   指向切片的指针额外存储了切片的元素数量；
+    -   指向 trait 对象的指针额外存储了 vtable 的地址。
+-   DST 可以作为实参来传递给有 `?Sized` 约束的泛型类型参数。当关联类型的声明有 `?Sized` 约束时，也可以被用于关联类型定义；
+-   默认情况下，任何泛型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束；
+-   与泛型类型参数不同，trait 定义中的默认约束为 `Self: ?Sized`，因此可以为 DST 实现 trait；
+-   结构体的最后一个字段可以为 DST，这让该结构体也是一个 DST。
+
+>   静态项、常量、变量和函数参数必须是 `Sized`。
 
 ## 类型别名
 
@@ -379,7 +431,7 @@ fn main() {
 Rust 中主要有 `str` 和 `String` 两种字符串类型，其中 `str` 是原生类型，存储在栈上，`String` 存储在堆上。这两种值的表示方法与 `[u8]` 相同，且都保证数据是有效的 UTF-8 序列。由于 `str` 是一个 DST，具有 `?Sized`，因此只能通过指针类型间接使用，如 `&str` 和 `Box<str>`。
 
 ```rust
-let s1: &str = "hello";  // 实际上会被推导为 &'static str
+let s1: &str = "hello";  // 实际上会被推断为 &'static str
 let s2: &'static str = "world";
 let s3: String = String::from("haha");
 let s4: &str = &s3;
@@ -394,9 +446,9 @@ let s5: Box<str> = String::from("hehe").into_boxed_str();
 `&str` 和 `&'static str`：
 
 -   不是所有的 `&str` 都是 `&'static str`。一个字符串字面量如 `"hello"`，则默认具有 `'statuc` 生命周期；
--   若从 `String` 创建一个切片，那么该切片的生命周期则不是 `'static`。
+-   若从 `String` 创建一个切片，该切片的生命周期则不是 `'static`。
 
-大多数时候，可以不用显式标注 `&str` 或 `&'static str`，因为编译器会自动推导其生命周期。
+大多数时候，可以不用显式标注 `&str` 或 `&'static str`，因为编译器会自动推断其生命周期。
 
 ### 原始字符串
 
@@ -894,8 +946,8 @@ let s2 = &s[6..=10];
 
 ```rust
 let s = String::from("你好");
-let s1 = &s[0..2];   // 错误，UTF-8 中汉字占 3 个字节
-let s1 = &s[0..3];   // 正确
+let s1 = &s[0..3];
+let s2 = &s[0..2];   // panic，UTF-8 中汉字占 3 个字节
 ```
 
 对于区间表达式，若从索引 0 开始或到尾部结束，可以不写两个点号之前或之后的值。
@@ -1123,7 +1175,7 @@ let some_string = Some("a string");
 let absent_number: Option<i32> = None;
 ```
 
-若使用 `None` 而不是 `Some`，则需要显式标注类型，因为编译器只通过 `None` 无法进行类型推导。
+若使用 `None` 而不是 `Some`，则需要显式标注类型，因为编译器只通过 `None` 无法进行类型推断。
 
 ### Option 方法
 
@@ -1239,7 +1291,7 @@ println!("{}", red.mix(&blue));
 println!("{}", (&red).mix(&blue));
 ```
 
-`red`、`(&red)` 实际上是等价的，因为方法明确接受 `&self`，因此编译器能自动推导出是 `self`、`&self` 还是 `&mut self`。
+`red`、`(&red)` 实际上是等价的，因为方法明确接受 `&self`，因此编译器能自动推断出是 `self`、`&self` 还是 `&mut self`。
 
 ## 内存布局
 
@@ -2309,20 +2361,4 @@ fn plus_one(n: Option<i32>) -> Option<i32> {
     Some(n? + 1)
 }
 ```
-
-`?` 实际上就是 `try!`，两者都会尝试将错误类型转换为匹配返回的错误类型（前提是实现了 `From`），用 `match` 表达式的伪代码大致表示为：
-
-```rust
-macro try {
-    match exp {
-        Ok(val) => val,
-        Err(err) => {
-            let converted = From::from(err);
-            return Err(converted);
-        }
-    }
-}
-```
-
->   目前 `try!` 已不常用。
 
