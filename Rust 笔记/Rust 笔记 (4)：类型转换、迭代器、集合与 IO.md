@@ -4,7 +4,13 @@
 
 
 
+## ToOwned
+
+
+
 ## From 和 Into
+
+
 
 ### FromStr、ToString 和 Display
 
@@ -15,8 +21,6 @@
 
 
 ## AsRef 和 AsMut
-
-
 
 
 
@@ -220,42 +224,45 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 
 ### CRUD
 
-通过 `new` 或宏来创建。
+有多种方法来创建 `Vec`：
+
+-   `new` 创建空 `Vec`；
+-   `from` 将其它类型转换成 `Vec`；
+-   `vec!` 创建指定 `Vec`。
 
 ```rust
 let v1: Vec<i32> = Vec::new();
-let v2: Vec<i32> = vec![];
-let v3 = vec![1, 2, 3];
-let v4 = vec![0; 5];
+let v2 = Vec::from([1, 2, 3]);
+let v3: Vec<i32> = vec![];
+let v4 = vec![1, 2, 3];
+let v5 = vec![0; 5];
 ```
 
-由于 `Vec` 实现了 `Index` 和 `IntoIterator`，因此可通过索引或 `get` 来读取指定值或切片。
+由于实现了 `Index` 和 `IndexMut`，因此除了 `get` 和 `get_mut` 外，还可通过索引来读写值。
 
 ```rust
-let v = vec![1, 2, 3, 4, 5];
+let mut v = vec![1, 2, 3, 4, 5];
 assert_eq!(&v[2], v.get(2).unwrap());
 assert_eq!(&v[1..3], v.get(1..3).unwrap());
+v[1] = 10;
 ```
 
-由于 `Vec` 也实现了 `IndexMut`，因此可以通过索引来修改值。
+由于实现了 `IntoIterator`，因此可转换为迭代器。
 
 ```rust
-let mut v = vec![1, 2, 3];
-v[1] = 10;
+let v = vec![1, 2, 3];
+v.iter().for_each(|e| println!("{e}"));
 ```
 
 常见 `Vec` 方法：
 
--   `new`、`with_capacity`
--   `len`、`ptr`、`capacity`、`get`
+-   `new`、`from`、`with_capacity`
+-   `len`、`ptr`、`capacity`
+-   `get`、`get_mut`
 -   `push`、`pop`
 -   `insert`、`remove`、`swap_remove`
 -   `dedup`、`clear`、`is_empty`
--   `append`、`splice`、`split_off`
--   `drain`、`drain_filter`
--   `shrink_to`、`shrink_to_fit`
--   `retrain`、`retrain_mut`
--   `reserve`、`resize`、`truncate`
+-   `splice`、`split_off`
 
 >   更多关于 `Vec` 的方法，可参考 [Vec in std::vec](https://doc.rust-lang.org/std/vec/struct.Vec.html#implementations)。
 
@@ -295,13 +302,12 @@ Rust 只有一种原生字符串类型：`&str`，它是一些储存在别处的
 
 ### CRUD
 
-有多种方法创建 `String`：
+有多种方法来创建 `String`：
 
--   `from` 或 `to_string` 将其它类型转换成 `String`；
 -   `new` 创建空 `String`；
--   `with_capacity` 创建指定容量大小且长度为 0 的字符串；
--   `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`。
--   `from_utf8_lossy` / `from_utf16_lossy` 与上述行为类似，但包括无效字节序列。
+-   `from` 或 `to_string` 将其它类型转换成 `String`；
+-   `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`；
+-   `from_utf8_lossy` / `from_utf16_lossy` 与不带 `lossy` 的方法类似，但包括无效字节序列。
 
 ```rust
 let s1 = String::from("foo");
@@ -316,11 +322,13 @@ let s7 = String::from_utf8_lossy(b"foo \xF0\x90\x80bar");
 assert_eq!("foo �bar", s7);
 ```
 
-`String` 没有实现 `Index` 和 `IndexMut`，因此不能使用索引语法，因为索引并不总是对应一个有效的 Unicode 标量值。
+由于没有实现 `Index` 和 `IndexMut`，因此不能使用索引，因为索引并不总是对应有效的 Unicode 标量值，但可以通过 `get` 和 `get_mut` 来读写值。
 
 ```rust
-let s = String::from("foo");
+let mut s = String::from("foo");
 let c = s[0]; // 错误
+assert_eq!("f", s.get(..1).unwrap());
+assert_eq!("F", s.get_mut(..1).map(|s| s.to_ascii_uppercase()).unwrap())
 ```
 
 虽然和 `&str` 一样，`String` 也可以通过切片的方式来获取值，但若获取的切片含有无效的 Unicode 标量值，则会 panic。
@@ -378,9 +386,10 @@ let s = format!("{}-{}-{}", s1, s2, s3);
 -   `new`、`from`
 -   `from_utf8`、`from_utf_16`
 -   `from_utf8_lossy`、`from_utf16_lossy`
+-   `get`、`get_mut`
 -   `push`、`push_str`、`pop`
 -   `insert`、`insert_str`、`remove`
--   `drain`、`clear`、`is_empty`
+-   `clear`、`is_empty`
 -   `find`、`matches`
 -   `split`、`split_off`、`split_whitespace`
 -   `chars`、`bytes`、`lines`
@@ -395,179 +404,193 @@ let s = format!("{}-{}-{}", s1, s2, s3);
 
 ## HashMap
 
-`HashMap` 通过 **Hash 函数**来实现键值对的映射并存储，用于不使用索引而是通过键来查找特定的值，并具有类似 `Vec` 的性质，如长度、容量和重新分配。
+`HashMap` 通过 **Hash 函数**来实现键值对的映射并存储，用于不使用索引而是通过键来查找特定的值，并具有类似 `Vec` 的性质，如长度、容量和重新分配。`HashMap` 的键必须实现 `Eq` 和 `Hash`，所有键类型必须相同，值类型也必须相同，键不能重复，且每个键都有且仅有一个关联值。
 
 ### CRUD
 
-使用 `new` 方法创建一个空的 `HashMap`，并使用 `insert` 方法增加元素。
+由于没有被包含在预导入包中，因此需要手动导入。
 
 ```rust
 use std::collections::HashMap;
-let mut scores = HashMap::new();
-scores.insert(String::from("Red"), 10);
-scores.insert(String::from("Green"), 20);
 ```
 
-需要 `use` 标准库中集合部分的 `HashMap`，因为没有被 prelude 自动引用。
+有多种方法来创建 `HashMap`：
 
-哈希 map 将的数据储存在堆上，这个 `HashMap` 的键类型是 `String` 而值类型是 `i32`，所有的键必须是相同类型，值也必须都是相同类型。
-
----
-
-还可以使用一个元组的 vector 的 `collect` 方法，其中每个元组包含一个键值对。`collect` 方法可以将数据收集进一系列的集合类型，使用 `zip` 方法来创建一个元组的 vector。
+-   `new` 创建空 `HashMap`；
+-   `from` 将其它类型转换成 `HashMap`；
+-   通过迭代器创建 `HashMap`。
 
 ```rust
-let teams = vec![String::from("Red"), String::from("Green")];
-let init_scores= vec![10, 20];
-let scores: HashMap<_, _> = teams.iter().zip(init_scores.iter()).collect();
+let hm1: HashMap<&str, i32> = HashMap::new();
+let hm2 = HashMap::from([("a", 1), ("b", 2)]);
+let hm3 = ["a", "b"]
+    .into_iter()
+    .zip([1, 2])
+    .collect::<HashMap<_, _>>();
 ```
 
-`HashMap<_, _>` 需要类型注解，因为 `collect` 有很多不同的数据结构，而除非显式指定否则无法进行类型推断。但是对于键和值的类型参数来说，可以使用下划线占位，Rust 能够根据 vector 中数据的类型推断出 `HashMap` 所包含的类型。
-
----
-
-还能使用 `from` 方法，将元组作为数组的元素进行初始化：
+由于实现了 `Index`，因此除了 `get` 外，还可通过索引 `key` 来读取值。
 
 ```rust
-let solar_distance = HashMap::from([
-    ("Mercury", 0.4),
-    ("Venus", 0.7),
-    ("Earth", 1.0),
-    ("Mars", 1.5),
-]);
+let hm = HashMap::from([("a", 1), ("b", 2)]);
+assert_eq!(&hm["a"], hm.get("a").unwrap());
 ```
 
-#### 所有权
-
-对于像 `i32` 这样的 `Copy` trait 的类型，其值可以拷贝进哈希 map。对于像 `String` 这样拥有所有权的值，其值将被移动而哈希 map 会成为这些值的所有者。
+由于没有实现 `IndexMut`，因此不能通过索引来修改键值对，但可通过 `get_mut` 来修改值，或使用 `insert` 来对已存在的键插入新值。
 
 ```rust
-let field_name = String::from("Red");
-let field_value = String::from("10");
-let mut map = HashMap::new();
-// field_name 和 field_value 不再有效，
-map.insert(field_name, field_value);
+let mut hm = HashMap::from([("a", 1)]);
+hm["a"] = 5;       // 错误
+hm.insert("a", 5);
+*hm.get_mut("a").unwrap() = 10;
 ```
 
-若将值的引用插入哈希 map，这些值本身不会被移进哈希 map，但是这些引用指向的值必须至少在哈希 map 有效时也是有效的。
-
-### 读取
-
-将键名作为索引来获取值：
+由于实现了 `IntoIterator`，因此可转换为迭代器。
 
 ```rust
-assert_eq!(10, scores["Red"]);
+let hm = HashMap::from([("a", 1), ("b", 2)]);
+hm.iter().for_each(|(k, v)| println!("{k}: {v}"));
 ```
 
-将键名作为索引时，如果被索引的键不在哈希 map 中，在编译时不会报错，但运行时会发生 panic。为了避免这种情况，可以通过 `get` 方法并提供对应的键来从哈希 map 中获取值。
+由于每个键只能关联一个值，因此对 `HashMap` 的更新可能有不同的策略：
+
+-   若键已存在，可以选择是否更新旧值；
+-   若键不存在，可以选择是否插入键值对。
+
+要根据键的存在来决定是否插入键值对，可使用 `entry`，其获取键作为参数，并返回一个 `Entry` 枚举，该枚举表示该键是否存在，其上有很多实用方法，如 `insert_or` 返回对值的可变引用，并在不存在时插入指定值。
 
 ```rust
-let mut scores = HashMap::new();
-scores.insert(String::from("Red"), 10);
-scores.insert(String::from("Green"), 20);
-let score = scores.get(&String::from("Red"));
+let mut hm = HashMap::from([("a", 1)]);
+hm.entry("b").or_insert(2);
+assert_eq!(hm["b"], 2);
 ```
 
-`score` 的值应为 `Some(10)`，因为 `get` 返回 `Option`，所以结果被装进 `Some`；如果某个键在哈希 map 中没有对应的值，`get` 会返回 `None`，这时需要用 match 来处理 `Option`，因此使用 `get` 方法不会发生 panic。
+常见 `Entry` 方法：
 
----
+-   `or_default`、`or_insert`、`or_insert_with`
+-   `key`、`and_modify`
 
-使用 `for` 来遍历哈希 map 中的每一个键值对：
+>   更多关于 `Entry` 的信息，可参考 [Entry in std::collections::hash_map](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)。
 
-```rust
-let mut scores = HashMap::new();
-scores.insert(String::from("Red"), 10);
-scores.insert(String::from("Green"), 20);
-for (key, value) in &scores {
-    println!("{key}: {value}");
-}
-```
+常见 `HashMap` 方法：
 
-`keys` 和 `values` 方法分别返回一个键和值的迭代器：
-
-```rust
-let map = HashMap::from([
-    ("a", 1),
-    ("b", 2),
-    ("c", 3),
-]);
-
-for key in map.keys() {
-    println!("{key}");
-}
-
-for val in map.values() {
-    println!("{val}");
-}
-```
-
-`contains_key` 方法判断是否含有指定键：
-
-```rust
-let map = HashMap::from([("a", 1)]);
-assert_eq!(map.contains_key("a"), true);
-```
-
-### 更新
-
-键值对的数量可增长，但任何时候每个键只能关联一个值。当要更新哈希 map 中的数据时，必须处理一个键已经有值了的情况。
-
--   可以选择用新值替代旧值；
-
--   可以选择保留旧值而忽略新值，并在键没有对应值时增加新值；
-
--   可以结合新旧两值。
-
-当插入了一个键值对，接着用相同的键插入一个不同的值，与这个键相关联的旧值将被替换。
-
-```rust
-let mut scores = HashMap::from([(String::from("Red"), 10)]);
-// 原始值 10 被覆盖
-scores.insert(String::from("Red"), 20);
-
-// 可以将键当作索引来获取值，但不能修改值
-scores["Red"] = 20;              // 错误
-println!("{}", scores["Red"]);   // 正确
-```
-
-检查某个特定的键是否有值，若没有则插入一个值。哈希 map 有一个 `entry` 方法，它获取要检查的键作为参数。`entry` 方法的返回值是一个 `Entry` 枚举，它代表了可能存在或不存在的值。
-
-```rust
-let mut scores = HashMap::from([(String::from("Red"), 10)]);
-scores.entry(String::from("Green")).or_insert(20);
-// Red 已存在，则不插入值
-scores.entry(String::from("Red")).or_insert(30);
-```
-
-`Entry` 的 `or_insert` 方法在键对应的值存在时就返回这个值的可变引用，如果不存在则将参数作为新值插入并返回新值的可变引用。
-
----
-
-要找到一个键对应的值并根据旧的值更新它，如计数文本中每一个单词分别出现了多少次。使用哈希 map 以单词作为键并递增其值来记录遇到过几次这个单词，若第一次看到某个单词，则插入值 `0`。
-
-```rust
-let text = "hello world hello ok 123 world hello";
-let mut map = HashMap::new();
-for word in text.split_whitespace() {
-    let count = map.entry(word).or_insert(0);
-    *count +=1;
-}
-println!("{:?}", map);
-```
-
-`clear`、`is_empty`
-
-`remove`、`remove_entry`
+-   `new`、`from`
+-   `get`、`get_mut`、`get_key_value`
+-   `insert`、`remove`、`remove_entry`
+-   `contains_key`、`entry`
+-   `clear`、`is_empty`
+-   `keys`、`into_keys`
+-   `values`、`into_values`、`values_mut`
 
 >   更多关于 `HashMap` 的方法，可参考 [HashMap in std::collections](https://doc.rust-lang.org/std/collections/struct.HashMap.html#implementations)。
 
+### 所有权
+
+对于像 `i32` 这样实现了 `Copy` 的类型，其值可以拷贝进 `HashMap`，但对于像 `String` 这样拥有所有权的但没有实现 `Copy` 的类型，其值将被移动进 `HashMap`。
+
+```rust
+let key = String::from("foo");
+let value = String::from("bar");
+let hm = HashMap::from([(key, value)]);
+(key, value); // 错误，key 和 value 已被移动
+```
+
+>   若将值的引用插入 `HashMap`，那么引用指向的值必须至少在 `HashMap` 有效时也是有效的。
+
 ## HashSet
+
+`HashSet` 实际上就是一个所有值都为 `()` 的 `HashMap`，但还包含了一些其它的方法。
 
 ### CRUD
 
+由于没有被包含在预导入包中，因此需要手动导入。
 
+```rust
+use std::collections::HashSet;
+```
+
+有多种方法来创建 `HashSet`：
+
+-   `new` 创建空 `HashSet`；
+-   `from` 将其它类型转换成 `HashSet`；
+-   通过迭代器创建 `HashSet`。
+
+```rust
+let hs1: HashSet<i32> = HashSet::new();
+let hs2 = HashSet::from([1, 2, 2, 3, 3, 3]);
+let hs3 = [1, 2, 2, 3, 3, 3].into_iter().collect::<HashSet<_>>();
+```
+
+由于没有实现 `Index` 和 `IndexMut`，因此只能通过 `get` 来获取值。
+
+```rust
+let hs = HashSet::from([1, 2, 2, 3, 3, 3]);
+assert_eq!(&2, hs.get(&2).unwrap());
+```
+
+可通过 `insert` 来插入值，若已存在则返回 `false`，否则返回 `true`。
+
+```rust
+let mut hs = HashSet::from([1, 2]);
+assert_eq!(true, hs.insert(3));
+assert_eq!(false, hs.insert(1));
+```
+
+`HashSet` 可求并集、交集、差集和对称差集。
+
+```rust
+let hs1 = HashSet::from([0, 1, 2]);
+let hs2 = HashSet::from([1, 2, 3]);
+
+// 并集
+let uni = hs1.union(&hs2).collect::<HashSet<_>>();
+// 交集
+let insc = hs1.intersection(&hs2).collect::<HashSet<_>>();
+// 差集 
+let diff1_2 = hs1.difference(&hs2).collect::<HashSet<_>>();
+let diff2_1 = hs2.difference(&hs1).collect::<HashSet<_>>();
+// 对称差集
+let sym_diff = hs1.symmetric_difference(&hs2).collect::<HashSet<_>>();
+
+assert_eq!(HashSet::from([&0, &1, &2, &3]), uni);
+assert_eq!(HashSet::from([&1, &2]), insc);
+assert_eq!(HashSet::from([&0]), diff1_2);
+assert_eq!(HashSet::from([&3]), diff2_1);
+assert_eq!(HashSet::from([&0, &3]), sym_diff);
+```
+
+常见 `HashSet` 方法：
+
+-   `new`、`from`
+-   `get`、`take`
+-   `insert`、`remove`
+-   `replace`、`contains`
+-   `clear`、`is_empty`
+-   `union`、`intersection`、`difference`、`symmetric_difference`
+-   `is_disjoint`、`is_subset`、`is_superset`
 
 >   更多关于 `HashSet` 的方法，可参考 [HashSet in std::collections](https://doc.rust-lang.org/std/collections/struct.HashSet.html#implementations)。
+
+## 扩展集合
+
+迭代器产生一系列值，集合也可以视为一系列值，因此标准库中的集合都实现了 `Extend`，以用迭代器的内容来扩展集合。当使用已存在的键扩展集合时，值将会被更新；若集合本身允许相同键，则插入新值。
+
+```rust
+let mut v = vec![1, 2, 3];
+let mut s = String::from("foo");
+let mut hm = HashMap::from([("a", 1)]);
+let mut hs = HashSet::from([1, 2]);
+
+v.extend([3, 4]);
+s.extend(["bar", "baz"]);
+hm.extend([("a", 2), ("b", 3)]);
+hs.extend([2, 3]);
+
+assert_eq!(vec![1, 2, 3, 3, 4], v);
+assert_eq!(String::from("foobarbaz"), s);
+assert_eq!(HashMap::from([("a", 2), ("b", 3)]), hm);
+assert_eq!(HashSet::from([1, 2, 3]), hs);
+```
 
 # 4 IO
 
