@@ -1,14 +1,76 @@
 # 1 类型转换
 
-## 基本类型转换
+## 类型自动强转
+
+由于要保证类型安全，Rust 中几乎很少有隐式类型转换。类型自动强转是少数隐式转换的行为，只会在特定的位置发生，并且有着诸多限制。
+
+### 自动强转点
+
+类型自动强转只能发生在特定位置，被称为**自动强转点**。
+
+自动强转点包括：
+
+-   `let`、`const`、`static` 声明语句：
+
+    ```rust
+    let _: &i8 = &mut 10; // 从 &mut i32 转换成 &i8
+    ```
+
+-   函数调用时的参数：
+
+    ```rust
+    fn foo(_: &i8) {}
+    
+    fn main() {
+        foo(&mut 10); // 从 &mut i32 转换成 &i8
+    }
+    ```
+
+-   实例化结构体、联合体或枚举变体的字段：
+
+    ```rust
+    struct Foo<'a> {
+        x: &'a i8,
+    }
+    
+    fn main() {
+        Foo { x: &mut 10 }; 从 &mut i32 转换成 &i8
+    }
+    ```
+
+-   函数返回值：
+
+    ```rust
+    fn foo(x: &i32) -> &dyn std::fmt::Display {
+        x // 从 &i32 转换成 &dyn Display
+    }
+    ```
+
+### 自动强转类型
+
+并不是所有类型都能在自动强转点被自动转换，有着以下限制：
+
+-   `T` 到 `U`，若 `T` 是 `U` 的子类型；
+-   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`；
+-   `&mut T` 到 `&T`；
+-   `*mut T` 到 `*const T`；
+-   `&T` 到 `*const T`；
+-   `&mut T` 到 `*mut T`；
+-   `&T` 或 `&mut T` 到 `&U`，若 `T` 实现了 `Deref<Target = U>`；
+-   `&mut T` 到 `&mut U`，若 `T` 实现了 `DerefMut<Target = U>`；
+-   函数项到函数指针；
+-   非捕获闭包到函数指针；
+-   `!` 到 `T`。
+
+>   更多关于类型自动强转的信息，可参考 [类型自动强转](https://minstrel1977.gitee.io/rust-reference/type-coercions.html)。
+
+## 显式类型转换
 
 
 
-## ToOwned
+## 转换相关 trait
 
-
-
-## From 和 Into
+### From 和 Into
 
 
 
@@ -16,15 +78,19 @@
 
 
 
-## TryFrom 和 TryInto
+### TryFrom 和 TryInto
 
 
 
-## AsRef 和 AsMut
+### AsRef 和 AsMut
 
 
 
-## Borrow 和 BorrowMut
+### ToOwned
+
+
+
+### Borrow 和 BorrowMut
 
 
 
@@ -403,6 +469,7 @@ let s = format!("{}-{}-{}", s1, s2, s3);
 -   `into_bytes`、`into_boxed_str`
 -   `as_bytes`、`as_str`
 -   `to_lowercase`、`to_uppercase`
+-   `make_ascii_lowercase`、`make_ascii_uppercase`
 -   `repeat`、`parse`
 -   `trim`、`trim_start`、`trim_end`
 
