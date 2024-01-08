@@ -1179,7 +1179,7 @@ let absent_number: Option<i32> = None;
 
 ### Option 方法
 
-`Option` 定义了很多方法来处理各种情况：
+常见 `Option` 方法：
 
 -   `is_some`、`is_none`
 -   `and`、`and_then`
@@ -2287,7 +2287,7 @@ fn main() {
 
 ### Result 方法
 
-`Result` 定义了很多方法来处理各种情况：
+常见 `Result` 方法：
 
 -   `is_ok`、`is_err`
 -   `and`、`and_then`

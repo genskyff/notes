@@ -1145,7 +1145,7 @@ fn main() {
 
 其中 `h1` 和 `v1` 的类型为自动推断，`h2`、`h3` 与 `v2`、`v3` 则明确指定了关联类型和泛型参数类型。
 
-## 常用 trait
+## 常见 trait
 
 ### Default
 
@@ -1262,7 +1262,7 @@ fn main() {
 
 `std::hash::Hash`：可散列的类型。
 
-实现了 `Hash` 的类型可通过 `Hasher` 的实例进行哈希化。如在 `HashMap<K, V>` 上存储数据，`Key` 必须实现 `Hash`。
+实现了 `Hash` 的类型可通过 `Hasher` 的实例进行哈希化。如在 `HashMap<K, V>` 上存储数据，`Key` 就必须实现 `Hash`。
 
 ```rust
 #[derive(PartialEq, Eq, Hash)]
@@ -1274,13 +1274,13 @@ map.insert(Point(1, 2), 1);
 
 >   -   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`；
 >
->   -   若所有字段都实现了 `Hash`，则可通过 `derive` 派生 `Hash`，产生的哈希值将是在每个字段上调用哈希函数得到结果的组合。
+>   -   若所有字段都实现了 `Hash`，则可通过 `derive` 派生 `Hash`，产生的 Hash 值将是在每个字段上调用 Hash 函数得到结果的组合。
 
 ### 运算符重载
 
 Rust 中的操作符均为某个 trait 方法的语法糖，有一系列用于运算符重载的 trait，可以方便的为类型实现各种运算操作，如 `a + b` 表达式会在编译的过程中会被转换为 `a.add(b)`。
 
-`std::ops::{Add, Sub, Mul, Div, Rem}`：定义加减乘除取余；
+-   `std::ops::{Add, Sub, Mul, Div, Rem}`：重载加减乘除取余 `+` / `-` / `*` / `/` / `%`：
 
 ```rust
 use std::ops::Add;
@@ -1303,7 +1303,7 @@ fn main() {
 }
 ```
 
-`std::ops::{Index, IndexMut}`：定义不可变和可变索引：
+-   `std::ops::{Index, IndexMut}`：重载不可变和可变索引 `[]`：
 
 ```rust
 use std::ops::Index;
@@ -1330,6 +1330,31 @@ fn main() {
     assert_eq!(2, p[Axis::Y]);
 }
 ```
+
+`std::ops::{Deref, DerefMut}`：重载不可变和可变的解引用 `*`：
+
+```rust
+use std::ops::Deref;
+
+struct Wrap {
+    value: i32,
+}
+
+impl Deref for Wrap {
+    type Target = i32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+fn main() {
+    let w = Wrap { value: 10 };
+    assert_eq!(10, *w);
+}
+```
+
+
 
 >   更多关于运算符重载的 trait，可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
 
