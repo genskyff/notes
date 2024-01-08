@@ -2,7 +2,7 @@
 
 ## 类型自动强转
 
-由于要保证类型安全，Rust 中几乎很少有隐式类型转换。类型自动强转是少数隐式转换的行为，只会在特定的位置发生，并且有着诸多限制。
+由于要保证类型安全，Rust 中很少有隐式类型转换。类型自动强转唯一的隐式转换行为，只会在特定的位置发生，且有着诸多限制。
 
 ### 自动强转点
 
@@ -34,7 +34,7 @@
     }
     
     fn main() {
-        Foo { x: &mut 10 }; 从 &mut i32 转换成 &i8
+        Foo { x: &mut 10 }; // 从 &mut i32 转换成 &i8
     }
     ```
 
@@ -43,6 +43,31 @@
     ```rust
     fn foo(x: &i32) -> &dyn std::fmt::Display {
         x // 从 &i32 转换成 &dyn Display
+    }
+    ```
+
+-   方法调用时的自动解引用：
+
+    ```rust
+    use std::ops::Deref;
+    
+    struct Wrap {
+        value: String,
+    }
+    
+    impl Deref for Wrap {
+        type Target = String;
+    
+        fn deref(&self) -> &Self::Target {
+            &self.value
+        }
+    }
+    
+    fn main() {
+        let w = Wrap {
+            value: "foo".to_string(),
+        };
+        w.len(); // 从 &Wrap 转换成 &String
     }
     ```
 
@@ -58,7 +83,7 @@
 -   `&mut T` 到 `*mut T`；
 -   `&T` 或 `&mut T` 到 `&U`，若 `T` 实现了 `Deref<Target = U>`；
 -   `&mut T` 到 `&mut U`，若 `T` 实现了 `DerefMut<Target = U>`；
--   函数项到函数指针；
+-   函数到函数指针；
 -   非捕获闭包到函数指针；
 -   `!` 到 `T`。
 
@@ -66,9 +91,46 @@
 
 ## 显式类型转换
 
+任何不能被自动强转的类型，都必须显式进行类型转换。
 
+### 基本类型转换
+
+对于基本类型，可以使用 `as` 进行转换：
+
+```rust
+let a = 1.23 as i8;
+let b = 10_i8 as i32;
+let c = 100 as f32;
+let d = 'a' as u8;
+```
+
+内存地址和指针之间也可以转换：
+
+```rust
+let mut values = [1, 2];
+let p1: *mut i32 = values.as_mut_ptr();
+let addr1 = p1 as usize;
+let addr2 = addr1 + std::mem::size_of::<i32>();
+let p2 = addr2 as *mut i32;
+unsafe {
+    *p2 += 10;
+}
+assert_eq!(12, values[1]);
+```
+
+通过 `as` 转换不具有传递性：即使 `T` 到 `U`，`U` 到 `S`，也不代表 `T` 到 `S`。
+
+```rust
+let v = 1;
+// 虽然 &T as *const T，*const T as *mut T 合法
+let p = &v as *const i32 as *mut i32;
+// 但 &T as *mut T 不合法
+let p = &v as *mut i32;
+```
 
 ## 转换相关 trait
+
+`as` 只能用于基本类型，对于自定义类型，标准库提供了一系列用于类型转换的 trait。
 
 ### From 和 Into
 
