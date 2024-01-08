@@ -1331,7 +1331,7 @@ fn main() {
 }
 ```
 
-`std::ops::{Deref, DerefMut}`：重载不可变和可变的解引用 `*`：
+`std::ops::{Deref, DerefMut}`：重载不可变和可变的解引用 `*` / `.`：
 
 ```rust
 use std::ops::Deref;
@@ -1349,8 +1349,9 @@ impl Deref for Wrap {
 }
 
 fn main() {
-    let w = Wrap { value: 10 };
-    assert_eq!(10, *w);
+    let w = Wrap { value: -10 };
+    assert_eq!(-10, *w);
+    assert_eq!(10, w.abs())
 }
 ```
 
@@ -1984,7 +1985,7 @@ let super: &for<'c> fn(&'c str, &'c str) = sub;
 
 `'static` 是 `'a` 的子类型暗示了 `&'static T` 是 `&'a T` 的子类型，这实际上是一种型变。
 
-**型变**是通过泛型参数来定义引用之间子类型关系的概念，分为三种：
+**型变**是通过泛型参数来定义引用之间子类型关系的概念，设 `F<T>` 是 `T` 的类型构造器：
 
 -   若 `T` 是 `U` 的子类型，且 `F<T>` 是 `F<U>` 子类型，则称 `F<T>` 在 `T` 上是**协变的**；
 -   若 `T` 是 `U` 的子类型，且 `F<U>` 是 `F<T>` 的子类型，则称 `F<T>` 在 `T` 上是**逆变的**；
