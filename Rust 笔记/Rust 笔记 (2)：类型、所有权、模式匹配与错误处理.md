@@ -431,8 +431,8 @@ fn main() {
 Rust 中主要有 `str` 和 `String` 两种字符串类型，其中 `str` 是原生类型，存储在栈上，`String` 存储在堆上。这两种值的表示方法与 `[u8]` 相同，且都保证数据是有效的 UTF-8 序列。由于 `str` 是一个 DST，具有 `?Sized`，因此只能通过指针类型间接使用，如 `&str` 和 `Box<str>`。
 
 ```rust
-let s1: &str = "hello";  // 实际上会被推断为 &'static str
-let s2: &'static str = "world";
+let s1: &str = "foo";  // 实际上会被推断为 &'static str
+let s2: &'static str = "bar";
 let s3: String = String::from("haha");
 let s4: &str = &s3;
 let s5: Box<str> = String::from("hehe").into_boxed_str();
@@ -455,10 +455,10 @@ let s5: Box<str> = String::from("hehe").into_boxed_str();
 以 `r` 或 `r#` 的形式来表示原始字符串，不会对字符进行转义。
 
 ```rust
-let s1 = r"hello\t\nhello";
-let s2 = r##"hello\t\nhello"##;
-let s3 = r###"hello\t\nhello"###;
-let s4 = r####"hello\t\nhello"####;
+let s1 = r"foo\t\nbar";
+let s2 = r##"foo\t\nbar"##;
+let s3 = r###"foo\t\nbar"###;
+let s4 = r####"foo\t\nbar"####;
 ```
 
 当使用 `r#` 的形式时，需要确保前后 `#` 的数量是一致的。
@@ -600,10 +600,10 @@ Rust 中的表达式有很多种，主要有：
 作用域是一个项在程序中有效的范围。
 
 ```rust
-let s1 = "hello";       // s1 生效
-{                       // 作用域开始
-    let s2 = "world";   // s2 生效
-}                       // 作用域结束，s2 无效，s1 有效
+let s1 = "foo";       // s1 生效
+{                     // 作用域开始
+    let s2 = "bar";   // s2 生效
+}                     // 作用域结束，s2 无效，s1 有效
 ```
 
 当变量进入作用域时，就是有效的，并一直持续到离开作用域为止。
@@ -613,8 +613,8 @@ let s1 = "hello";       // s1 生效
 在编译时就知道的大小的数据通常放在栈上，而变化的或运行时才知道大小的数据通常放在堆上。`String` 类型就是一种放在堆上的数据。
 
 ```rust
-let mut s = String::from("hello");
-s.push_str(", world!");
+let mut s = String::from("foo");
+s.push_str("bar");
 ```
 
 `&str` 在编译时就知道其内容，被直接硬编码进可执行文件的只读区块中，因此效率高，但不可变。
@@ -630,7 +630,7 @@ s.push_str(", world!");
 
 ```rust
 {
-    let s = String::from("hello");  // s 从此处开始生效
+    let s = String::from("foo");  // s 从此处开始生效
 }                                   // s 无效
 ```
 
@@ -674,7 +674,7 @@ println!("{s1}");   // 错误
 若确实需要复制 `String` 中堆上的数据，而不仅仅是栈上的数据，可以调用 `clone` 函数。
 
 ```rust
-let s1 = String::from("hello");
+let s1 = String::from("foo");
 let s2 = s1.clone();
 println!("{s1}, {s2}");
 ```
@@ -702,7 +702,7 @@ fn print_string(s: String) { // s 作用域开始
 
 fn main() {
     let n = 1;
-    let s = String::from("hello");
+    let s = String::from("foo");
     print_number(n);      // n 的值移动到函数中，但 i32 是 Copy 的，可在之后继续使用
     print_string(s);      // s 的值移动到函数中，之后不能继续使用
     println!("{n}");      // n 依旧有效
@@ -716,7 +716,7 @@ fn main() {
 
 ```rust
 fn ret() -> String {
-    let s = String::from("hello");
+    let s = String::from("foo");
     s   // 将 s 的值移出，返回给调用它的函数
 }
 
@@ -726,7 +726,7 @@ fn take_and_ret(ts: String) -> String {
 
 fn main() {
     let s1 = ret();             // 函数将返回值移动到 s1
-    let s2 = String::from("hello");
+    let s2 = String::from("foo");
     let s3 = take_and_ret(s2);  // s2 的值被移动到函数中，函数将返回值移动到 s3
 }   // s1、s3 被移出作用域，调用析构函数，s2 的值已被移走，不会调用析构函数
 ```
@@ -771,17 +771,17 @@ let s1 = &s;
 变量默认是不可变的，引用也一样，**默认不允许修改引用的值**。
 
 ```rust
-let s = String::from("hello");
+let s = String::from("foo");
 let ps = &s;
-ps.push_str(" world!");  // 错误，引用默认不可变
+ps.push_str("bar");  // 错误，引用默认不可变
 ```
 
 使用 `mut` 修饰变量和引用，可以使引用可变，类型表示为 `&mut T`。
 
 ```rust
-let mut s = String::from("hello");
+let mut s = String::from("foo");
 let ps = &mut s;
-ps.push_str(" world!");
+ps.push_str("bar");
 ```
 
 **`mut` 变量可被引用为 `&` 或 `&mut`，非 `mut` 变量只能被引用为 `&`**。
@@ -819,7 +819,7 @@ let rx = &y;            // 正确，可以通过隐藏来改变 rx 的类型
 **值在同一作用域内有且仅有一个可变引用**，这个限制可以避免数据竞争。
 
 ```rust
-let mut s = String::from("hello");
+let mut s = String::from("foo");
 let r1 = &mut s;
 let r2 = &mut s;    // 错误
 ```
@@ -827,7 +827,7 @@ let r2 = &mut s;    // 错误
 通过创建新的作用域，以允许拥有多个可变引用。
 
 ```rust
-let mut s = String::from("hello");
+let mut s = String::from("foo");
 {
     let r1 = &mut s;
 }   // r1 离开作用域，r2 可以拥有 s 的可变引用
@@ -837,7 +837,7 @@ let r2 = &mut s;
 **不能在拥有不可变引用的同时拥有可变引用，但可以拥有多个不可变引用**。
 
 ```rust
-let mut s = String::from("hello");
+let mut s = String::from("foo");
 let r1 = &s;
 let r2 = &s;
 let r3 = &mut s;    // 错误，已有不可变引用
@@ -846,7 +846,7 @@ let r3 = &mut s;    // 错误，已有不可变引用
 一个引用的作用域从声明的地方开始一直持续到**最后一次使用为止**。如最后一次使用不可变引用在声明可变引用之前，或仅在最后一次使用可变引用**之后**，原始数据才可以再次可变或被不可变的借用。编译器在作用域结束之前判断不再使用的引用的能力称为**非词法作用域生命周期**。
 
 ```rust
-let mut s = String::from("hello");
+let mut s = String::from("foo");
 let r1 = &s;
 let r2 = &s;
 println!("{r1}, {r2}");   // 最后一次使用引用，r1、r2 作用域结束
@@ -919,7 +919,7 @@ fn main() {
 }
 
 fn dr() -> &String {        // 返回一个字符串引用
-    let s = String::from("hello");
+    let s = String::from("foo");
     &s                      // 错误
 }   // s 离开作用域，其内存将被释放
 ```
@@ -963,7 +963,7 @@ let s3 = &s[..];    // 获取整个字符串切片
 字符串字面值被储存在二进制文件中，因此它就是一个切片。
 
 ```rust
-let s = "hello world";
+let s = "foo";
 ```
 
 这里 `s` 的类型是 `&str`：它是一个指向二进制文件特定位置的切片，这也就是为什么字符串字面值是不可变的。
@@ -985,8 +985,8 @@ fn foo(s: &str) {}
 这样可以对 `String` 值和 `&str` 值使用相同的函数，使 API 更加通用。
 
 ```rust
-let s1 = String::from("hello world");
-let s2 = "second string";
+let s1 = String::from("foo");
+let s2 = "bar";
 
 foo(&s1);
 foo(&s1[..]);
@@ -1171,7 +1171,7 @@ enum Option<T> {
 
 ```rust
 let some_number = Some(5);
-let some_string = Some("a string");
+let some_string = Some("foo");
 let absent_number: Option<i32> = None;
 ```
 
@@ -1522,7 +1522,7 @@ if let Some(x) = value {}
 对于没有实现 `Copy` 的类型值，在匹配时会获取所有权，从而发生移动。
 
 ```rust
-let s = Some(String::from("hello"));
+let s = Some(String::from("foo"));
 match s {
     Some(v) => println!("{v}"),
     None => println!("Nothing"),
@@ -1537,7 +1537,7 @@ println!("{:?}", s);    // 错误，s 中的值已经移动到 v
 ```rust
 fn update_inner(s: &mut Option<String>) {
     match s {
-        Some(ref mut v) => v.push_str(", world"),
+        Some(ref mut v) => v.push_str("bar"),
         None => (),
     }
 }
@@ -1550,7 +1550,7 @@ fn print_inner(s: &Option<String>) {
 }
 
 fn main() {
-    let mut s = Some(String::from("hello"));
+    let mut s = Some(String::from("foo"));
     update_inner(&mut s);
     print_inner(&s);
 }
@@ -1561,7 +1561,7 @@ fn main() {
 `ref` 和 `&` 都可在模式匹配中使用，主要区别在于用法和目的。前者用于在模式匹配中**创建一个引用**，而不是获得值的所有权，后者主要是为了**匹配引用**。因此 `ref` 不是模式的一部分，而 `&` 是模式的一部分。
 
 ```rust
-let tup = (String::from("hello"), &1);
+let tup = (String::from("foo"), &1);
 match tup {
     (ref x, &y) => println!("({x}, {y})"),
 }
