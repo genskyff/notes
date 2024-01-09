@@ -75,8 +75,8 @@
 
 并不是所有类型都能在自动强转点被自动转换，有着以下限制：
 
--   `T` 到 `U`，若 `T` 是 `U` 的子类型；
--   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`；
+-   `T` 到 `U`，若 `T` 是 `U` 的子类型（反射性）；
+-   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`（传递性）；
 -   `&mut T` 到 `&T`；
 -   `*mut T` 到 `*const T`；
 -   `&T` 到 `*const T`；
@@ -132,13 +132,129 @@ let p = &v as *mut i32;
 
 `as` 只能用于基本类型，对于自定义类型，标准库提供了一系列用于类型转换相关的 trait。
 
+`std::convert` 提供了多种从一种类型转换到另一种类型的 trait：
+
+-   `From` 和 `Into`：`T` 到 `U` 之间的转换；
+-   `TryFrom` 和 `TryInto`：`T` 到 `U` 之间的转换，但可能转换失败；
+-   `AsRef` 和 `AsMut`：`&T` / `&mut T` 到 `&U` / `&mut U` 之间转换。
+
+`std::borrow` 则提供了另一种针对引用转换的 trait：
+
+-   `ToOwned`：`&T` 到 `U` 的转换；
+-   `Borrow` 和 `Borrow`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`。
+
 ### From 和 Into
 
+`From` 和 `Into` 的定义是对称的，其会获得所有权，然后将转换值返回，这种转换要求**不能失败**。
 
+```rust
+pub trait From<T>: Sized {
+    fn from(value: T) -> Self;
+}
 
-### FromStr、ToString 和 Display
+pub trait Into<T>: Sized {
+    fn into(self) -> T;
+}
+```
 
+-   由于 `From` 是反射的，因此所有的 `T` 都实现了 `From<T>` 和 `Into<T>`；
+-   若为 `T` 实现了 `From<U>`，则自动为 `U` 实现 `Into<T>`，因此推荐实现 `From` 而不是 `Into`；
+-   这两种转换 trait 虽然都是用作转换，但是用途不同：
+    -   `From` 主要用在构造函数，用于从 `U` 构造 `T` 的实例；
+    -   `Into` 主要用在函数参数，让参数类型更灵活。
 
+```rust
+struct Wrap {
+    value: i32,
+}
+
+impl From<i32> for Wrap {
+    fn from(value: i32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<f64> for Wrap {
+    fn from(value: f64) -> Self {
+        Self {
+            value: value as i32,
+        }
+    }
+}
+
+fn get_wrap<T: Into<Wrap>>(v: T) -> Wrap {
+    v.into()
+}
+
+fn main() {
+    let w = Wrap::from(1);
+    get_wrap(w);
+    get_wrap(1);
+    get_wrap(1.1);
+}
+```
+
+### FromStr、Display 和 ToString
+
+`FromStr` 用于 `&str` 到 `T` 的转换，通常被 `&str` 的 `parse` 方法隐式使用。由于没有生命周期参数，因此 `T` 中不能包含引用。
+
+```rust
+pub trait FromStr: Sized {
+    type Err;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err>;
+}
+```
+
+而 `Display` 则用于将类型转换为用于显式输出的字符串，实现了该 trait 则自动实现了 `ToString`，并且拥有 `to_string` 方法，因此不应该直接实现 `ToString`。
+
+```rust
+pub trait Display {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result;
+}
+```
+
+由于 `FromStr` 通常被 `parse` 隐式使用，其接收一个 `Formatter`，因此通常也需要实现 `Display`。
+
+```rust
+use std::{fmt::Display, str::FromStr};
+
+struct Point(i32, i32);
+struct ParsePointError;
+
+impl Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
+    }
+}
+
+impl FromStr for Point {
+    type Err = ParsePointError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>();
+
+        let (x, y) = s
+            .strip_prefix("(")
+            .and_then(|s| s.strip_suffix(")"))
+            .and_then(|s| s.split_once(","))
+            .ok_or(ParsePointError)?;
+
+        let x = x.parse::<i32>().map_err(|_| ParsePointError)?;
+        let y = y.parse::<i32>().map_err(|_| ParsePointError)?;
+
+        Ok(Point(x, y))
+    }
+}
+
+fn main() {
+    let p = "(1, 2)".parse::<Point>().unwrap_or(Point(0, 0));
+    println!("{p}");
+}
+```
 
 ### TryFrom 和 TryInto
 
@@ -187,7 +303,6 @@ for e in v_iter {
 pub trait Iterator {
     type Item;
     fn next(&mut self) -> Option<Self::Item>;
-    // -- snip --
 }
 ```
 
@@ -523,16 +638,18 @@ let s = format!("{}-{}-{}", s1, s2, s3);
 -   `get`、`get_mut`
 -   `push`、`push_str`、`pop`
 -   `insert`、`insert_str`、`remove`
--   `clear`、`is_empty`
--   `find`、`matches`
--   `split`、`split_off`、`split_whitespace`
--   `chars`、`bytes`、`lines`
+-   `clear`、`is_empty`、`is_ascii`
+-   `find`、`matches`、`contains`
+-   `split`、`splitn`、`split_once`、`split_inclusive`、`split_off`、`split_whitespace`
+-   `chars`、`char_indices`、`bytes`、`lines`、`encode_utf16`
 -   `replace`、`replacen`
 -   `into_bytes`、`into_boxed_str`
 -   `as_bytes`、`as_str`
 -   `to_lowercase`、`to_uppercase`
 -   `make_ascii_lowercase`、`make_ascii_uppercase`
 -   `repeat`、`parse`
+-   `strip_prefix`、`strip_suffix`
+-   `start_with`、`end_with`
 -   `trim`、`trim_start`、`trim_end`
 
 >   更多关于 `String` 的方法，可参考 [String in std::string](https://doc.rust-lang.org/std/string/struct.String.html#implementations)。
