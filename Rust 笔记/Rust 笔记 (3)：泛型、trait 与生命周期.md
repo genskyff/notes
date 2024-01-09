@@ -618,17 +618,26 @@ where
     fn cmp(&self) -> bool {
         self.x > self.y
     }
+
+    fn cmp_i(&self) -> bool
+    where
+        T: Ord,
+    {
+        self.x > self.y
+    }
 }
 
 fn main() {
     let p1 = Pair::new(1, 2);
-    let p2 = Pair::new("foo".to_string(), "bar".to_string());
+    let p2 = Pair::new(1.1, 2.2);
     p1.cmp();
-    p2.cmp(); // 错误
+    p1.cmp_i();
+    p2.cmp();
+    p2.cmp_i(); // 错误，f64 没有实现 Ord
 }
 ```
 
-第一个实现中的 `new` 方法没有对 `T` 做限制，因此能被任何 `Pair` 实例调用。第二个实现中的 `cmp` 方法只能被实现了 `Copy` 和 `PartialOrd` 的 `Pair` 实例调用。
+第一个实现中的 `new` 方法没有对 `T` 做限制，因此能被任何 `Pair` 实例调用。第二个实现中的 `cmp` 方法只能被实现了 `Copy` 和 `PartialOrd` 的 `Pair` 实例调用，`cmp_i` 只能被还另外实现了 `Ord` 的实例调用。
 
 ## trait 对象
 
