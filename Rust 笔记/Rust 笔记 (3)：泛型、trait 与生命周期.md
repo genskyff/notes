@@ -1331,7 +1331,7 @@ fn main() {
 }
 ```
 
-`std::ops::{Deref, DerefMut}`：重载不可变和可变的解引用 `*` / `.`：
+`std::ops::{Deref, DerefMut}`：重载不可变和可变的自动引用和解引用 `.` / `*`：
 
 ```rust
 use std::ops::Deref;
