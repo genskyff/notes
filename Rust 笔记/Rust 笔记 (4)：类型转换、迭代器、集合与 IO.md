@@ -394,7 +394,7 @@ assert_eq!(r, 18);
 -   `take`、`take_while`
 -   `skip`、`skip_while`
 -   `fuse`、`step_by`
--   `chain`、`zip`、`unzip`
+-   `chain`、`chunk`、`zip`、`unzip`
 -   `enumerate`、`rev`、`cycle`
 -   `cloned`、`copied`
 -   `inspect`、`by_ref`
@@ -508,6 +508,7 @@ v.iter().for_each(|e| println!("{e}"));
 -   `new`、`from`、`with_capacity`
 -   `len`、`ptr`、`capacity`
 -   `get`、`get_mut`
+-   `first`、`last`
 -   `push`、`pop`
 -   `insert`、`remove`、`swap_remove`
 -   `dedup`、`clear`、`is_empty`

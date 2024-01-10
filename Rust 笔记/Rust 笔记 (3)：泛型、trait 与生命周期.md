@@ -2130,6 +2130,10 @@ fn ret_static_str() -> &'static str;
 fn ret_static_str<'a>() -> &'a str;
 ```
 
+### 临时生命周期扩展
+
+
+
 ### 永久借用
 
 ```rust
