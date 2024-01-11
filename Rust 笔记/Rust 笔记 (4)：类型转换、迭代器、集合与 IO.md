@@ -311,15 +311,82 @@ fn main() {
 
 ### AsRef 和 AsMut
 
+`AsRef` 和 `AsMut` 用于引用之间的转换，前者用于不可变引用，后者用于可变引用，这种转换要求**不能失败**。
 
+```rust
+pub trait AsRef<T: ?Sized> {
+    fn as_ref(&self) -> &T;
+}
+
+pub trait AsMut<T: ?Sized> {
+    fn as_mut(&mut self) -> &mut T;
+}
+```
+
+`AsRef` 和 `AsMut` 都会自动解引用：
+
+-   若实现了 `AsRef<U> for T`，则 `&T`、`&mut T`、`&&mut T` 都能调用 `as_ref`；
+-   若实现了 `AsMut<U> for T`，则 `&mut T`、`&mut &mut T` 都能调用 `as_mut`。
+
+```rust
+struct Wrap {
+    value: i32,
+}
+
+impl AsRef<i32> for Wrap {
+    fn as_ref(&self) -> &i32 {
+        &self.value
+    }
+}
+
+impl AsMut<i32> for Wrap {
+    fn as_mut(&mut self) -> &mut i32 {
+        &mut self.value
+    }
+}
+
+fn main() {
+    let mut w = Wrap { value: 1 };
+    // r1 == r2 == r3
+    let r1 = w.as_ref();
+    let r2 = (&mut w).as_ref();
+    let r3 = (&&mut w).as_ref();
+    
+    // m1 == m2
+    let m1 = w.as_mut();
+    let m2 = (&mut &mut w).as_mut();
+}
+```
+
+由于智能指针的 `Deref` 或 `DerefMut` trait，在 `T` 上调用 `as_ref` 或 `as_mut` 会返回 `&T` 或 `&mut T`，而不是 `&U` 或 `&mut U`。
+
+```rust
+let mut w = Wrap { value: 1 };
+let mut b = Box::new(w);
+
+// 需要两次调用才能的到 value 的引用
+let r1 = b.as_ref().as_ref();
+let r2 = b.as_mut().as_mut();
+```
+
+这两个 trait 可以应用于函数参数，如一个接收 `AsRef<str>` 作为参数的函数，那么 `&str` 和 `String` 都可以作为参数。
+
+```rust
+fn get_foo<T: AsRef<str>>(value: T) {
+    assert_eq!("foo", value.as_ref());
+}
+
+fn main() {
+    get_foo(String::from("foo"));
+    get_foo("foo");
+}
+```
 
 ### ToOwned
 
 
 
 ### Borrow 和 BorrowMut
-
-
 
 
 
