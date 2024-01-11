@@ -20,17 +20,17 @@ apt update && apt -y install git
 
 ## 配置
 
-使用 `git config` 命令来读取和配置环境变量：
+使用 `git config` 来读取和配置环境变量：
 
--   `--system` 选项：对所有用户都适用的配置；
-    -   Windows：Git 安装目录下的 `etc/gitconfig` 文件 ；
-    -   Linux： `/etc/gitconfig` 文件。
+-   `--system`：对所有用户都适用的配置；
+    -   Windows：Git 安装目录下的 `etc/gitconfig` ；
+    -   Linux： `/etc/gitconfig`。
 
--   `--global` 选项：仅对当前用户适用的配置；
-    -   Windows、Linux：`~/.gitconfig` 文件。
+-   `--global`：仅对当前用户适用的配置；
+    -   Windows、Linux：`~/.gitconfig`。
 
--   `--local` 选项：**默认选项**，仅对当前 Git 目录适用的配置。
-    -   Windows、Linux：工作区中的 `.git/config` 文件。
+-   `--local`：**默认选项**，仅对当前 Git 目录适用的配置。
+    -   Windows、Linux：工作区中的 `.git/config`。
 
 >   `--system` 优先级**最低**，`--local` 优先级**最高**，高优先级会覆盖低优先级中的相同配置。这些配置仅在本地生效，不会推送到远程仓库中去。
 
@@ -60,40 +60,25 @@ git config -l --show-origin
 git config --show-origin <key>
 ```
 
->   使用 `-l` 选项时，会查找所有级别的配置，并以优先级最高的配置为准，相同优先级的同名配置，以最后找到的为准。
+>   使用 `-l` 时，会查找所有级别的配置，并以优先级最高的配置为准，相同优先级的同名配置，以最后找到的为准。
 
 ### 设置配置
 
-#### 用户信息
-
-配置用户名和 Email：
-
 ```shell
+# 配置用户信息
 git config --global user.name "usename"
 git config --global user.email "email@example.com"
-```
 
-#### 文本编辑器
-
-要求输入信息时可以指定编辑器，如设置 `VSCode` 为默认文本编辑器：
-
-```shell
+# 指定默认编辑器
 git config --global core.editor "code --wait"
-```
 
-#### 显示非 ASCII 字符
-
-默认情况下输出的非 ASCII 字符会被转义，设置不转义非 ASCII 字符：
-
-```shell
+# 显示非 ASCII 字符
 git config --global core.quotepath false
-```
 
-#### 取消配置
+# 自动解决冲突
+git config --global rerere.enabled true
 
-取消指定配置：
-
-```shell
+# 取消配置
 git config --unset <key>
 ```
 
@@ -134,13 +119,13 @@ git config --unset <key>
 
 ## 克隆
 
-`clone` 命令克隆仓库，可重命名仓库：
+`clone` 用于克隆仓库，并可重命名仓库：
 
 ```shell
 git clone <repo> [rename]
 ```
 
-`--depth` 选项用于指定克隆历史提交记录的数量：
+`--depth` 用于指定克隆历史提交记录的数量：
 
 ```shell
 # 只克隆最新的提交
@@ -159,7 +144,7 @@ git init
 
 ## 提交
 
-`add` 命令会将未跟踪文件变为已跟踪，将已跟踪文件添加到暂存区。
+`add` 会将未跟踪文件变为已跟踪，将已跟踪文件添加到暂存区。
 
 ```shell
 # 跟踪或添加文件
@@ -168,19 +153,19 @@ git add <file>
 git add <path>
 ```
 
-`commit` 命令将暂存区中的文件提交到仓库，`-m` 选项用于指定提交信息：
+`commit` 将暂存区中的文件提交到仓库，`-m` 用于指定提交信息：
 
 ```shell
 git commit -m <message>
 ```
 
-`-a` 选项，Git 会自动把所有**已跟踪**的文件暂存起来一并提交，从而跳过 `git add` 步骤。
+`-a` 会自动把所有**已跟踪**的文件暂存起来一并提交，从而跳过 `git add` 步骤。
 
 ```shell
 git commit -am <message>
 ```
 
-`--amend` 选项，会覆盖上次提交：
+`--amend` 会覆盖上次提交：
 
 ```shell
 git commit --amend [-m <message>]
@@ -190,13 +175,13 @@ git commit --amend [-m <message>]
 
 ## 文件状态
 
-`status` 命令查看当前目录文件状态：
+`status` 查看当前目录文件状态：
 
 ```shell
 git status -s
 ```
 
-`-s` 选项将以更紧凑的格式输出：
+`-s` 将以更紧凑的格式输出：
 
 ```
 [暂存区状态][工作区状态] [文件]
@@ -218,30 +203,6 @@ git status -s
 **文件：.gitignore**
 
 ```
-*.[oa]
-*~
-```
-
-文件 `.gitignore` 的格式规范如下：
-
--   所有空行或者以 `＃` 开头的行都会被 Git 忽略；
--   可以使用标准的 `glob` 模式匹配；
--   匹配模式可以以 `/` 开头防止递归；
--   匹配模式可以以 `/` 结尾指定目录；
--   要忽略指定模式以外的文件或目录，可以在模式前加上 `!` 取反。
-
-`glob` 模式指 shell 所使用的简化的正则表达式：
-
--   `*` 匹配零个或多个任意字符；
--   `?` 只匹配一个任意字符；
-
--   `[abc]` 匹配任意一个列在方括号中的字符。`-` 分隔两个字符，表示范围匹配，如 `[0-9]` 表示匹配所有 0 到 9 的数字；
-
--   使用 `**` 匹配任意中间目录，如 `a/**/z` 可以匹配 `a/z`、`a/b/z` 或 `a/b/c/z` 等。
-
->   可以忽略 `.gitignore` 文件本身。
-
-```
 # 忽略所有的 .a 文件
 *.a
 
@@ -261,7 +222,7 @@ doc/*.txt
 doc/**/*.pdf
 ```
 
-工作目录的根目录下有一个 `.gitignore` 文件，它递归地应用到整个仓库中。 而在其子目录下也可以有额外的 `.gitignore` 文件，但只作用于其所在的目录中。
+工作目录的根目录下有一个 `.gitignore` 文件，它递归地应用到整个仓库中。而在其子目录下也可以有额外的 `.gitignore` 文件，但只作用于其所在的目录中。
 
 >   所有 `.gitignore` 文件规则会合并生效。
 
@@ -310,15 +271,15 @@ git diff --name-only <commit>
 
 ## 删除文件
 
-`rm` 命令从工作区和仓库中删除指定的文件：
+`rm` 从工作区和仓库中删除指定的文件：
 
 ```shell
 git rm <file>
 ```
 
-若已保存到暂存区，则必须使用 `-f` 选项来强制删除，防止误删还未提交的数据。
+若已保存到暂存区，则必须使用 `-f` 来强制删除，防止误删还未提交的数据。
 
-`--cached` 选项仅从暂存区删除，但文件仍保留在工作区中：
+`--cached` 仅从暂存区删除，但文件仍保留在工作区中：
 
 ```shell
 git rm --cached <file>
@@ -326,13 +287,13 @@ git rm --cached <file>
 
 ## 移动文件
 
-`mv` 命令移动或重命名文件：
+`mv` 移动或重命名文件：
 
 ```shell
 git mv <old> <new>
 ```
 
-该命令相当于执行了以下三条命令：
+相当于执行了以下三条命令：
 
 ```shell
 mv <old> <new>
@@ -342,7 +303,7 @@ git add <new>
 
 ## 撤销更改
 
-`restore`、`reset` 和 `revert` 命令都可以用来撤销更改，但在功能上有一些区别。
+`restore`、`reset` 和 `revert` 都可以用来撤销更改，但在功能上有一些区别。
 
 ### restore
 
@@ -356,7 +317,7 @@ git add <new>
 ### reset
 
 - 用途：用于重置 `HEAD` 指针，撤销提交，并可选地更改工作区和暂存区。
-- 安全性：可能不安全，因为 `--hard` 选项可以修改提交历史。
+- 安全性：可能不安全，因为 `--hard` 可以修改提交历史。
 - 影响：可以影响工作区、暂存区和提交历史。
 - 常见用法
   - 软重置（不影响工作区和暂存区）：`git reset --soft <commit>`
@@ -376,7 +337,7 @@ git add <new>
 
 ## 提交历史
 
-`log` 命令用来查看提交历史：
+`log` 用来查看提交历史：
 
 ```shell
 git log <branch> --oneline --abbrev-commit --graph
@@ -384,21 +345,21 @@ git log <branch> --oneline --abbrev-commit --graph
 
 -   可选指定分支的历史；
 
--   `--oneline` 选项表示以一行的形式简洁输出结果；
+-   `--oneline` 以一行的形式简洁输出结果；
 
--   `--abbrev-commit` 选项将 `commit id` 缩短显示；
+-   `--abbrev-commit` 将 `commit id` 缩短显示；
 
--   `--graph` 选项以图形形式显示提交历史，包括分支历史；
+-   `--graph` 以图形形式显示提交历史，包括分支历史；
 
--   `--reverse` 选项倒序显示提交历史。
+-   `--reverse` 倒序显示提交历史。
 
- `-p` 选项可以显示每次提交的差异， `-数字` 可以指定显示条数：
+ `-p` 可以显示每次提交的差异， `-数字` 可以指定显示条数：
 
 ```shell
 git log -p -2
 ```
 
-`--stat` 选项显示每次提交的文件修改统计信息：
+`--stat` 显示每次提交的文件修改统计信息：
 
 ```shell
 git log --stat
@@ -418,7 +379,7 @@ git log --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - 
 
 ### 临时切换
 
-`checkout` 和 `switch` 命令也可以用来临时切换到某个历史提交的状态。
+`checkout` 和 `switch` 也可以用来临时切换到某个历史提交的状态。
 
 ```shell
 # 临时切换到某个提交
@@ -442,25 +403,25 @@ git switch <branch>
 
 ## 查看
 
-`branch` 命令查看分支列表：
+`branch` 查看分支列表：
 
 ```shell
 git branch
 ```
 
-`-v` 选项查看每个分支最后一次提交：
+`-v` 查看每个分支最后一次提交：
 
 ```shell
 git branch -v
 ```
 
-`-a` 选项查看所有本地和远程分支：
+`-a` 查看所有本地和远程分支：
 
 ```shell
 git branch -a
 ```
 
-`--merged/--no-merged` 选项查看所有当前分支已经合并或未合并的分支：
+`--merged/--no-merged` 查看所有当前分支已经合并或未合并的分支：
 
 ```shell
 git branch --merged
@@ -469,7 +430,7 @@ git branch --no-merged
 
 ## 创建
 
-`branch` 命令创建分支：
+`branch` 创建分支：
 
 ```shell
 git branch <name>
@@ -477,7 +438,7 @@ git branch <name>
 
 这会在当前所在的提交对象上创建一个指向所创建分支的指针，但此时 `HEAD` 指向的还是当前分支。该命令仅仅创建一个新分支，并不会自动切换到新分支中去。
 
-`switch` 命令切换分支，`-c` 选项表示创建：
+`switch` 切换分支，`-c` 表示创建：
 
 ```shell
 git switch -c <name>
@@ -489,7 +450,7 @@ git switch -c <name>
 
 ## 合并
 
-`merge` 命令合并指定分支到当前分支：
+`merge` 合并指定分支到当前分支：
 
 ```shell
 git merge [--squash] <branch>
@@ -503,41 +464,39 @@ git merge [--squash] <branch>
 
 ## 重命名与删除
 
-`branch` 命令的 ` -m`  选项可以重命名当前分支：
+`branch -m`  可以重命名当前分支：
 
 ```shell
 git branch -m <new>
 ```
 
--   `-m` 选项用于重命名当前分支。若分支名已经存在，则会执行失败；
--   `-M` 选项用于强制重命名当前分支。若分支名已存在，则会丢弃已有的分支并重命名当前分支。
+-   `-m` 用于重命名当前分支。若分支名已经存在，则会执行失败；
+-   `-M` 用于强制重命名当前分支。若分支名已存在，则会丢弃已有的分支并重命名当前分支。
 
----
-
-`branch` 命令的 ` -d`  选项可以删除分支：
+`branch -d`  可以删除分支：
 
 ```shell
 git branch -d <name>
 ```
 
--   `-d` 选项用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败；
--   `-D` 选项用于强制删除指定分支，即使该分支还未被合并到当前分支。
+-   `-d` 用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败；
+-   `-D` 用于强制删除指定分支，即使该分支还未被合并到当前分支。
 
 # 5 远程仓库
 
 ## 查看
 
-`remote` 命令查看远程仓库：
+`remote` 查看远程仓库：
 
 ```shell
 git remote -v
 ```
 
-`-v` 选项会显示远程仓库拉取和推送对应的 URL。
+`-v` 会显示远程仓库拉取和推送对应的 URL。
 
 >   Git 远程仓库默认名为 `origin`。
 
-`show` 子命令还会列出远程仓库与跟踪分支的信息：
+`remote show` 还会列出远程仓库与跟踪分支的信息：
 
 ```shell
 git remote show <remote>
@@ -545,13 +504,13 @@ git remote show <remote>
 
 ## 添加
 
-添加新的远程仓库，同时指定一个别名，可以在命令行中使用别名来代替远程仓库的路径。
+添加新的远程仓库，同时指定一个别名，可以使用别名来代替远程仓库的路径。
 
 ```shell
 git remote add <alias> <repo>
 ```
 
->   当使用 `clone` 命令克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
+>   当使用 `clone` 克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
 
 ## 修改
 
@@ -563,23 +522,23 @@ git remote set-url origin <url>
 
 ## 拉取
 
-`fetch` 命令从中远程仓库拉取所有本地还没有的数据，但**并不会自动合并**到当前分支，必须手动合并。
+`fetch` 从中远程仓库拉取所有本地还没有的数据，但**并不会自动合并**到当前分支，必须手动合并。
 
 ```shell
 git fetch [remote]
 ```
 
-`pull` 命令和 `fetch` 的不同在于，会**自动合并**对应的远程分支到当前分支。
+`pull` 和 `fetch` 的不同在于，会**自动合并**对应的远程分支到当前分支。
 
 ```shell
 git pull [remote]
 ```
 
->   `pull` 命令实际上是 `fetch` 和 `merge` 命令的组合。
+>   `pull` 实际上是 `fetch` 和 `merge` 的组合。
 
 ## 推送
 
-`push` 命令将当前分支推送到远程对应的分支：
+`push` 将当前分支推送到远程对应的分支：
 
 ```shell
 git push [remote] [branch]
@@ -591,7 +550,7 @@ git push [remote] [branch]
 git push -u origin main
 ```
 
-首次推送时需要使用 `-u` 选项将本地和对应的远程分支相关联，之后就可以直接使用 `push` 推送。
+首次推送时需要使用 `-u` 将本地和对应的远程分支相关联，之后就可以直接使用 `push` 推送。
 
 >   若使用了 `--amend`、`rebase` 之类的操作，推送时可能会失败，这时可以使用 `-f` 选项来强制推送。但是注意，若在推送时有其他人在相同分支也进行了提交，则会**覆盖别人的提交**。除非提交的分支是只有自己在使用，否则谨慎使用该选项。
 
@@ -647,13 +606,13 @@ Git 支持两种标签：
 
 ### 轻量标签
 
-`tag` 命令默认就是轻量标签：
+`tag` 默认就是轻量标签：
 
 ```shell
 git tag v1.0-l
 ```
 
-`show` 命令查看轻量标签只会看到提交信息：
+`show` 查看轻量标签只会看到提交信息：
 
 ```shell
 git show v1.0-l
@@ -661,13 +620,13 @@ git show v1.0-l
 
 ### 附注标签
 
-使用 `-a` 选项创建附注标签，`-m` 选项指定提交信息：
+使用 `-a` 创建附注标签，`-m` 指定提交信息：
 
 ```shell
 git tag -a v1.0 -m "version 1.0"
 ```
 
-`show` 命令查看附注标签会显示更多信息：
+`show` 查看附注标签会显示更多信息：
 
 ```shell
 git show v1.0
@@ -687,7 +646,7 @@ git log --oneline --abbrev-commit
 git tag v0.9-l <commit>
 ```
 
-标签总是和某个 `commit` 挂钩。若这个 `commit` 既出现在 `main` 分支，又出现在其它分支，那么在这两个分支上都可以看到这个标签。
+标签总是和某个 `commit` 关联。若这个 `commit` 既出现在 `main` 分支，又出现在其它分支，那么在这两个分支上都可以看到这个标签。
 
 ## 共享
 
@@ -697,7 +656,7 @@ git tag v0.9-l <commit>
 git push <remote> <tag>
 ```
 
-`--tags` 选项一次性推送所有标签：
+`--tags` 一次性推送所有标签：
 
 ```shell
 git push <remote> --tags
@@ -707,7 +666,7 @@ git push <remote> --tags
 
 ## 删除
 
-`-d` 选项删除本地标签：
+`-d` 删除本地标签：
 
 ```shell
 git tag -d <tag>
@@ -731,7 +690,7 @@ git push <remote> -d <tag>
 ssh-keygen -t ed25519 [-C <message>]
 ```
 
-`-C` 选项用于添加注释方便管理 SSH 密钥，并不会用于加密或验证。该命令在 `~/.ssh` 目录里生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，`id_ed25519` 是私钥，`id_ed25519.pub` 是公钥。
+`-C` 用于添加注释方便管理 SSH 密钥，并不会用于加密或验证。该命令在 `~/.ssh` 目录里生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，`id_ed25519` 是私钥，`id_ed25519.pub` 是公钥。
 
 在 Linux 中，还需要私钥的读权限才能生效：
 
@@ -860,8 +819,8 @@ Hello world!
 
 同步有两种方式：
 
--   使用 `merge` 命令来合并；
--   使用 `rebase` 命令来变基。
+-   使用 `merge` 来合并；
+-   使用 `rebase` 来变基。
 
 这两种都需要先将远程 `main` 分支的最新代码拉取到本地，但不合并到本地分支：
 
@@ -877,14 +836,14 @@ git fetch origin
 git merge origin/main
 ```
 
-当使用 `merge` 命令时，若出现了代码冲突，则自动合并会失败，并提示需要手动解决冲突。
+当使用 `merge` 时，若出现了代码冲突，则自动合并会失败，并提示需要手动解决冲突。
 
 具体步骤如下：
 
-1.  使用 `status` 命令检查当前冲突的状态；
+1.  使用 `status` 检查当前冲突的状态；
 2.  使用文本编辑器打开存在冲突的文件，并手动解决冲突；
-3.  在解决冲突后，使用 `add` 命令将修改的文件标记为已解决冲突；
-4.  使用 `commit` 命令提交代码。在提交代码时，Git 会自动生成一条合并提交，该提交包含了本地分支修改和远程分支的修改；
+3.  在解决冲突后，使用 `add` 将修改的文件标记为已解决冲突；
+4.  使用 `commit` 提交代码。在提交代码时，Git 会自动生成一条合并提交，该提交包含了本地分支修改和远程分支的修改；
 
 ---
 
@@ -894,12 +853,12 @@ git merge origin/main
 git rebase origin/main
 ```
 
-当使用 `rebase` 命令时，若出现了代码冲突，Git 会停止变基操作，并需要手动解决冲突。
+当使用 `rebase` 时，若出现了代码冲突，Git 会停止变基操作，并需要手动解决冲突。
 
 具体步骤如下：
 
 1.  前三步与 `merge` 的方式相同；
-2.  使用 `rebase --continue` 命令继续变基操作，并自动应用到后续提交。
+2.  使用 `rebase --continue` 继续变基操作，并自动应用到后续提交。
 
 由于变基默认会影响到所有的提交，因此在解决冲突的时候会变得十分繁琐，可以使用 `-i` 选项启用交互式变基，选择需要变基的提交。
 
@@ -933,7 +892,7 @@ git push origin -d my-dev
 git pull
 ```
 
-使用 `remote prune` 命令删除本地仓库中已经不存在的远程分支。这些无效的分支通常是由于远程仓库中的分支已被删除而在本地仍保留所致。
+使用 `remote prune` 删除本地仓库中已经不存在的远程分支。这些无效的分支通常是由于远程仓库中的分支已被删除而在本地仍保留所致。
 
 ```shell
 git remote prune origin
@@ -943,19 +902,19 @@ git remote prune origin
 
 ## 保存进度
 
-有时候会遇到这样一种情况，当在 `dev` 分支进行开发时，有人反馈了一个 Bug，需要紧急切换到另一个分支去修改，但是在 `dev` 分支的工作还没有完成，这时就可使用 `stash` 命令把当前进度保存起来，然后切换到另一个分支去修改，修改完提交后，再切回 `dev` 分支来恢复之前的进度继续开发。
+有时候会遇到这样一种情况，当在 `dev` 分支进行开发时，有人反馈了一个 Bug，需要紧急切换到另一个分支去修改，但是在 `dev` 分支的工作还没有完成，这时就可使用 `stash` 把当前进度保存起来，然后切换到另一个分支去修改，修改完提交后，再切回 `dev` 分支来恢复之前的进度继续开发。
 
-还有一种情况，当在 `feature/a` 分支的开发完成后，准备在 `feature/b` 分支继续开发，但是进行到一半后才发现忘记开新分支了，依然是在 `feature/a` 上开发，所以需要将修改应用到新分支去，这时也可以使用 `stash` 命令来完成。
+还有一种情况，当在 `feature/a` 分支的开发完成后，准备在 `feature/b` 分支继续开发，但是进行到一半后才发现忘记开新分支了，依然是在 `feature/a` 上开发，所以需要将修改应用到新分支去，这时也可以使用 `stash` 来完成。
 
 ### 保存当前进度
 
-`stash` 命令会把工作区和暂存区的修改保存起来。执行完后，再运行 `git status` 命令，会发现当前是一个干净的工作区，没有任何改动。
+`stash` 会把工作区和暂存区的修改保存起来。执行完后，再运行 `git status`，会发现当前是一个干净的工作区，没有任何改动。
 
 ```shell
 git stash
 ```
 
-使用 `stash save` 命令在保存时添加注释：
+使用 `stash save`在保存时添加注释：
 
 ```shell
 git stash save <message>
@@ -963,7 +922,7 @@ git stash save <message>
 
 ### 查看已保存进度
 
-`stash list` 命令显示保存进度的列表：
+`stash list` 显示保存进度的列表：
 
 ```shell
 git stash list
@@ -971,7 +930,7 @@ git stash list
 
 ### 恢复进度
 
-`stash pop/apply` 命令恢复指定进度到工作区和暂存区，若不指定则恢复最新的进度：
+`stash pop/apply` 恢复指定进度到工作区和暂存区，若不指定则恢复最新的进度：
 
 ```shell
 # 恢复后会在 stash list 中删除该进度
@@ -981,7 +940,7 @@ git stash pop [stash id]
 git stash apply [stash id]
 ```
 
-其中 `stash id` 是通过 `stash list` 命令得到的。
+其中 `stash id` 是通过 `stash list` 得到的。
 
 ### 删除进度
 
