@@ -451,7 +451,7 @@ pub trait ToOwned {
 }
 ```
 
-如标准库的通用实现中，若满足 `T: Clone`，则实现了 `ToOwned<Owned=Vec<T>> for [T]`；同样 `str` 也实现了 `ToOwned<Owned=String>`。
+如标准库的通用实现中，若满足 `T: Clone`，则实现了 `ToOwned<Owned = Vec<T>> for [T]`；同样 `str` 也实现了 `ToOwned<Owned = String>`。
 
 ```rust
 let v = [1, 2, 3];
