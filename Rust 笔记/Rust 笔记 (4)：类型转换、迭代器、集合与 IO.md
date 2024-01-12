@@ -358,7 +358,7 @@ fn main() {
 }
 ```
 
-由于智能指针的 `Deref` 或 `DerefMut` trait，在 `T` 上调用 `as_ref` 或 `as_mut` 会返回 `&T` 或 `&mut T`，而不是 `&U` 或 `&mut U`。
+由于智能指针实现了 `Deref` 或 `DerefMut`，在 `T` 上调用 `as_ref` 或 `as_mut` 会返回 `&T` 或 `&mut T`，而不是 `&U` 或 `&mut U`。
 
 ```rust
 let mut w = Wrap { value: 1 };
@@ -382,13 +382,76 @@ fn main() {
 }
 ```
 
-### ToOwned
+这里虽然是 `AsRef<str>`，但是对 `&str` 也可以，这并不是因为隐式解引用，而是标准库含有如下通用实现：
 
+```rust
+impl<T: ?Sized, U: ?Sized> AsRef<U> for &T
+where T: AsRef<U>
+{
+    fn as_ref(&self) -> &U {
+        <T as AsRef<U>>::as_ref(*self)
+    }
+}
 
+impl<T: ?Sized, U: ?Sized> AsRef<U> for &mut T
+where T: AsRef<U>
+{
+    fn as_ref(&self) -> &U {
+        <T as AsRef<U>>::as_ref(*self)
+    }
+}
+
+impl<T: ?Sized, U: ?Sized> AsMut<U> for &mut T
+where T: AsMut<U>
+{
+    fn as_mut(&mut self) -> &mut U {
+        (*self).as_mut()
+    }
+}
+```
+
+因此对类型 `T`，只要实现了 `AsRef<U>` 或 `AsMut<U>`，则 `&T` 或 `&mut T` 也能使用。
 
 ### Borrow 和 BorrowMut
 
+`Borrow`、`BorrowMut` 与 `AsRef`、`AsMut` 定义基本相同，但要求 `T` 和 `U` 两者可以当作完全等同的对象来看待，即 `hash(T) == hash(U)`。如 `String` 实现了 `AsRef<str>`、`AsRef<[u8]>`、`AsRef<Path>`，但其中的三种类型的 Hash 值并不同，只有 `&str` 和 `String` 才能保证相同。
 
+要实现 `BorrowMut`，必须先实现 `Borrow`：
+
+```rust
+pub trait Borrow<Borrowed: ?Sized> {
+    fn borrow(&self) -> &Borrowed;
+}
+
+pub trait BorrowMut<Borrowed: ?Sized>: Borrow<Borrowed> {
+    fn borrow_mut(&mut self) -> &mut Borrowed;
+}
+```
+
+这主要用在如 `HashMap` 这种类型的键上：
+
+```rust
+let hm = std::collections::HashMap::from([("a".to_string(), 1)]);
+assert_eq!(hm[&"a".to_string()], hm["a"]);
+```
+
+键的类型是 `String`，由于其实现了 `Borrow<str>`，因此可以用 `&str` 来进行索引。
+
+### ToOwned
+
+若 `T` 实现了 `Clone`，则可在 `&T` 或 `&mut T` 上调用 `clone` 得到 `T`，但对于像 `&str` 或 `&[u8]` 这种类型，更希望获得 `String` 或 `Vec<u8>`。`ToOwned` 则更加泛化，可将 `&T` 或 `&mut T` 转化为 `U`。
+
+要实现 `ToOwned`，必须先实现 `Borrow<Self>`：
+
+```rust
+pub trait ToOwned {
+    type Owned: Borrow<Self>;
+
+    fn to_owned(&self) -> Self::Owned;
+}
+```
+
+因此若 `T` 实现了 `Clone`，则 `[T]` 可实现 `ToOwned<Owned = Vec<T>`，而 `str` 实现了 `ToOwned<Owned = String>`。
 
 # 2 迭代器
 
