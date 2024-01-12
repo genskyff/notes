@@ -451,7 +451,14 @@ pub trait ToOwned {
 }
 ```
 
-因此若 `T` 实现了 `Clone`，则 `[T]` 可实现 `ToOwned<Owned = Vec<T>`，而 `str` 实现了 `ToOwned<Owned = String>`。
+如标准库的通用实现中，若满足 `T: Clone`，则实现了 `ToOwned<Owned=Vec<T>> for [T]`；同样 `str` 也实现了 `ToOwned<Owned=String>`。
+
+```rust
+let v = [1, 2, 3];
+let s = "foo";
+let vv: Vec<_> = (&v[..]).to_owned();
+let ss: String = (&s[..]).to_owned();
+```
 
 # 2 迭代器
 
