@@ -2132,7 +2132,74 @@ fn ret_static_str<'a>() -> &'a str;
 
 ### 临时生命周期扩展
 
+若值没有被绑定到变量上，那么就是一个临时值，临时值只会在当前表达式中生效，无法在之后的语句中**使用从临时值创建的引用**。
 
+```rust
+let s = (&String::from("foo")).as_str();
+// println!("{s}"); // 取消注释，则上面这行报错
+```
+
+Rust 会在一些特定情况下扩展临时值的生命周期，但目前规则还未稳定。对于 `let` 语句，绝大部分都只能在简单情况下将临时值的生命周期扩展成与绑定的变量一样长，简单情况可以理解为不能对临时值进行函数调用，除非该函数返回的是一个具有所有权的值。
+
+```rust
+// 以下都会扩展
+let a = &temp;
+let a = &temp[index];
+let a = &temp();
+let a = A { field: &temp() };
+let a = [&temp()];
+let a = { …; &temp() };
+
+// 以下都不会扩展
+let b = f(&temp());
+let b = temp().f();
+let b = temp() + temp();
+```
+
+>   更多关于临时生命周期扩展的信息，可参考 [临时生存期扩展](https://minstrel1977.gitee.io/rust-reference/destructors.html?highlight=temp#temporary-lifetime-extension)。
+
+### 再借用
+
+对于 `&T` 是 `Copy` 的，对于 `&mut T` 则不是。若严格按照借用规则，下面这段代码就不会通过编译。
+
+```rust
+// 理论不通过，实际通过
+fn plus(v: &mut i32) {
+    *v += 1;
+}
+
+fn main() {
+    let mut a = 1;
+    let p = &mut a;
+    plus(p);
+    plus(p);
+    assert_eq!(3, *p);
+}
+```
+
+`plus` 接收一个 `&mut i32`，因此 `p` 作为参数时会发生移动，从而导致第二次调用时出错，但实际上并没有，这是因为**再借用**机制。
+
+再借用实际上是一种强制转换，是借用的一个特例。当把 `&'a T` 或 `&'a mut T` 作为函数参数，在实际调用时会将其转换为 `&'b T` 或 `&'b mut T`。虽然有两个借用，但其生命周期并不重叠，因此并不违反借用规则。
+
+再借用不仅仅发生在函数参数，闭包的参数、`let` 语句中都会出现。若不显式指定闭包参数类型或显式再借用，则会直接进行移动。
+
+```rust
+let mut a = 1;
+let b = &mut a;
+
+let c: &mut i32 = b; // 显式指定类型时，发生再借用
+println!("{b}");
+
+let c = &mut *b;     // 通过 * 进行显式再借用
+println!("{b}");
+
+let c = b;           // 自动类型推断时不发生
+println!("{b}");     // 错误，使用了已经移动的值
+
+let c = |b: &mut i32| *b += 1;
+c(b);
+c(&mut *b);
+```
 
 ### 永久借用
 
