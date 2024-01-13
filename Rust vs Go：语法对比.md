@@ -1,0 +1,542 @@
+## 声明语句
+
+### 变量
+
+Rust
+
+```rust
+// 显式标注类型
+let x: i32 = 1;
+
+// 自动推断
+let x = 1;
+
+// 可变
+let mut x = 1;
+```
+
+Go
+
+```go
+// 显式标注类型
+var x int = 1
+
+// 自动推断
+var x = 1
+
+// 自动推断
+x := 1
+```
+
+### 常量
+
+Rust
+
+```rust
+const X: i32 = 1;
+```
+
+Go
+
+```go
+const X int = 1
+```
+
+## 数据类型
+
+### 基本类型
+
+Rust
+
+-   有符号：`i8`、`i16`、`i32`、`i64`、`i128`、`isize`
+-   无符号：`u8`（`byte`）、`u16`、`u32`、`u64`、`u128`、`usize`
+-   浮点：`f32`、`f64`
+-   布尔：`bool`
+-   字符：`char`（`u32`）
+-   字符串：`&str`
+
+Go
+
+-   有符号：`int8`、`int16`、`int32`、`int64`、`int`
+-   无符号：`uint8`、`uint16`、`uint32`、`uint64`、`uint`、`uintptr`
+-   字节：`byte`（`uint8`）
+-   浮点：`float32`、`float64`
+-   复数：`complex64`、`complex128`
+-   布尔：`bool`
+-   字符：`rune`（`uint32`）
+-   字符串：`string`
+
+### 引用 / 指针
+
+Rust
+
+```rust
+// 引用
+let x = 1;
+let px = &x;
+
+let mut y = 2;
+let py = &mut y;
+*py = 10;
+
+println!("{} {} {}", x, px, *px);
+println!("{} {}", py, *py);
+
+// 原始指针
+let a = 1;
+let ra = &x as *const i32;
+
+let mut b = 2;
+let rb = &mut b as *mut i32;
+unsafe {
+    *rb = 10;
+}
+
+unsafe {
+    println!("{} {:p} {}", a, ra, *ra);
+    println!("{} {:p} {}", b, rb, *rb);
+}
+```
+
+Go
+
+```go
+x := 1
+var px *int = &x
+*px = 10
+fmt.Println(x, px, *px)
+```
+
+### 数组
+
+Rust
+
+```rust
+let mut a: [i32; 3] = [1,2,3];
+a[0] = 10;
+println!("{}", a[0]);
+
+// 二维数组
+let a_2d = [[1, 2], [3, 4]];
+println!("{}", a_2d[0][1]);
+```
+
+Go
+
+```go
+var a [3]int = [3]int {1, 2, 3}
+a[0] = 10
+fmt.Println(a[0])
+
+// 二维数组
+s_2d := [][]int{
+	{1, 2},
+	{3, 4},
+}
+
+fmt.Println(s_2d[0][1])
+```
+
+### 切片
+
+Rust
+
+```rust
+let a = [1, 2, 3, 4, 5];
+let slice: &[i32] = &a[1..4];
+for e in slice {
+    println!("{e}");
+}
+
+// &slice[..] &slice[1..] &slice[..3]
+println!("{:?}", &a[2..]);
+```
+
+Go
+
+```go
+a := [5]int{1, 2, 3, 4, 5}
+var slice []int = a[1:4]
+for i := 0; i < len(slice); i++ {
+	fmt.Println(slice[i])
+}
+fmt.Println(slice)
+
+slice2 := []int {1, 2, 3, 4, 5}
+// slice[:] slice[1:] slice[:3]
+fmt.Printf("%T %v", slice2, slice2[2:])
+```
+
+### 动态数组 / 切片
+
+Rust
+
+```rust
+let mut v = Vec::with_capacity(10);
+v.insert(0, 0);
+v.extend([1, 2, 3]);
+println!("{:?} {} {}", v, v.len(), v.capacity());
+```
+
+Go
+
+```go
+s := make([]int, 0, 10)
+s = append(s, 0)
+s = append(s, 1, 2, 3)
+fmt.Println(s, len(s), cap(s))
+```
+
+## Range
+
+Rust
+
+```rust
+let r = 1..=3;
+for (_, e) in r.enumerate() {
+    println!("{e}");
+}
+```
+
+Go
+
+```go
+s := []int{1, 2, 3}
+for _, v := range s {
+	fmt.Println(v)
+}
+```
+
+## 控制流
+
+### 分支
+
+Rust
+
+```rust
+// if
+let x = 1;
+if x < 0 {
+    println!("< 0");
+} else if x < 10 {
+    println!("< 10");
+} else {
+    println!(">= 10");
+}
+
+// match
+let x = 1;
+match x {
+    v if v < 0 => println!("< 0"),
+    v if v < 10 => println!("< 10"),
+    _ => println!(">= 10"),
+}
+```
+
+Go
+
+```go
+// if
+if x := 1; x < 0 {
+    fmt.Println("< 0")
+} else if x < 10 {
+    fmt.Println("< 10")
+} else {
+    fmt.Println(">= 10")
+}
+
+// switch
+switch x := 1; {
+case x < 0:
+	fmt.Println("< 0")
+case x < 10:
+	fmt.Println("< 10")
+default:
+	fmt.Println(">= 0")
+}
+
+switch os := runtime.GOOS; os {
+case "windows":
+	fmt.Println("Windows")
+case "linux":
+	fmt.Println("Linux")
+case "darwin":
+	fmt.Println("macOS")
+default:
+	fmt.Println(os)
+}
+```
+
+### 循环
+
+Rust
+
+```rust
+// while
+let mut i = 1;
+while i < 10 {
+    println!("{i}");
+    i += 1;
+}
+
+// for
+for i in 1..10 {
+    println!("{i}");
+}
+
+// 无限循环
+loop {
+    println!("loop");
+}
+```
+
+Go
+
+```go
+// 等价 while
+i := 1
+for ; i < 10; {
+    fmt.Println(i)
+    i++
+}
+
+// for
+for i := 1; i< 10; i++ {
+    fmt.Println(i)
+}
+
+// 无限循环
+for {
+    fmt.Println("loop")
+}
+```
+
+## 结构体
+
+Rust
+
+```Rust
+struct User {
+    name: String,
+    id: u8,
+    age: u8,
+}
+
+fn main() {
+    let u = User {
+        name: "Alice".to_string(),
+        id: 1,
+        age: 18,
+    };
+    let pu = &u;
+    
+    println!("{} {} {}", u.name, u.id, u.age);
+    println!("{} {} {}", pu.name, pu.id, pu.age); // 无需 *
+}
+```
+
+Go
+
+```go
+type User struct {
+	name string
+	id, age  uint8
+}
+
+func main() {
+	u := User{"Alice", 1, 18}
+    pu := &u
+    
+	fmt.Println(u.name, u.id, u.age)
+    fmt.Println(pu.name, u.id, pu.age) // 无需 *
+    
+    // 结构体切片
+    a := []struct {
+        a int
+        b string
+    }{
+        {1, "a"},
+        {2, "b"},
+        {3, "c"},
+    }
+    fmt.Println(a[2:])
+}
+```
+
+## HashMap
+
+Rust
+
+```rust
+let mut hm = HashMap::new();
+hm.insert("a", 1);
+println!("{}", hm["a"]);
+
+let mut hm2 = HashMap::from([("a", 1), ("b", 2)]);
+println!("{}", hm2["b"]);
+
+// 获取元素
+let (v, ok) = match hm2.get("c") {
+    Some(&v) => (v, true),
+    None => (i32::default(), false),
+};
+println!("{v} {ok}");
+
+// 删除元素
+hm2.remove("a");
+println!("{hm2:?}");
+```
+
+Go
+
+```go
+m := make(map[string]int)
+m["a"] = 1
+fmt.Println(m["a"])
+
+m2 := map[string]int{
+	"a": 1,
+	"b": 2,
+}
+fmt.Println(m2["b"])
+
+// 获取元素
+v, ok := m2["c"]
+fmt.Println(v, ok)
+
+// 删除元素
+delete(m2, "a")
+fmt.Println(m2)
+```
+
+## 函数
+
+Rust
+
+```rust
+fn add(x: i32, y: i32) -> i32 {
+    x + y
+}
+```
+
+Go
+
+```go
+func add(x, y int) int {
+	return x + y
+}
+```
+
+### 函数指针
+
+Rust
+
+```rust
+fn get_ret_f(f: fn(i32) -> i32) -> fn(i32) -> i32 {
+    f
+}
+
+fn main() {
+    fn g(x: i32) -> i32 {
+        x
+    }
+    let f = get_ret_f;
+    println!("{}", f(g)(1));
+}
+```
+
+Go
+
+```go
+func get_ret_f(f func(int) int) func(int) int {
+	return f
+}
+
+func main() {
+	g := func(x int) int {
+		return x
+	}
+	f := get_ret_f
+	fmt.Println(f(g)(1))
+}
+```
+
+## 闭包
+
+Rust
+
+```rust
+let n = Cell::new(1);
+let c = || n.set(n.get() + 1);
+
+for _ in 0..5 {
+    println!("{}", n.get());
+    c();
+}
+```
+
+Go
+
+```go
+n := 1
+c := func() {
+	n++
+}
+
+for i := 0; i < 5; i++ {
+	fmt.Println(n)
+	c()
+}
+```
+
+### 返回闭包
+
+Rust
+
+```rust
+fn fib() -> impl FnMut() -> i32 {
+    let (mut a, mut b) = (0, 1);
+    move || {
+        let r = a;
+        a = b;
+        b = r + b;
+        r
+    }
+}
+
+fn main() {
+    let mut f = fib();
+    for _ in 0..10 {
+        println!("{}", f());
+    }
+}
+```
+
+Go
+
+```go
+func fib() func() int {
+	a, b := 0, 1
+	return func() int {
+		ret := a
+		a, b = b, a+b
+		return ret
+	}
+}
+
+func main() {
+	f := fib()
+	for i := 0; i < 10; i++ {
+		fmt.Println(f())
+	}
+}
+```
+
+## 方法
+
+
+
+
+
+
+
