@@ -1030,3 +1030,16 @@ assert_eq!(String::from("foobarbaz"), s);
 assert_eq!(HashMap::from([("a", 2), ("b", 3)]), hm);
 assert_eq!(HashSet::from([1, 2, 3]), hs);
 ```
+
+# 4 IO
+
+## 标准 IO
+
+
+
+## 文件 IO
+
+
+
+## 网络 IO
+
