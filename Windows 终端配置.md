@@ -193,8 +193,8 @@ Import-Module Terminal-Icons
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
-Set-PSReadLineOption -PredictionViewStyle ListView
 
 function OpenCurrentFolder {
 	param($Path = '.')
