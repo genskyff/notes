@@ -54,6 +54,8 @@ Rust
 -   布尔：`bool`
 -   字符：`char`（`u32`）
 -   字符串：`&str`
+-   引用：`&T`、`&mut T`
+-   原始指针：`*const T`、`*mut T`
 
 Go
 
@@ -65,37 +67,18 @@ Go
 -   布尔：`bool`
 -   字符：`rune`（`uint32`）
 -   字符串：`string`
+-   指针：`*T`
 
 ### 引用 / 指针
 
 Rust
 
 ```rust
-// 引用
-let x = 1;
-let px = &x;
+let mut x = 2;
+let px = &mut x;
+*px = 10;
 
-let mut y = 2;
-let py = &mut y;
-*py = 10;
-
-println!("{} {} {}", x, px, *px);
-println!("{} {}", py, *py);
-
-// 原始指针
-let a = 1;
-let ra = &x as *const i32;
-
-let mut b = 2;
-let rb = &mut b as *mut i32;
-unsafe {
-    *rb = 10;
-}
-
-unsafe {
-    println!("{} {:p} {}", a, ra, *ra);
-    println!("{} {:p} {}", b, rb, *rb);
-}
+println!("{} {}", px, *px);
 ```
 
 Go
@@ -104,6 +87,7 @@ Go
 x := 1
 var px *int = &x
 *px = 10
+
 fmt.Println(x, px, *px)
 ```
 
@@ -148,7 +132,6 @@ for e in slice {
     println!("{e}");
 }
 
-// &slice[..] &slice[1..] &slice[..3]
 println!("{:?}", &a[2..]);
 ```
 
@@ -163,8 +146,7 @@ for i := 0; i < len(slice); i++ {
 fmt.Println(slice)
 
 slice2 := []int {1, 2, 3, 4, 5}
-// slice[:] slice[1:] slice[:3]
-fmt.Printf("%T %v", slice2, slice2[2:])
+fmt.Printf("%T %v\n", slice2, slice2[2:])
 ```
 
 ### 动态数组 / 切片
@@ -191,6 +173,8 @@ fmt.Println(s, len(s), cap(s))
 
 Rust
 
+-   `a..b`、`a..`、`..b`、`..`、`a..=b`、`..=b`
+
 ```rust
 let r = 1..=3;
 for (_, e) in r.enumerate() {
@@ -199,6 +183,8 @@ for (_, e) in r.enumerate() {
 ```
 
 Go
+
+-   `[a:b]`、`[a:]`、`[:b]`、`[..]`
 
 ```go
 s := []int{1, 2, 3}
@@ -534,9 +520,219 @@ func main() {
 
 ## 方法
 
+>   Rust 和 Go 对方法都具有自动引用和解引用的功能。
 
+Rust
 
+```rust
+#[derive(Debug)]
+struct Point {
+    x: i32,
+    y: i32,
+}
 
+impl Point {
+    fn add(&self, o: Self) -> Self {
+        Self {
+            x: self.x + o.x,
+            y: self.y + o.y,
+        }
+    }
 
+    fn modify(&mut self, x: i32, y: i32) {
+        self.x = x;
+        self.y = y;
+    }
+}
 
+fn main() {
+    let mut p = Point { x: 1, y: 2 };
+    let o = Point { x: 2, y: 3 };
+    println!("{:?}", p.add(o));
+    
+    p.modify(0, 0);
+    println!("{:?}", p);
+}
+```
+
+Go
+
+```go
+type Point struct {
+	x, y int
+}
+
+func (p Point) add(o Point) Point {
+	return Point{p.x + o.x, p.y + o.y}
+}
+
+func (p *Point) modify(x, y int) {
+	p.x, p.y = x, y
+}
+
+func main() {
+	p := Point{1, 2}
+	o := Point{3, 4}
+	fmt.Println(p.add(o))
+
+	p.modify(0, 0)
+	fmt.Println(p)
+}
+```
+
+### newtype
+
+>   Rust 和 Go 都具有孤儿规则，但可通过 newtype 来规避。
+
+Rust
+
+```rust
+struct MyInt(i32);
+
+impl MyInt {
+    fn foo(&self) {
+        println!("foo");
+    }
+}
+
+fn main() {
+    let i = MyInt(1);
+    i.foo();
+}
+```
+
+Go
+
+```go
+type MyInt int
+
+func (i MyInt) foo() {
+	fmt.Println("foo")
+}
+
+func main() {
+	i := MyInt(1)
+	i.foo()
+}
+```
+
+## 接口
+
+Rust
+
+```rust
+use std::{any::type_name_of_val, fmt::Debug};
+
+trait I: Debug {
+    fn m(&self);
+}
+
+#[derive(Debug)]
+struct F(f64);
+
+#[derive(Debug)]
+struct T {
+    s: String,
+}
+
+impl I for F {
+    fn m(&self) {
+        println!("{}", self.0);
+    }
+}
+
+impl I for T {
+    fn m(&self) {
+        println!("{}", self.s);
+    }
+}
+
+fn info(i: &dyn I) {
+    println!("{} {:?}", type_name_of_val(i), i);
+}
+
+fn main() {
+    let f = F(1.0);
+    let t = T {
+        s: "foo".to_string(),
+    };
+
+    f.m();
+    t.m();
+
+    info(&f);
+    info(&t);
+}
+```
+
+Go
+
+```go
+type I interface {
+	M()
+}
+
+type F float64
+
+type T struct {
+	S string
+}
+
+func (f F) M() {
+	fmt.Println(f)
+}
+
+func (t *T) M() {
+	fmt.Println(t.S)
+}
+
+func info(i I) {
+	fmt.Printf("%T %v\n", i, i)
+}
+
+func main() {
+	var f F = F(1.0)
+	var t T = T{"foo"}
+
+	f.M()
+	t.M()
+
+	info(f)
+	info(&t)
+}
+```
+
+### 泛型
+
+Rust
+
+```rust
+use std::{any::type_name_of_val, fmt::Debug};
+
+fn info<T: Debug>(t: T) {
+    println!("{} {:?}", type_name_of_val(&t), t);
+}
+
+fn main() {
+    info(1);
+    info(1.1);
+    info('a');
+    info("abc");
+}
+```
+
+Go
+
+```go
+func info(i interface{}) {
+	fmt.Printf("%T %v\n", i, i)
+}
+
+func main() {
+	info(1)
+	info(1.1)
+	info('a')
+	info("abc")
+}
+```
 
