@@ -1004,6 +1004,25 @@ let slice = &arr[1..3];
 assert_eq!(slice, &[2, 3]);
 ```
 
+### 切片方法
+
+常见切片方法：
+
+-   `chunks`、`concat`、`contains`、`flatten`、`to_vec`
+-   `first`、`last`
+-   `start_with`、`end_with`、`fill`、`fill_with`
+-   `strip_prefix`、`strip_suffix`
+-   `get`、`swap`、`join`、`len`
+-   `repeat`、`reverse`、`windows`
+-   `is_ascii`、`is_empty`、`is_sorted`
+-   `make_ascii_lowercase`、`make_ascii_uppercase`
+-   `to_ascii_lowercase`、`to_ascii_uppercase`
+-   `rotate_left`、`rotate_right`
+-   `sort`、`sort_by`
+-   `split`、`split_at`、`splitn`
+
+>   更多关于切片的方法，可参考 [slice - Rust](https://doc.rust-lang.org/std/primitive.slice.html#implementations)。
+
 # 3 自定义类型
 
 ## 结构体
