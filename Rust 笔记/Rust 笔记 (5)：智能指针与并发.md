@@ -8,7 +8,7 @@
 
 智能指针通常使用结构体实现，并实现了 `Deref` 和 `Drop` trait。`Deref` trait 重载了 `*` 运算符，允许智能指针实例可以像引用一样使用。`Drop` trait 允许自定义当智能指针离开作用域时运行的代码。
 
-## Box\<T\>
+## Box
 
 最简单的智能指针是 `Box`，其类型是 `Box<T>`。 Box 可以将一个值放在堆上而不是栈上，留在栈上的则是指向堆数据的指针。
 
@@ -20,7 +20,7 @@
 -   在确保数据不被拷贝的情况下转移所有权；
 -   需要拥有一个值并确保是否实现了特定 trait。
 
-### 使用 Box\<T\>
+### 使用 Box
 
 ```rust
 let x = Box::new(3);
@@ -66,7 +66,7 @@ enum Message {
 
 `Message::Quit` 并不需要任何空间，`Message::Move` 需要两个 `i32` 值的空间，依此类推。因为 enum 实际上只会使用其中的一个成员，所以 `Message` 值所需的空间等于储存其最大成员的大小。
 
-### 改用 Box\<T\>
+### 改用 Box
 
 因为 Box 是一个指针，所以大小是固定的。将 Box 放入 `Cons` 成员中而不是直接存放另一个 `List` 值。Box 会指向另一个位于堆上的 `List` 值，而不是存放在 `Cons` 成员中。
 
@@ -273,7 +273,7 @@ drop(s1);     // 正确
 
 `drop` 是一个析构函数，编译器会确保值不再被使用时只释放一次。
 
-## Rc\<T\>
+## Rc
 
 有时一个值可能会有多个所有者，如在图数据结构中，多个边可能指向相同的节点，这个节点被所有指向它的边拥有，直到没有任何边指向它之前都不应该被清理。
 
@@ -283,7 +283,7 @@ Rust 的所有权规则决定了一个值有且只有一个所有者，为了模
 
 >   `Rc<T>` 是**非原子**性的，因此只能用于**单线程**场景。
 
-### 使用 Rc\<T\> 共享数据
+### 使用 Rc 共享数据
 
 ![共享 List](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204291124165.png)
 
@@ -345,11 +345,11 @@ a.count = 2
 
 在 `main` 函数的结尾 `a` 和 `b` 离开作用域时，引用计数会变为 0，同时 `Rc<List>` 被完全清理。使用 `Rc<T>` 允许一个值有多个所有者，只要引用计数不为 0，则值始终有效。通过不可变引用， `Rc<T>` 允许在程序的多个部分之间**只读地**共享数据。
 
-## Cow\<T\>
+## Cow
 
 `Cow<T>` 是写时克隆智能指针，允许在需要的时候才进行克隆，可使代码更加高效。它封装并提供对借用数据的不可变访问，并在需要更改或获取所有权时延迟克隆数据。该类型旨在通过`Borrow`特征处理一般借用的数据。
 
-### 使用 Cow\<T\>
+### 使用 Cow
 
 `Cow<T>` 是一个枚举类型，包含两个变体：
 
@@ -395,7 +395,7 @@ fn main() {
 
 Rust 提供了 `Cell<T>` 和 `RefCell<T>` 用于内部可变性，两者在功能上没有区别，但 `Cell<T>` 适用于实现了 `Copy` trait 的类型。
 
-### Cell\<T\>
+### Cell
 
 ```rust
 use std::cell:Cell;
@@ -428,7 +428,7 @@ println!("{}", x.get());
 
 对实现了 `Copy` trait 的类型使用 `Cell<T>` 意义不大，通常是对非 `Copy` 的类型使用 `RefCell<T>`。
 
-### RefCell\<T\>
+### RefCell
 
 不同于 `Rc<T>`，`RefCell<T>` 拥有数据的唯一所有权。对于引用和 `Box<T>`，借用规则的不可变性作用于编译期，对于 `RefCell<T>`，则作用于**运行时**。对于引用和 `Box<T>`，若违反借用规则，则编译错误，对于 `RefCell<T>`，则会在运行时 panic。
 
@@ -475,7 +475,7 @@ let y1 = x.borrow_mut();
 let y2 = x.borrow_mut();  // 运行时 panic
 ```
 
-### 结合 Rc\<T\> 和 RefCell\<T\>
+### 结合 Rc 和 RefCell
 
 `RefCell<T>` 的一个常见用法是与 `Rc<T>` 结合。`Rc<T>` 通过不可变的引用使数据有多个所有者，若数据被 `RefCell<T>` 封装，则可以修改数据。
 
@@ -568,7 +568,7 @@ b.count = 2
 
 通过内部可变性修改了 `a` 使其指向 `b`，形成了一个循环链表，最后两者的引用计数都是 2，在离开作用域时两者的引用计数都不为 0，因此不会释放空间，导致内存泄漏，并且如果打印的话，会造成无限循环，最后发生栈溢出。
 
-### 使用 Weak\<T\>
+### 使用 Weak
 
 `Rc::clone` 会增加 `Rc<T>` 实例的 `strong_count`，只有在 `strong_count` 为 0 时才会释放 `Rc<T>` 实例。通过`Rc::downgrade` 函数来创建其值的**弱引用**，该函数返回 `Weak<T>` 类型的智能指针，并将 `weak_count` 加 1。`Rc<T>` 类型使用 `weak_count` 来记录其存在多少个 `Weak<T>` 引用，和强引用不同的是，`weak_count` 无需计数为 0 就能使 `Rc<T>` 实例被清理。
 
@@ -814,21 +814,20 @@ leaf2 strong = 1, weak = 0
 
 # 2 并发
 
-**并发**代表程序的不同部分可以相互独立的执行，而**并行**代表程序的不同部分同时执行。并行实际上是并发的一种实现形式，当只有一个 CPU 核心时，任务通过轮流切换来实现并发，当有多个 CPU 核心时，任务通过并行来实现并发。通常使用并发来表示轮流执行，并行来表示同时执行，而当任务数大于 CPU 核心数时，并行和并发都同时存在，即**并行一定是并发，并发只有在多核 CPU 上才能并行**。
+**并发**代表程序的不同部分可以相互独立的执行，而**并行**代表程序的不同部分同时执行。并行实际上是并发的一种实现形式。当只有一个 CPU 核心时，通过轮流切换来实现并发；当有多个 CPU 核心时，通过并行来实现并发。通常使用并发来表示轮流执行，并行来表示同时执行。而当任务数大于 CPU 核心数时，并行和并发都同时存在，即**并行一定是并发，并发只有在多核 CPU 上才能并行**。
 
 >   在 Rust 中统一使用并发来指代这两者。
 
 ## 使用线程
 
-现代操作系统中，程序的代码在一个**进程**中运行，操作系统则负责管理多个进程。在程序内部，也可以拥有多个同时运行的独立部分，被称为**线程**。
+现代操作系统中，程序的代码在一个**进程**中运行，操作系统则负责管理多个进程。在程序内部，也可以拥有多个同时运行的独立部分，称为**线程**。
 
-将程序的多个计算部分拆分成多个线程可以提高性能，但也会增加复杂度。因为线程是同时运行的，所以无法保证不同线程中的代码的执行顺序。
+每个程序都会从主线程开始，主线程可以创建子线，子线程也可以创建子线程。由于线程是同时运行的，因此无法保证不同线程中代码的执行顺序，这依赖操作系统如何进行调度。当主线程结束时，不管子线程是否执行完毕都会结束。
 
-多线程通常会导致以下问题：
+在大多数情况下，多线程可以提高性能，但也会增加复杂度，通常会导致以下问题：
 
--   数据竞争：多个线程以不一致的顺序同时访问数据或资源；
--   死锁：两个线程相互等待对方停止使用其所拥有的资源，导致都不能继续运行；
--   只会发生在特定情况下且难以稳定重现和修复的 Bug。
+-   **数据竞争**：多个线程以不一致的顺序同时访问数据；
+-   **死锁**：线程之间相互等待对方停止使用其所拥有的数据，导致都不能继续运行。
 
 ### 线程模型
 
@@ -836,189 +835,90 @@ leaf2 strong = 1, weak = 0
 
 >   为了较小的运行时和性能，Rust 标准库只提供了 1:1 线程实现，一些第三方标准库，如 [Tokio](https://github.com/tokio-rs/tokio) 则提供了 M:N 线程实现。
 
-### spawn 函数
+### spawn
 
-为了创建一个新线程，需要调用 `thread::spawn` 函数并传递一个闭包，并在其中包含新线程要运行的代码。
+`thread::spawn` 接收一个闭包并在新线程中运行闭包，其返回一个 `JoinHandle`，其上的 `join` 会阻塞当前线程直到所代表的线程结束，**阻塞**表示阻止当前线程执行或退出。因此 `join` 放置的位置会影响线程的运行，在主线程结尾调用 `join` 来确保子线程的代码能够全部执行。
 
 ```rust
 use std::thread;
 use std::time::Duration;
 
 fn main() {
-    thread::spawn(|| {
-        for i in 1..=6 {
-            println!("spawn thread {}", i);
+    let handle = thread::spawn(|| {
+        for i in 0..5 {
+            println!("spawn: {i}");
             thread::sleep(Duration::from_millis(100));
         }
     });
 
-    for i in 1..=3 {
-        println!("main thread {}", i);
+    for i in 0..5 {
+        println!("main: {i}");
         thread::sleep(Duration::from_millis(100));
     }
+
+    handle.join().unwrap();
 }
 ```
 
-执行结果：
-
-```
-main thread 1 
-spawn thread 1
-spawn thread 2
-main thread 2
-spawn thread 3
-main thread 3
-spawn thread 4
-```
-
-`thread::sleep` 函数强制暂停线程一小段时间，这会使其它线程继续运行。这些线程的执行顺序无法保证，这依赖操作系统如何进行调度。
-
-当主线程 `main ` 结束时，不管子线程代码是否执行完毕都会结束。这里先执行主线程中的代码，在结束时由于还暂停了一小段时间，因此会继续执行子线程中的代码，但由于主线程很快结束，导致子线程中的代码没有全部执行。
-
-### join 函数
-
-`thread::spawn` 函数的返回值类型是 `JoinHandle`，它是一个拥有所有权的值，当对其调用 `join` 方法时，它会等待线程结束。因此可以将返回值保存在变量中，然后在主线程结尾对其调用 `join` 方法来确保子线程的代码能够全部执行。
-
-```rust
-let handle = thread::spawn(|| {
-    for i in 1..=6 {
-        println!("spawn thread {}", i);
-        thread::sleep(Duration::from_millis(100));
-    }
-});
-
-for i in 1..=3 {
-    println!("main thread {}", i);
-    thread::sleep(Duration::from_millis(100));
-}
-
-handle.join().unwrap();
-```
-
-执行结果：
-
-```
-main thread 1
-spawn thread 1
-main thread 2
-spawn thread 2
-main thread 3
-spawn thread 3
-spawn thread 4
-spawn thread 5
-spawn thread 6
-```
-
-由于 `join` 方法返回一个 `Result`，因此需要调用 `unwrap` 方法。`join` 方法会阻塞当前线程直到 handle 所代表的线程结束，**阻塞**线程表示阻止当前线程执行或退出。
-
-当把 `join` 方法放到主线程的 `for` 前：
-
-```rust
-let handle = thread::spawn(|| {
-    for i in 1..=6 {
-        println!("spawn thread {}", i);
-        thread::sleep(Duration::from_millis(100));
-    }
-});
-
-handle.join().unwrap();
-
-for i in 1..=3 {
-    println!("main thread {}", i);
-    thread::sleep(Duration::from_millis(100));
-}
-```
-
-执行结果：
-
-```
-spawn thread 1
-spawn thread 2
-spawn thread 3
-spawn thread 4
-spawn thread 5
-spawn thread 6
-main thread 1
-main thread 2
-main thread 3
-```
-
-主线程会等待直到子线程执行完毕之后才开始执行 `for`，所以输出不会交替出现，即 `join` 方法放置的位置会影响线程的运行。
-
-### move 闭包
-
-`move` 关键字会强制闭包获取其使用的环境值的所有权，因此主要用于将值的所有权从一个线程转移到另一个线程。
+对闭包使用 `move` 可以把值在多个线程间传递。
 
 ```rust
 let v = vec![1, 2, 3];
-// 错误，无法保证 v 的引用一直有效
-let handle = thread::spawn(|| {
-    println!("v = {:?}", v);
+
+// 若不使用 move，则报错
+let handle = thread::spawn(move || {
+    println!("{v:?}");
 });
+
 handle.join().unwrap();
 ```
 
-闭包使用了 `v`，所以闭包会捕获 `v` 并使其成为闭包环境的一部分。因为 `thread::spawn` 函数在一个子线程中运行这个闭包，所以可以在新线程中访问 `v`。编译器会推断如何捕获 `v`，因为 `println!` 只需要 `v` 的引用，闭包尝试借用 `v`。由于编译器无法推断子线程的执行时间，因此无法确定 `v` 的引用是否一直有效，于是这段代码无法通过编译。
-
-通过使用 `move` 关键字，强制闭包获取其使用的值的所有权，而不是由编译器推断的借用值：
-
-```rust
-let handle = thread::spawn(move || {
-    println!("v = {:?}", v);
-});
-```
-
-由于使用了 `move` 闭包，则不能在主线程中继续使用 `v`：
-
-```rust
-let handle = thread::spawn(move || {
-    println!("v = {:?}", v);
-});
-// 错误，v 已经移动
-drop(v);
-```
-
-编译器是保守的，并只会为线程借用 `v`，主线程可能使子线程的引用无效。`move` 关键字覆盖了默认保守的借用，但依然不能违反所有权规则。
+若不使用 `move`，`println!` 以引用的方式使用值，因此自动推断为借用 `v`，但主线程可能使该值无效，因此报错。
 
 ### 线程结束
 
-操作系统提供了直接结束线程的接口，但 Rust 没有提供，原因在于直接终止一个线程可能会导致其资源没有释放、状态混乱等不可预期的结果。
+操作系统虽然提供了直接结束线程的接口，但直接终止线程可能会导致如资源未释放等不可预期的结果。
 
-在 Rust 中，`main` 线程是程序的主线程，一旦结束，则程序随之结束，同时各个子线程也将被强行终止。而对子线程来说，其中代码执行完，线程就会自动结束。
+在 Rust 中，`main` 是主线程，一旦结束，则程序终止，同时各个子线程也会被强行终止。对子线程来说，其中代码执行完，线程就自动结束。
 
 当子线程的代码没有执行完时，需要分情况讨论：
 
--   线程的任务是一个循环 IO 读取，其流程类似：`IO 阻塞 -> 等待读取数据 -> 读取数据 -> 处理完毕 -> 继续阻塞等待 -> ... -> 收到 Socket 关闭信号 -> 结束线程`。在此过程中，绝大部分时间线程都处于阻塞的状态，因此虽然看上去是循环，CPU 占用其实很小，这也是网络 IO 最常见的场景。
--   线程的任务是一个循环，没有任何阻塞，连 `sleep` 也没有，此时 CPU 会被占满，若没有终止条件，该线程将持续占满一个 CPU 核心，直到 `main` 线程的结束。
+-   线程任务是一个循环 IO 读取，有阻塞状态，其流程类似：
 
-第一种十分常见，对于第二种，有以下代码：
+    ```
+    IO 阻塞 -> 等待读取数据 -> 读取数据 -> 处理完毕 -> 继续阻塞等待 ->
+    ...-> 收到 Socket 关闭信号 -> 结束线程
+    ```
 
-```rust
-let new_thread = thread::spawn(move || {
-    thread::spawn(move || loop {
-        println!("ok");
-    })
-});
+    在此过程中，大部分时间线程都处于阻塞状态，因此实际 CPU 占用很低，这也是 IO 任务最常见的场景；
+-   线程的任务是一个循环，没有任何阻塞，此时 CPU 会被占满，若没有终止条件，该线程将持续占满一个 CPU 核心，直到主线程结束。
 
-new_thread.join().unwrap();
-println!("new_thread is finished");
+    ```rust
+    let new_thread = thread::spawn(|| {
+        thread::spawn(|| loop {
+            println!("ok");
+        })
+    });
+    
+    new_thread.join().unwrap();
+    println!("new_thread done");
+    
+    thread::sleep(Duration::from_secs(1));
+    ```
 
-thread::sleep(Duration::from_millis(10));
-```
-
-主线程 `main` 线程创建了一个子线程 `new_thread`，然后该线程又创建了一个子线程，`new_thread` 在创建完子线程后就结束了，但其创建的子线程依旧在执行。
+    主线程线程创建了一个子线程 `new_thread`，然后该线程又创建了一个子线程，`new_thread` 在创建完子线程后就结束了，但其创建的子线程依旧在执行。
 
 ## 线程间通信
 
-一种主流的确保并发安全的方式是**消息传递**，线程通过发送包含数据的消息来进行通信。
+一种主流的确保并发安全的方式是**消息传递**，线程通过发送包含数据消息来进行通信。
 
-Rust 中一个实现消息传递并发的主要方式是**信道**，由两部分组成，**一个发送端和一个接收端**。程序的一部分调用发送端的方法和要发送的数据，另一部分检查接收端收到的消息。**当所有发送端或接收端被丢弃时可以认为信道被关闭了**。
+实现消息传递并发的主要方式是**信道**，由**发送端**和**接收端**这两部分组成。**当所有发送端或接收端都被丢弃时**，可以认为信道被关闭了。
 
-利用线程间通信，就能使用信道来实现聊天系统，或利用多线程进行分布式计算并将部分计算结果发送给一个线程进行聚合。
+### MPSC 信道
 
-### 使用 channel
+`mpsc::channel` 用于创建有**多个发送端、一个接收端**的信道，其返回一个发送端和接收端的元组，`tx` 和 `rx` 通常作为这两者的缩写。
 
-设有一个程序，它会在一个线程生成值并向信道发送，另一个线程会接收值并打印，这可以通过信道在线程间发送消息来完成。
+>   信道的内部实现使用了泛型，一旦确定了信道传输值的类型，就不能再改变。
 
 ```rust
 use std::sync::mpsc;
@@ -1026,76 +926,53 @@ use std::thread;
 
 fn main() {
     let (tx, rx) = mpsc::channel();
+    
     thread::spawn(move || {
         let v = String::from("hello");
         tx.send(v).unwrap();
     });
+    
     let recv = rx.recv().unwrap();
-    println!("{}", recv);
+    println!("{recv}");
 }
 ```
 
-`mpsc::channel` 函数创建一个信道；`mpsc` 是**多个生产者、单个消费者**的缩写。标准库实现信道的方式为**一个信道可以有多个产生值的发送端，但只能有一个使用这些值的接收端**。这会返回一个元组，第一个元素是发送端，第二个元素是接收端，`tx` 和 `rx` 通常作为这两者的缩写。
+必须使用 `move` 将 `tx` 移动到闭包中，因为**线程需要拥有发送端所有权才能向信道发送消息**。
 
->   信道的内部实现使用了泛型，一旦确定了信道传输值的类型，就不能再修改。
+发送端使用 `send` 来向信道发送值，其返回一个 `Result`，若接收端已被丢弃，则会返回错误。`send` 会获取值的所有权，这样可以保证接收端使用的值一定有效。
 
-`thread::spawn` 函数创建一个线程并使用 `move` 将 `tx` 移动到闭包中，这样子线程就拥有 `tx` 了。**线程需要拥有信道发送端所有权才能向信道发送消息**。
+接收端有两个常用的方法：`recv` 和 `try_recv`：
 
-发送端的 `send` 方法用来获取需要放入信道的值，它会返回一个 `Result`，若接收端已被丢弃，将没有发送目标，会返回错误。
+-   `recv` 会阻塞当前线程执行直到从信道中接收到一个值。其返回一个 `Result`，`Ok` 包含接收到的值，`Err` 表示发送端被关闭；
 
-信道的接收端有两个常用的方法：`recv` 和 `try_recv`：
+-   `try_recv` 不会阻塞。其立刻返回一个 `Result`，`Ok` 包含接收到的值，`Err` 代表没有任何消息。若线程在等待消息过程中还有其它代码需要执行时使用 `try_recv`，如通过循环调用 `try_recv`，在有可用消息时进行处理，否则继续其它任务。
 
--   `recv` 方法会阻塞当前线程执行直到从信道中接收一个值。它返回一个 `Result`，`Ok` 值包含接收到的信息，`Err` 值表示信道发送端被关闭；
+    ```rust
+    let (tx, rx) = mpsc::channel();
+    
+    thread::spawn(move || {
+        tx.send(1).unwrap();
+    });
+    
+    loop {
+        if let Ok(v) = rx.try_recv() {
+            println!("{v}");
+            break;
+        }
+    }
+    ```
 
--   `try_recv` 方法不会阻塞。它立刻返回一个 `Result`，`Ok` 值包含接收到的信息，而 `Err` 值代表没有任何消息。若线程在等待消息过程中还有其它代码需要执行时使用 `try_recv`，如编写一个循环来频繁调用 `try_recv`，在有可用消息时进行处理，否则处理其它工作直到再次检查。
 
-### 不阻塞的 try_recv
+### 接收多个值
 
-```rust
-let (tx, rx) = mpsc::channel();
-thread::spawn(move || {
-    tx.send(1).unwrap();
-});
-
-for _ in 0..3 {
-    println!("{:?}", rx.try_recv());
-}
-```
-
-执行结果：
-
-```
-Err(Empty)
-Ok(1)
-Err(Disconnected)
-```
-
-由于子线程的创建需要时间，因此主线程中的代码会先执行，而此时子线程的消息还未来得及发送。
-
-`for` 中的 `try_recv ` 方法首先读取一次消息，由于消息没有发出，此次读取会报错，第二次读取时消息已经发送，因此可以获取到值，第三次由于子线程结束，发送端离开作用域，因此信道被看作关闭。
-
-### 信道与所有权
-
-所有权规则有助于在消息传递中进行安全的并发：
-
-```rust
-thread::spawn(move || {
-    let v = String::from("hello");
-    tx.send(v).unwrap();
-    println!("v = {}", v);    // 错误，v 已经移动
-});
-```
-
-这里尝试在调用 `send` 方法发送 `v` 到信道后再将其打印出来。由于 `send` 是获取所有权的，因此编译不通过。若允许在发送信道后依然可在发送端线程使用该值，那么可能在接收端线程使用该值之前就被修改或丢弃，这将导致错误，所有权系统会保证值在发送后是肯定有效的。
-
-### 发送多个值
+在子线程中发送多个值到主线程，接收端不再显式调用 `recv`，而是将 `rx` 当作迭代器。**当信道被关闭时，迭代才会结束**。
 
 ```rust
 let (tx, rx) = mpsc::channel();
+
 thread::spawn(move || {
     let vec = vec![
         String::from("hello"),
-        String::from("world"),
         String::from("hi"),
         String::from("ok"),
     ];
@@ -1107,81 +984,42 @@ thread::spawn(move || {
 });
 
 for v in rx {
-    println!("{}", v);
+    println!("{v}");
 }
 ```
-
-在子线程中将字符串 vector 发送到主线程，在主线程中，不再显式调用 `recv` 方法，而是将 `rx` 当作一个迭代器。**当信道被关闭时，迭代器才会结束**。
 
 ### 多个发送端
 
+由于线程需要发送端的所有权才能发送消息，因此可以通过 `clone` 来复制发送端，这样就可以在不同线程向同一个接收端发送消息。
+
 ```rust
 let (tx, rx) = mpsc::channel();
-let tx2 = tx.clone();
-thread::spawn(move || {
-    let vec = vec![String::from("hello"), String::from("world")];
-    for v in vec {
-        tx.send(v).unwrap();
-        thread::sleep(Duration::from_millis(100));
-    }
-});
 
-thread::spawn(move || {
-    let vec = vec![String::from("hi"), String::from("ok")];
-    for v in vec {
-        tx2.send(v).unwrap();
+for i in 0..5 {
+    let t = tx.clone();
+    thread::spawn(move || {
+        t.send(i).unwrap();
         thread::sleep(Duration::from_millis(100));
-    }
-});
+    });
+}
 
+// 由于还 tx 未被关闭，若不 drop 则一直阻塞
+drop(tx);
 for v in rx {
-    println!("{}", v);
+    println!("from thread {v}");
 }
 ```
-
-执行结果：
-
-```
-hi   
-hello
-ok
-world
-```
-
-对信道的发送端调用了 `clone` 方法，这会返回一个发送端的拷贝。可以创建多个线程，每个线程向同一个信道的接收端发送不同的消息。
 
 需要注意的是:
 
--   所有发送端都被 `drop` 掉后，信道才会被关闭，接收端才会收到错误，进而跳出循环，最终结束主线程；
--   不能确定两个子线程的创建顺序，因此消息的发送和主线程的输出顺序也是未知的。
+-   所有发送端都被 `drop` 掉后，信道才会被关闭，接收端才会收到错误，进而终止迭代；
+-   不能确定子线程的创建顺序，因此消息的发送顺序也不能确定。但对信道而言，其中的消息是有序的，符合先进先出原则。
 
->   虽然不能确定线程创建的顺序，但信道中消息是有序的。对于信道而言，消息的发送顺序和接收顺序是一致的，符合先进先出原则。
+### 同步和异步信道
 
-若发送端没有全部 `drop` 掉，那么接收端在接收消息时会一直阻塞：
+`mpsc` 的信道分为两种类型：同步和异步。
 
-```rust
-let (tx, rx) = mpsc::channel();
-let tx2 = tx.clone();
-thread::spawn(move || {
-    tx2.send(1).unwrap();
-    tx2.send(2).unwrap();
-});
-
-drop(tx);    // 若不 drop 则死循环
-for v in rx {
-    println!("{}", v);
-}
-
-println!("done");
-```
-
-通过 `clone` 方法创建了两个发送端，子线程执行完后 `tx2` 被释放，但 `tx` 还在，信道还未关闭，因此主线程接收端会一直阻塞，造成死循环，最后一行的 `println!` 也无法执行，因此需要将 `tx` 给手动 `drop` 掉。
-
-### 同步和异步 channel
-
-`mpsc` 的 channel 分为两种类型：同步和异步。
-
-#### 异步 channel
+#### 异步信道
 
 异步 channel 表示无论接收端是否正在接收消息，发送端在发送消息时都不会阻塞。通过 `mpsc::channel` 函数创建的就是异步 channel。
 
@@ -1201,35 +1039,15 @@ println!("{}", rx.recv().unwrap());
 handle.join().unwrap();
 ```
 
-执行结果：
-
-```
-before sleep
-before send  
-after send
-after sleep
-1
-```
-
 主线程因为 `sleep` 阻塞了 1 秒，因此并没有进行消息接收，而子线程却在此期间完成了消息的发送。直到主线程阻塞结束后，才从信道中接收了子线程发送的消息。
 
-#### 同步 channel
+#### 同步信道
 
 同步 channel 表示发送消息是阻塞的，只有在消息被接收后才解除阻塞。通过 `mpsc::sync_channel` 函数创建的就是同步 channel。
 
 ```rust
 let (tx, rx) = mpsc::sync_channel(0);
 // --snip--
-```
-
-执行结果：
-
-```
-before sleep
-before send
-after sleep
-1
-after send
 ```
 
 `after send` 的输出是在 `1` 之后，表明**只有成功接收消息后，发送消息的过程才算完成**。在成功接收消息之前，子线程都处于阻塞状态。
@@ -1242,37 +1060,11 @@ after send
 
 使用异步 channel 创建则没有这个缓冲值参数，上限取决于内存大小，因此异步消息非常高效且不会导致发送线程的阻塞，但存在消息未及时接收，最终占用内存过大的问题，通常可以考虑使用一个带缓冲值的同步通道来避免这种风险。
 
-### 传输多种数据类型
+### MPMC 信道
 
-一个信道只能传输一种类型的数据，要传输多种类型的数据，可以为每个类型创建一个信道，或使用枚举来实现。
+Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端的 MPMC 信道，可以使用第三方库，如 [Crossbeam](https://github.com/crossbeam-rs/crossbeam)。
 
-```rust
-#[derive(Debug)]
-enum Data {
-    Int(i32),
-    Float(f64),
-}
-
-fn main() {
-    let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
-        tx.send(Data::Int(1)).unwrap();
-        tx.send(Data::Float(2.2)).unwrap();
-    });
-
-    for v in rx {
-        println!("{:?}", v);
-    }
-}
-```
-
-需要注意的是，编译器会按照枚举中占用空间最大的那个成员进行内存对齐，因此容易造成内存上的浪费。
-
-### MPMC
-
-Rust 标准库只提供了 MPSC 的 channel，若要使用多发送端、多接收端的 channel，可以使用第三方库，如 [Crossbeam](https://github.com/crossbeam-rs/crossbeam)。
-
-## 共享内存并发
+## 共享内存
 
 使用信道来进行消息传递是处理并发的方式之一，信道类似于单所有权，一旦将一个值传送到信道中，就无法再使用这个值。共享内存类似于多所有权，多个线程可以同时访问相同内存的数据。
 
@@ -1287,7 +1079,7 @@ Rust 标准库只提供了 MPSC 的 channel，若要使用多发送端、多接�
 
 和信道相比，互斥器则异常复杂，得益于 Rust 的类型系统和所有权，使用互斥器也不容易出错。
 
-### Mutex\<T\>
+### Mutex
 
 ```rust
 use std::sync::Mutex;
@@ -1308,9 +1100,9 @@ fn main() {
 
 一旦获取了锁，就可以将返回值视为一个其内部数据的**可变引用**。类型系统确保在使用 `m` 中的值之前获取锁。
 
-### Arc\<T\>
+### Arc
 
-#### 共享 Mutex\<T\>
+#### 共享 Mutex
 
 ```rust
 let counter = Mutex::new(0);
@@ -1334,7 +1126,7 @@ println!("Result = {}", *counter.lock().unwrap());
 
 以上代码将启动 10 个线程，并在每个线程中对同一个 `counter` 值加 1，最终 `counter` 值为 10，但此代码还不能通过编译，因为 `counter` 已经移动到创建线程的闭包中，导致后面创建线程的闭包无法使用，因此 `Mutex<T>` 是单所有权的。
 
-#### 使用 Arc\<T\>
+#### 使用 Arc
 
 在单线程中，可以使用 `Rc<T>` 来创建具有多所有权的不可变引用，但由于 `Rc<T>` 的操作不是**原子**的，因此不能安全的在线程间共享。当 `Rc<T>` 管理引用计数时，不能保证改变引用计数的操作不会被其它线程干扰。
 
@@ -1408,7 +1200,7 @@ world
 
 在线程打印出 `hello` 后，使用 `wait` 方法增加了一个线程屏障，目的是等所有的线程都打印出 `hello` 后，各个线程再继续执行下面的代码。
 
-### 结合 Arc\<T\> 和 Mutex\<T\>
+### 结合 Arc 和 Mutex
 
 `counter` 本来是一个不可变的 `Arc<T>`，但可以获得内部值的可变引用，这表示 `Mutex<T>` 提供了内部可变性。和使用 `RefCell<T>` 来改变 `Rc<T>` 中的内容类似，可以使用 `Mutex<T>` 来改变 `Arc<T>` 中的内容。
 
@@ -1419,7 +1211,7 @@ world
 
 需要注意的是，`Rc<T>` 的内部可变性模式有造成引用循环的风险，同理 `Arc<T>` 的内部可变性模式也有造成**死锁**的风险，如当一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
 
-### 比较 RefCell\<T\> 和 Mutex\<T\>
+### 比较 RefCell 和 Mutex
 
 | 指针类型     | 获取不可变引用 | 获取可变引用 |
 | ------------ | -------------- | ------------ |
@@ -1452,7 +1244,7 @@ let d2 = m.try_lock().unwrap();
 
 由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致运行时 panic。
 
-### RwLock\<T\>
+### RwLock
 
 `Mutex<T>` 会对每次读写都进行加锁，因此当有大量的并发读就无法满足需求了，此时就可以使用读写锁 `RwLock<T>`。
 
@@ -1502,19 +1294,19 @@ println!("{}", num.read().unwrap());
 -   通常统一使用 `Mutex<T>`；
 -   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock<T>`，因为 `Mutex<T>` 一次只允许一个线程去读取。
 
-## Sync 和 Send trait
+## Sync 和 Send
 
 有两个内嵌于语言中的并发概念：`std::marker` 中的 `Sync` 和 `Send` trait。`marker` 代表**标记 trait**，表示该 trait 不含任何方法。
 
-### Send trait 允许线程间转移所有权
+### Send 允许线程间转移所有权
 
-实现了 `Send` trait 的类型的可以安全的在线程间转移所有权。除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Send` trait，由实现了 `Send` trait 的类型组成的类型也会自动被标记为 `Send`。
+实现了 `Send` 的类型的可以安全的在线程间转移所有权。除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Send` trait，由实现了 `Send` trait 的类型组成的类型也会自动被标记为 `Send`。
 
-### Sync trait 允许多线程访问
+### Sync 允许多线程访问
 
-实现了 `Sync` trait 的类型可以安全的在多个线程中拥有其值的引用。对于任意类型 `T`，若 `&T` 实现了  `Send` trait，则 `T` 就是 `Sync` 的，反之亦然，这表示引用可以被安全的发送到另一个线程。和 `Send` trait 类似，除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Sync` trait，由实现了 `Sync` trait 的类型组成的类型也是 `Sync` 的。
+实现了 `Sync` 的类型可以安全的在多个线程中拥有其值的引用。对于任意类型 `T`，若 `&T` 实现了  `Send` trait，则 `T` 就是 `Sync` 的，反之亦然，这表示引用可以被安全的发送到另一个线程。和 `Send` trait 类似，除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Sync` trait，由实现了 `Sync` trait 的类型组成的类型也是 `Sync` 的。
 
-### 手动实现 Send 和 Sync trait 是不安全的
+### 手动实现 Send 和 Sync 是不安全的
 
 通常并不需要手动实现 `Send` 和 `Sync` trait，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。由于是标记 trait，不含任何方法，仅用于标记是否满足并发相关的性质。手动实现这些标记 trait 涉及到编写 Unsafe 代码，因此通常是不安全的。
 
