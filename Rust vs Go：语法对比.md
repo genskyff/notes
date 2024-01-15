@@ -483,10 +483,8 @@ Rust
 fn fib() -> impl FnMut() -> i32 {
     let (mut a, mut b) = (0, 1);
     move || {
-        let r = a;
-        a = b;
-        b = r + b;
-        r
+        (a, b) = (b, a + b);
+        a
     }
 }
 
@@ -532,26 +530,21 @@ struct Point {
 }
 
 impl Point {
-    fn add(&self, o: Self) -> Self {
-        Self {
-            x: self.x + o.x,
-            y: self.y + o.y,
-        }
+    fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
     }
 
-    fn modify(&mut self, x: i32, y: i32) {
-        self.x = x;
-        self.y = y;
+    fn add(&mut self, o: &Self) {
+        self.x += o.x;
+        self.y += o.y;
     }
 }
 
 fn main() {
-    let mut p = Point { x: 1, y: 2 };
-    let o = Point { x: 2, y: 3 };
-    println!("{:?}", p.add(o));
-    
-    p.modify(0, 0);
-    println!("{:?}", p);
+    let mut p = Point::new(1, 2);
+    let o = Point::new(3, 4);
+    p.add(&o);
+    println!("{p:?}");
 }
 ```
 
@@ -562,20 +555,19 @@ type Point struct {
 	x, y int
 }
 
-func (p Point) add(o Point) Point {
-	return Point{p.x + o.x, p.y + o.y}
+func (Point) new(x, y int) Point {
+	return Point{x, y}
 }
 
-func (p *Point) modify(x, y int) {
-	p.x, p.y = x, y
+func (p *Point) add(o Point) {
+	p.x += o.x
+	p.y += o.y
 }
 
 func main() {
-	p := Point{1, 2}
-	o := Point{3, 4}
-	fmt.Println(p.add(o))
-
-	p.modify(0, 0)
+	p := Point{}.new(1, 2)
+	o := Point{}.new(3, 4)
+	p.add(o)
 	fmt.Println(p)
 }
 ```
@@ -735,4 +727,142 @@ func main() {
 	info("abc")
 }
 ```
+
+## 并发
+
+### 线程
+
+Rust
+
+```rust
+let handle = thread::spawn(|| {
+    for i in 0..5 {
+        println!("spawn: {i}");
+        thread::sleep(Duration::from_millis(100));
+    }
+});
+
+for i in 0..5 {
+    println!("main: {i}");
+    thread::sleep(Duration::from_millis(100));
+}
+
+handle.join().unwrap();
+```
+
+Go
+
+```go
+func say(ws *sync.WaitGroup) {
+	defer ws.Done()
+	for i := 0; i < 5; i++ {
+		fmt.Println("say: ", i)
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go say(&wg)
+    
+	for i := 0; i < 5; i++ {
+		fmt.Println("main: ", i)
+		time.Sleep(100 * time.Millisecond)
+	}
+    
+	wg.Wait()
+}
+```
+
+### 信道
+
+Rust
+
+```rust
+fn fib(n: i32, tx: mpsc::Sender<i32>) {
+    let (mut a, mut b) = (0, 1);
+    for _ in 0..n {
+        tx.send(a).unwrap();
+        (a, b) = (b, a + b);
+    }
+}
+
+fn main() {
+    let (tx, rx) = mpsc::channel();
+
+    thread::spawn(move || {
+        fib(10, tx);
+    });
+
+    for v in rx {
+        println!("{v}");
+    }
+}
+```
+
+Go
+
+```go
+func fib(n int, c chan int) {
+	a, b := 0, 1
+	for i := 0; i < n; i++ {
+		c <- a
+		a, b = b, a+b
+
+	}
+	close(c)
+}
+
+func main() {
+	c := make(chan int, 10)
+	go fib(cap(c), c)
+	for v := range c {
+		fmt.Println(v)
+	}
+}
+```
+
+### 锁
+
+Rust
+
+```rust
+```
+
+Go
+
+```go
+type SafeCounter struct {
+	count int
+	mux   sync.Mutex
+}
+
+func (sc *SafeCounter) inc() {
+	sc.mux.Lock()
+	defer sc.mux.Unlock()
+	sc.count++
+}
+
+func (sc *SafeCounter) cur() int {
+	sc.mux.Lock()
+	defer sc.mux.Unlock()
+	return sc.count
+}
+
+func main() {
+	sc := SafeCounter{count: 0}
+	for i := 0; i < 10; i++ {
+		go sc.inc()
+	}
+	time.Sleep(time.Second)
+	fmt.Println(sc.cur())
+}
+```
+
+
+
+
+
+
 

@@ -36,27 +36,17 @@ apt update && apt -y install git
 
 ### 查看配置
 
-查看所有配置：
-
 ```shell
+# 查看所有配置
 git config -l
-```
 
-查看指定配置：
-
-```shell
+# 查看指定配置
 git config <key>
-```
 
-查看所有配置及其对应配置文件：
-
-```shell
+# 查看所有配置及其对应配置文件
 git config -l --show-origin
-```
 
-查看指定配置在哪个配置文件中生效：
-
-```shell
+# 查看指定配置在哪个配置文件中生效
 git config --show-origin <key>
 ```
 
@@ -461,6 +451,12 @@ git merge [--squash] <branch>
 当在两个不同的分支中，对同一个文件的同一个部分进行了不同的修改，在进行合并时就会产生冲突。此时 Git 做了合并，但没有自动地创建一个新的合并提交，并会暂停下来，等待手工解决合并冲突。
 
 `--squash` 和普通合并的区别为：普通合并会把另一个分支上所有的提交都保留，而 `squash` 会把另一个分支上的所有提交压缩为一个新提交，这样当前分支上的提交就会比较简洁，但 `squash` 操作完后还需要手动执行 `git commit` 以在当前分支上创建这个新的压缩提交。
+
+### 查看文件冲突时的信息
+
+```shell
+git checkout --conflict=merge <path>
+```
 
 ## 重命名与删除
 
