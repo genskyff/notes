@@ -214,7 +214,7 @@ pub trait Display {
 }
 ```
 
-由于 `FromStr` 通常被 `parse` 隐式使用，其接收一个 `Formatter`，因此通常也需要实现 `Display`。
+由于 `FromStr` 通常被 `parse` 隐式使用，其接受一个 `Formatter`，因此通常也需要实现 `Display`。
 
 ```rust
 use std::{fmt::Display, str::FromStr};
@@ -369,7 +369,7 @@ let r1 = b.as_ref().as_ref();
 let r2 = b.as_mut().as_mut();
 ```
 
-这两个 trait 可以应用于函数参数，如一个接收 `AsRef<str>` 作为参数的函数，那么 `&str` 和 `String` 都可以作为参数。
+这两个 trait 可以应用于函数参数，如一个接受 `AsRef<str>` 作为参数的函数，那么 `&str` 和 `String` 都可以作为参数。
 
 ```rust
 fn get_foo<T: AsRef<str>>(value: T) {
