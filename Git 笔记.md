@@ -376,7 +376,7 @@ git log --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - 
 git checkout [--detach] <commit>
 git switch --detach <commit>
 
-# 切换回当前分支最新的提交
+# 切换回指定分支最新的提交
 git checkout <branch>
 git switch <branch>
 ```

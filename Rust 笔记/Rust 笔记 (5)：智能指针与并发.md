@@ -1075,26 +1075,24 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ### Mutex
 
-`new` 函数创建一个 `Mutex<T>`，并使用 `lock` 方法获取锁，以访问互斥器中的数据。这个调用会阻塞当前线程，直到获得锁为止。若另一个线程拥有锁，且线程发生了 panic，则 `lock` 方法会失败。在这种情况下，锁不能再被任何对象获取，所以使用 `unwrap` 并在遇到这种情况时使线程 panic。
-
-`Mutex<T>` 是一个智能指针，而 `lock` 方法返回一个 `MutexGuard<T>` 类型的智能指针，该智能指针是一个可修改内部数据的可变引用，其 `Drop` trait 实现确保当离开作用域时自动释放锁。
-
-一旦获取了锁，就可以将返回值视为一个其内部数据的**可变引用**。类型系统确保在使用 `m` 中的值之前获取锁。
+`Mutex` 智能指针是一种互斥器，通过 `lock` 阻塞地获取锁，成功后返回一个 `MutexGuard` 智能指针，其内部包含了数据的**可变引用**。锁会在作用域结束后自动释放，但若在释放前线程发生了 panic，那么该锁就不会被释放，在这种情况下，锁不能再被任何对象获取，获取锁的对象可以使用 `unwrap` 来处理。
 
 ```rust
 use std::sync::Mutex;
 
 fn main() {
-    let m = Mutex::new(5);
+    let m = Mutex::new(1);
     {
         let mut n = m.lock().unwrap();
-        *n = 10;
+        *n = 2;
     }
     println!("{}", m.lock().unwrap());
 }
 ```
 
 ### 比较 Mutex 和 RefCell
+
+`Mutex` 实际上就是线程安全版本的 `RefCell`，但默认获得的就是可变引用。
 
 | 指针类型 | 线程安全 | 获取不可变引用 | 获取可变引用 |
 | -------- | -------- | -------------- | ------------ |
@@ -1157,18 +1155,18 @@ println!("Result = {}", *counter.lock().unwrap());
 
 ### 结合 Arc 和 Mutex
 
-`counter` 本来是一个不可变的 `Arc<T>`，但可以获得内部值的可变引用，这表示 `Mutex<T>` 提供了内部可变性。和使用 `RefCell<T>` 来改变 `Rc<T>` 中的内容类似，可以使用 `Mutex<T>` 来改变 `Arc<T>` 中的内容。
+`counter` 本来是一个不可变的 `Arc`，但可以获得内部值的可变引用，这表示 `Mutex` 提供了内部可变性。和使用 `RefCell` 来改变 `Rc` 中的内容类似，可以使用 `Mutex` 来改变 `Arc` 中的内容。
 
 | 指针类型   | 所有权 | 可变性 |
 | ---------- | ------ | ------ |
 | Mutex\<T\> | 唯一   | 可变   |
 | Arc\<T\>   | 多个   | 不可变 |
 
-需要注意的是，`Rc<T>` 的内部可变性模式有造成引用循环的风险，同理 `Arc<T>` 的内部可变性模式也有造成**死锁**的风险，如当一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
+需要注意的是，`Rc` 的内部可变性模式有造成引用循环的风险，同理 `Arc` 的内部可变性模式也有造成**死锁**的风险，如当一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
 
 ### RwLock
 
-`Mutex<T>` 会对每次读写都进行加锁，因此当有大量的并发读就无法满足需求了，此时就可以使用读写锁 `RwLock<T>`。
+`Mutex` 会对每次读写都进行加锁，因此当有大量的并发读就无法满足需求了，此时就可以使用读写锁 `RwLock`。
 
 ```rust
 use std::thread;
@@ -1194,7 +1192,7 @@ for h in handles {
 println!("{}", num.read().unwrap());
 ```
 
->   `RwLock<T>` 在使用上和 `Mutex<T>` 基本相同。
+>   `RwLock` 在使用上和 `Mutex` 基本相同。
 
 无论是单线程还是多线程，需要注意以下几点：
 
@@ -1205,16 +1203,16 @@ println!("{}", num.read().unwrap());
 
 ### 比较 Mutex 和 RwLock
 
-`Mutex<T>` 要更简单，因为使用 `RwLock<T>` 需要关心：
+`Mutex` 要更简单，因为使用 `RwLock` 需要关心：
 
 -   读和写不能同时发生，若使用 `try_xxx` 解决，则需要做错误处理；
 -   当读多写少时，写操作可能会因为无法获得锁导致连续多次失败；
--   `RwLock<T>` 为操作系统提供，具体实现比 `Mutex<T>` 更复杂。
+-   `RwLock` 为操作系统提供，具体实现比 `Mutex` 更复杂。
 
 两者使用场景：
 
--   通常统一使用 `Mutex<T>`；
--   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock<T>`，因为 `Mutex<T>` 一次只允许一个线程去读取。
+-   通常统一使用 `Mutex`；
+-   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock`，因为 `Mutex` 一次只允许一个线程去读取。
 
 ### 死锁
 
@@ -1236,7 +1234,7 @@ let d1 = m.lock().unwrap();
 let d2 = m.try_lock().unwrap();
 ```
 
-由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致运行时 panic。
+由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致 panic。
 
 ### 线程屏障
 
@@ -1269,21 +1267,62 @@ fn main() {
 
 在线程打印出 `hello` 后，使用 `wait` 方法增加了一个线程屏障，目的是等所有的线程都打印出 `hello` 后，各个线程再继续执行下面的代码。
 
-## 条件变量
+### 条件变量
 
-## Sync 和 Send
+## 并发 trait
 
-有两个内嵌于语言中的并发概念：`std::marker` 中的 `Sync` 和 `Send` trait。`marker` 代表**标记 trait**，表示该 trait 不含任何方法。
+Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Sync}`。其中 `marker` 代表**标记 trait**，表示该 trait 不含任何方法，仅用于标记是否满足相关性质。
 
 ### Send 允许线程间转移所有权
 
-实现了 `Send` 的类型的可以安全的在线程间转移所有权。除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Send` trait，由实现了 `Send` trait 的类型组成的类型也会自动被标记为 `Send`。
+实现了 `Send` 的类型的可以安全地在线程间转移所有权。除了 `Cell`、`RefCell`、`Rc` 和原始指针外，几乎所有类型都实现了 `Send` ，由实现了该 trait 的类型组成的类型也是 `Send` 的。
 
 ### Sync 允许多线程访问
 
-实现了 `Sync` 的类型可以安全的在多个线程中拥有其值的引用。对于任意类型 `T`，若 `&T` 实现了  `Send` trait，则 `T` 就是 `Sync` 的，反之亦然，这表示引用可以被安全的发送到另一个线程。和 `Send` trait 类似，除了原始指针、`Rc<T>`、`Cell<T>` 和 `RefCell<T>` 外，几乎所有类型都实现了 `Sync` trait，由实现了 `Sync` trait 的类型组成的类型也是 `Sync` 的。
+实现了 `Sync` 的类型可以安全地在多个线程使用其引用，这表明：
+
+-   若 `T` 实现了 `Sync`，则 `&T` 为 `Send` 的；
+-   若 `&T` 实现了 `Send`，则 `T` 为 `Sync` 的。
+
+与 `Send` 类似，除了 `Cell`、`RefCell`、`Rc` 和原始指针外，几乎所有类型都实现了 `Sync`，由实现了该 trait 的类型组成的类型也是 `Sync` 的。
 
 ### 手动实现 Send 和 Sync 是不安全的
 
-通常并不需要手动实现 `Send` 和 `Sync` trait，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。由于是标记 trait，不含任何方法，仅用于标记是否满足并发相关的性质。手动实现这些标记 trait 涉及到编写 Unsafe 代码，因此通常是不安全的。
+通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。手动实现这些标记 trait 涉及编写 Unsafe 代码，因此通常是不安全的。
+
+```rust
+unsafe impl<T: ?Sized + Send> Send for Cell<T> {}
+impl<T: ?Sized> !Sync for Cell<T> {}
+
+unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
+impl<T: ?Sized> !Sync for RefCell<T> {}
+
+impl<T: ?Sized> !Send for Rc<T> {}
+impl<T: ?Sized> !Sync for Rc<T> {}
+
+impl<T: ?Sized> !Send for Weak<T> {}
+impl<T: ?Sized> !Sync for Weak<T> {}
+
+impl<T: ?Sized> !Send for *const T {}
+impl<T: ?Sized> !Sync for *const T {}
+
+impl<T: ?Sized> !Send for *mut T {}
+impl<T: ?Sized> !Sync for *mut T {}
+
+//
+unsafe impl<T: ?Sized + Sync + Send> Send for Arc<T> {}
+unsafe impl<T: ?Sized + Sync + Send> Sync for Arc<T> {}
+
+unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
+unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
+
+// Cell、RefCell、Mutex
+impl<T: ?Sized> !Sync for UnsafeCell<T> {}
+
+// Arc、Rc、Weak
+impl<T: ?Sized> !Send for NonNull<T> {}
+impl<T: ?Sized> !Sync for NonNull<T> {}
+```
+
+
 
