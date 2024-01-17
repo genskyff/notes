@@ -835,9 +835,9 @@ leaf2 strong = 1, weak = 0
 
 >   为了较小的运行时和性能，Rust 标准库只提供了 1:1 线程实现，一些第三方标准库，如 [Tokio](https://github.com/tokio-rs/tokio) 则提供了 M:N 线程实现。
 
-### spawn
+### 创建线程
 
-`thread::spawn` 接收一个闭包并在新线程中运行闭包，其返回一个 `JoinHandle`，其上的 `join` 会阻塞当前线程直到所代表的线程结束，**阻塞**表示阻止当前线程执行或退出。因此 `join` 放置的位置会影响线程的运行，在主线程结尾调用 `join` 来确保子线程的代码能够全部执行。
+`thread::spawn` 接收一个闭包并在新线程中运行闭包，会立即返回一个 `JoinHandle`，其上的 `join` 会阻塞当前线程直到所代表的线程结束，**阻塞**表示阻止当前线程的执行。因此 `join` 放置的位置会影响线程的执行结果，在主线程结尾调用 `join` 来确保子线程的代码能够全部执行。
 
 ```rust
 use std::thread;
@@ -907,6 +907,76 @@ handle.join().unwrap();
     ```
 
     主线程线程创建了一个子线程 `new_thread`，然后该线程又创建了一个子线程，`new_thread` 在创建完子线程后就结束了，但其创建的子线程依旧在执行。
+
+## 并发 trait
+
+Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Sync}`。其中 `marker` 代表**标记 trait**，表示该 trait 不含任何方法，仅用于标记是否满足相关性质。实现了 `Send` 和 `Sync` 的类型是并发安全的。
+
+### Send
+
+实现了 `Send` 的类型可以在线程间安全地转移所有权。除了 `Rc`、`Weak`、原始指针等少数类型外，绝大部分类型都实现了 `Send` ，由实现了 `Send` 的类型组成的类型也是 `Send` 的。
+
+### Sync
+
+实现了 `Sync` 的类型可以安全地在多个线程共享其引用，这代表：
+
+-   若 `T` 实现了 `Sync`，则 `&T` 为 `Send` 的；
+
+-   若 `&T` 实现了 `Send`，则 `T` 为 `Sync` 的。
+
+除了 `Cell`、`RefCell`、`Rc`、`Weak`、原始指针等少数类型外，绝大部分类型都实现了 `Sync`，由实现了 `Sync` 的类型组成的类型也是 `Sync` 的。
+
+### Send 和 Sync 实现
+
+通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。手动实现这些标记 trait 涉及编写 Unsafe 代码，因此通常是不安全的。
+
+```rust
+impl<T: ?Sized> !Send for Rc<T> {}
+impl<T: ?Sized> !Sync for Rc<T> {}
+
+impl<T: ?Sized> !Send for Weak<T> {}
+impl<T: ?Sized> !Sync for Weak<T> {}
+
+impl<T: ?Sized> !Send for *const T {}
+impl<T: ?Sized> !Sync for *const T {}
+
+impl<T: ?Sized> !Send for *mut T {}
+impl<T: ?Sized> !Sync for *mut T {}
+```
+
+
+
+```rust
+unsafe impl<T: ?Sized + Send> Send for Cell<T> {}
+impl<T: ?Sized> !Sync for Cell<T> {}
+
+unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
+impl<T: ?Sized> !Sync for RefCell<T> {}
+```
+
+
+
+```rust
+unsafe impl<T: ?Sized + Sync + Send> Send for Arc<T> {}
+unsafe impl<T: ?Sized + Sync + Send> Sync for Arc<T> {}
+
+unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
+unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
+
+unsafe impl<T: ?Sized + Send> Send for RwLock<T> {}
+unsafe impl<T: ?Sized + Send + Sync> Sync for RwLock<T> {}
+```
+
+
+
+```rust
+// Cell、RefCell、Mutex、RwLock
+impl<T: ?Sized> !Sync for UnsafeCell<T> {}
+
+// Arc、Rc、Weak
+impl<T: ?Sized> !Send for NonNull<T> {}
+impl<T: ?Sized> !Sync for NonNull<T> {}
+```
 
 ## 线程间通信
 
@@ -1075,7 +1145,9 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ### Mutex
 
-`Mutex` 智能指针是一种互斥器，通过 `lock` 阻塞地获取锁，成功后返回一个 `MutexGuard` 智能指针，其内部包含了数据的**可变引用**。锁会在作用域结束后自动释放，但若在释放前线程发生了 panic，那么该锁就不会被释放，在这种情况下，锁不能再被任何对象获取，获取锁的对象可以使用 `unwrap` 来处理。
+`Mutex` 智能指针是一种互斥器，通过 `lock` 阻塞地返回一个 `Result`，成功时 `Ok` 包含一个具有内部可变性的 `MutexGuard` 智能指针。
+
+锁会在作用域结束后自动释放，但若线程在释放前发生了 panic，那么该锁就不会被释放，在这种情况下，锁不能再被任何对象获取，此时 `lock` 会返回 `Err`。
 
 ```rust
 use std::sync::Mutex;
@@ -1090,9 +1162,11 @@ fn main() {
 }
 ```
 
+>   获取的锁若不绑定到一个变量上，则相当于是一个临时变量，在当前语句结束后就会立即解锁。
+
 ### 比较 Mutex 和 RefCell
 
-`Mutex` 实际上就是线程安全版本的 `RefCell`，但默认获得的就是可变引用。
+`RefCell` 只实现了 `Send` 而没有实现 `Sync`，因此不能在多线程间安全地共享。而 `Mutex` 实际上就是线程安全的 `RefCell`，但默认获得的就是可变引用。
 
 | 指针类型 | 线程安全 | 获取不可变引用 | 获取可变引用 |
 | -------- | -------- | -------------- | ------------ |
@@ -1269,60 +1343,4 @@ fn main() {
 
 ### 条件变量
 
-## 并发 trait
-
-Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Sync}`。其中 `marker` 代表**标记 trait**，表示该 trait 不含任何方法，仅用于标记是否满足相关性质。
-
-### Send 允许线程间转移所有权
-
-实现了 `Send` 的类型的可以安全地在线程间转移所有权。除了 `Cell`、`RefCell`、`Rc` 和原始指针外，几乎所有类型都实现了 `Send` ，由实现了该 trait 的类型组成的类型也是 `Send` 的。
-
-### Sync 允许多线程访问
-
-实现了 `Sync` 的类型可以安全地在多个线程使用其引用，这表明：
-
--   若 `T` 实现了 `Sync`，则 `&T` 为 `Send` 的；
--   若 `&T` 实现了 `Send`，则 `T` 为 `Sync` 的。
-
-与 `Send` 类似，除了 `Cell`、`RefCell`、`Rc` 和原始指针外，几乎所有类型都实现了 `Sync`，由实现了该 trait 的类型组成的类型也是 `Sync` 的。
-
-### 手动实现 Send 和 Sync 是不安全的
-
-通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。手动实现这些标记 trait 涉及编写 Unsafe 代码，因此通常是不安全的。
-
-```rust
-unsafe impl<T: ?Sized + Send> Send for Cell<T> {}
-impl<T: ?Sized> !Sync for Cell<T> {}
-
-unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
-impl<T: ?Sized> !Sync for RefCell<T> {}
-
-impl<T: ?Sized> !Send for Rc<T> {}
-impl<T: ?Sized> !Sync for Rc<T> {}
-
-impl<T: ?Sized> !Send for Weak<T> {}
-impl<T: ?Sized> !Sync for Weak<T> {}
-
-impl<T: ?Sized> !Send for *const T {}
-impl<T: ?Sized> !Sync for *const T {}
-
-impl<T: ?Sized> !Send for *mut T {}
-impl<T: ?Sized> !Sync for *mut T {}
-
-//
-unsafe impl<T: ?Sized + Sync + Send> Send for Arc<T> {}
-unsafe impl<T: ?Sized + Sync + Send> Sync for Arc<T> {}
-
-unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
-unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
-
-// Cell、RefCell、Mutex
-impl<T: ?Sized> !Sync for UnsafeCell<T> {}
-
-// Arc、Rc、Weak
-impl<T: ?Sized> !Send for NonNull<T> {}
-impl<T: ?Sized> !Sync for NonNull<T> {}
-```
-
-
-
+## 原子类型
