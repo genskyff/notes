@@ -881,16 +881,16 @@ handle.join().unwrap();
 
 在 Rust 中，`main` 是主线程，一旦结束，则程序终止，同时各个子线程也会被强行终止。对子线程来说，其中代码执行完，线程就自动结束。
 
-当子线程的代码没有执行完时，需要分情况讨论：
+当子线程的代码没有执行完时：
 
 -   线程任务是一个循环 IO 读取，有阻塞状态，其流程类似：
 
     ```
     IO 阻塞 -> 等待读取数据 -> 读取数据 -> 处理完毕 -> 继续阻塞等待 ->
-    ...-> 收到 Socket 关闭信号 -> 结束线程
+    ... -> 收到 Socket 关闭信号 -> 结束线程
     ```
 
-    在此过程中，大部分时间线程都处于阻塞状态，因此实际 CPU 占用很低，这也是 IO 任务最常见的场景；
+    在此过程中，大部分时间线程都处于阻塞状态，因此实际 CPU 占用很低，这也是 IO 任务最常见的场景。
 -   线程的任务是一个循环，没有任何阻塞，此时 CPU 会被占满，若没有终止条件，该线程将持续占满一个 CPU 核心，直到主线程结束。
 
     ```rust
@@ -907,6 +907,37 @@ handle.join().unwrap();
     ```
 
     主线程线程创建了一个子线程 `new_thread`，然后该线程又创建了一个子线程，`new_thread` 在创建完子线程后就结束了，但其创建的子线程依旧在执行。
+
+### 线程屏障
+
+`sync::Barrier` 可以让多个线程都执行到某个点后，才继续往后执行：
+
+```rust
+use std::sync::{Arc, Barrier};
+use std::thread;
+
+fn main() {
+    let mut handles = vec![];
+    let b = Arc::new(Barrier::new(3));
+    for _ in 0..3 {
+        let t = Arc::clone(&b);
+        let handle = thread::spawn(move || {
+            println!("hello");
+            t.wait();
+            println!("world");
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+```
+
+`Barrier::new` 函数接收一个参数 `N`，表示阻塞指定线程数，它会阻塞 `N-1` 个调用 `wait` 方法的线程，然后在第 `N` 个线程调用 `wait` 方法时立即继续执行所有线程。
+
+在线程打印出 `hello` 后，使用 `wait` 方法增加了一个线程屏障，目的是等所有的线程都打印出 `hello` 后，各个线程再继续执行下面的代码。
 
 ## 并发 trait
 
@@ -1173,6 +1204,28 @@ fn main() {
 | Mutex    | 是       |                | lock         |
 | RefCell  | 否       | borrow         | borrow_mut   |
 
+### 死锁
+
+死锁通常在另一个锁还未被释放时就去获取新的锁时触发：
+
+```rust
+let m = Mutex::new(5);
+let d1 = m.lock().unwrap();
+let d2 = m.lock().unwrap();
+```
+
+由于 `d1` 已经获取了锁，且未离开作用域，因此 `d2` 永远也获取不到锁，但 `lock` 方法会阻塞当前线程，因此 `d2` 永远保持获取锁的状态，而 `d1` 也永远无法解锁，从而导致了死锁。
+
+和 `lock` 方法不同，`try_lock` 方法尝试获取一次锁，若无法获取则返回一个错误，因此不会发生阻塞。
+
+```rust
+let m = Mutex::new(5);
+let d1 = m.lock().unwrap();
+let d2 = m.try_lock().unwrap();
+```
+
+由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致 panic。
+
 ### Arc
 
 ```rust
@@ -1268,7 +1321,7 @@ println!("{}", num.read().unwrap());
 
 >   `RwLock` 在使用上和 `Mutex` 基本相同。
 
-无论是单线程还是多线程，需要注意以下几点：
+无论是单线程还是多线程，都需要注意：
 
 -   同时允许多个读，但同时只能有一个写；
 -   读和写不能同时存在，否则会发生死锁。
@@ -1277,70 +1330,17 @@ println!("{}", num.read().unwrap());
 
 ### 比较 Mutex 和 RwLock
 
-`Mutex` 要更简单，因为使用 `RwLock` 需要关心：
+和 `Mutex` 相比，使用 `RwLock` 时需要注意：
 
--   读和写不能同时发生，若使用 `try_xxx` 解决，则需要做错误处理；
+-   读和写不能同时发生；
 -   当读多写少时，写操作可能会因为无法获得锁导致连续多次失败；
--   `RwLock` 为操作系统提供，具体实现比 `Mutex` 更复杂。
+-   `RwLock` 由操作系统提供，具体实现比 `Mutex` 更复杂。
 
 两者使用场景：
 
--   通常统一使用 `Mutex`；
--   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock`，因为 `Mutex` 一次只允许一个线程去读取。
-
-### 死锁
-
-死锁通常在另一个锁还未被释放时就去获取新的锁时触发：
-
-```rust
-let m = Mutex::new(5);
-let d1 = m.lock().unwrap();
-let d2 = m.lock().unwrap();
-```
-
-由于 `d1` 已经获取了锁，且未离开作用域，因此 `d2` 永远也获取不到锁，但 `lock` 方法会阻塞当前线程，因此 `d2` 永远保持获取锁的状态，而 `d1` 也永远无法解锁，从而导致了死锁。
-
-和 `lock` 方法不同，`try_lock` 方法尝试获取一次锁，若无法获取则返回一个错误，因此不会发生阻塞。
-
-```rust
-let m = Mutex::new(5);
-let d1 = m.lock().unwrap();
-let d2 = m.try_lock().unwrap();
-```
-
-由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致 panic。
-
-### 线程屏障
-
-可以配合使用 `Barrier` 让多个线程都执行到某个点后，才一起继续往后执行：
-
-```rust
-use std::sync::{Arc, Barrier};
-use std::thread;
-
-fn main() {
-    let mut handles = vec![];
-    let b = Arc::new(Barrier::new(3));
-    for _ in 0..3 {
-        let t = Arc::clone(&b);
-        let handle = thread::spawn(move || {
-            println!("hello");
-            t.wait();
-            println!("world");
-        });
-        handles.push(handle);
-    }
-
-    for handle in handles {
-        handle.join().unwrap();
-    }
-}
-```
-
-`Barrier::new` 函数接收一个参数 `N`，表示阻塞指定线程数，它会阻塞 `N-1` 个调用 `wait` 方法的线程，然后在第 `N` 个线程调用 `wait` 方法时立即继续执行所有线程。
-
-在线程打印出 `hello` 后，使用 `wait` 方法增加了一个线程屏障，目的是等所有的线程都打印出 `hello` 后，各个线程再继续执行下面的代码。
+-   通常使用 `Mutex`；
+-   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock`。
 
 ### 条件变量
 
-## 原子类型
+## 原子操作
