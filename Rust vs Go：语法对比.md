@@ -69,6 +69,20 @@ Go
 -   字符串：`string`
 -   指针：`*T`
 
+### 类型别名
+
+Rust
+
+```rust
+type int8 = i8;
+```
+
+Go
+
+```go
+type i8 = int8
+```
+
 ### 引用 / 指针
 
 Rust
