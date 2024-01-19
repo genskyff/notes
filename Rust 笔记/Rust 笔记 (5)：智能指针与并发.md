@@ -820,20 +820,23 @@ leaf2 strong = 1, weak = 0
 
 ## 使用线程
 
-现代操作系统中，程序的代码在一个**进程**中运行，操作系统则负责管理多个进程。在程序内部，也可以拥有多个同时运行的独立部分，称为**线程**。
+程序代码通常在**进程**中运行，操作系统管理多个进程。程序内部可以有多个同时运行的**线程**。程序从主线程 `main` 开始，可创建子线程，子线程也能创建线程。线程同时运行，执行顺序不确定，依赖操作系统调度。主线程结束时，不论子线程是否完成，程序都会结束；子线程完成后自动结束，但其创建的线程会继续执行。操作系统提供结束线程的接口，但直接终止线程可能导致如资源未释放之类的问题。
 
-每个程序都会从主线程开始，主线程可以创建子线，子线程也可以创建子线程。由于线程是同时运行的，因此无法保证不同线程中代码的执行顺序，这依赖操作系统如何进行调度。当主线程结束时，不管子线程是否执行完毕都会结束。
+程序执行的任务通常有两类：
 
-在大多数情况下，多线程可以提高性能，但也会增加复杂度，通常会导致以下问题：
+-   **IO 密集型**：有大量的 IO 操作，如文件处理、网络通信等；
+-   **CPU 密集型**：需要大量的计算，如图像处理、复杂运算等。
 
--   **数据竞争**：多个线程以不一致的顺序同时访问数据；
--   **死锁**：线程之间相互等待对方停止使用其所拥有的数据，导致都不能继续运行。
+通常对 CPU 密集型任务使用多线程会有显著的性能提升，但也会导致以下问题：
+
+-   **数据竞争**：多个线程以不一致的顺序同时访问同一个数据；
+-   **死锁**：线程之间相互等待对方停止使用其所拥有的数据，导致双方永远等待。
 
 ### 线程模型
 
-不同语言实现线程方式不同。操作系统通常会提供创建线程的 API，这种调用系统 API 创建线程的模型被称为 **1:1** 模型，即一个 OS 线程对应一个语言线程。而 **M:N** 模型被称为**绿色线程**或**协程**，即程序内部实现的 M 个线程会映射到 N 个 OS 线程中。
+不同语言实现线程方式不同。操作系统通常会提供创建线程的 API，这种调用系统 API 创建线程的模型被称为 **1:1** 模型，即一个 OS 线程对应一个程序线程。而 **M:N** 模型被称为**协程**，即程序内部实现的 M 个线程会映射到 N 个 OS 线程中。
 
->   为了较小的运行时和性能，Rust 标准库只提供了 1:1 线程实现，一些第三方标准库，如 [Tokio](https://github.com/tokio-rs/tokio) 则提供了 M:N 线程实现。
+>   为了较小的运行时和性能，Rust 标准库只提供了 1:1 线程实现，一些第三方库，如 [Tokio](https://github.com/tokio-rs/tokio) 则提供了 M:N 线程实现。
 
 ### 创建线程
 
@@ -875,42 +878,9 @@ handle.join().unwrap();
 
 若不使用 `move`，`println!` 以引用的方式使用值，因此自动推断为借用 `v`，但主线程可能使该值无效，因此报错。
 
-### 线程结束
-
-操作系统虽然提供了直接结束线程的接口，但直接终止线程可能会导致如资源未释放等不可预期的结果。
-
-在 Rust 中，`main` 是主线程，一旦结束，则程序终止，同时各个子线程也会被强行终止。对子线程来说，其中代码执行完，线程就自动结束。
-
-当子线程的代码没有执行完时：
-
--   线程任务是一个循环 IO 读取，有阻塞状态，其流程类似：
-
-    ```
-    IO 阻塞 -> 等待读取数据 -> 读取数据 -> 处理完毕 -> 继续阻塞等待 ->
-    ... -> 收到 Socket 关闭信号 -> 结束线程
-    ```
-
-    在此过程中，大部分时间线程都处于阻塞状态，因此实际 CPU 占用很低，这也是 IO 任务最常见的场景。
--   线程的任务是一个循环，没有任何阻塞，此时 CPU 会被占满，若没有终止条件，该线程将持续占满一个 CPU 核心，直到主线程结束。
-
-    ```rust
-    let new_thread = thread::spawn(|| {
-        thread::spawn(|| loop {
-            println!("ok");
-        })
-    });
-    
-    new_thread.join().unwrap();
-    println!("new_thread done");
-    
-    thread::sleep(Duration::from_secs(1));
-    ```
-
-    主线程线程创建了一个子线程 `new_thread`，然后该线程又创建了一个子线程，`new_thread` 在创建完子线程后就结束了，但其创建的子线程依旧在执行。
-
 ### 线程屏障
 
-`sync::Barrier` 可以让多个线程都执行到某个点后，才继续往后执行：
+`sync::Barrier` 可以让多个线程都执行到某个点后，才继续往后执行。其接收一个参数 `N`，表示阻塞指定线程数，它会阻塞前 `N-1` 个调用 `wait` 的线程，然后在第 `N` 个线程调用 `wait` 时立即继续执行所有线程。
 
 ```rust
 use std::sync::{Arc, Barrier};
@@ -918,13 +888,14 @@ use std::thread;
 
 fn main() {
     let mut handles = vec![];
-    let b = Arc::new(Barrier::new(3));
-    for _ in 0..3 {
+    let b = Arc::new(Barrier::new(4));
+
+    for i in 0..4 {
         let t = Arc::clone(&b);
         let handle = thread::spawn(move || {
-            println!("hello");
+            println!("{i}: start");
             t.wait();
-            println!("world");
+            println!("{i}: end");
         });
         handles.push(handle);
     }
@@ -934,10 +905,6 @@ fn main() {
     }
 }
 ```
-
-`Barrier::new` 函数接收一个参数 `N`，表示阻塞指定线程数，它会阻塞 `N-1` 个调用 `wait` 方法的线程，然后在第 `N` 个线程调用 `wait` 方法时立即继续执行所有线程。
-
-在线程打印出 `hello` 后，使用 `wait` 方法增加了一个线程屏障，目的是等所有的线程都打印出 `hello` 后，各个线程再继续执行下面的代码。
 
 ## 并发 trait
 
@@ -959,7 +926,9 @@ Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Syn
 
 ### Send 和 Sync 实现
 
-通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。手动实现这些标记 trait 涉及编写 Unsafe 代码，因此通常是不安全的。
+通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。
+
+`Rc`、`Weak` 和原始指针没有实现 `Send` 和 `Sync`，因此不是并发安全的。
 
 ```rust
 impl<T: ?Sized> !Send for Rc<T> {}
@@ -975,7 +944,7 @@ impl<T: ?Sized> !Send for *mut T {}
 impl<T: ?Sized> !Sync for *mut T {}
 ```
 
-
+`Cell` 和 `RefCell` 虽然实现了 `Send`，但没有实现 `Sync`，因此也不是并发安全的。
 
 ```rust
 unsafe impl<T: ?Sized + Send> Send for Cell<T> {}
@@ -985,7 +954,7 @@ unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
 impl<T: ?Sized> !Sync for RefCell<T> {}
 ```
 
-
+`Arc`、`Mutex` 和 `RwLock` 都实现了 `Send` 和 `Sync`，因此是并发安全的。
 
 ```rust
 unsafe impl<T: ?Sized + Sync + Send> Send for Arc<T> {}
@@ -998,16 +967,16 @@ unsafe impl<T: ?Sized + Send> Send for RwLock<T> {}
 unsafe impl<T: ?Sized + Send + Sync> Sync for RwLock<T> {}
 ```
 
-
+实现了并发安全的类型自身可能含有没有实现并发安全的字段，如 `Mutex`、`RwLock` 都含有没有实现 `Sync` 的 `UnsafeCell` 字段；而 `Arc` 含有没有实现 `Send` 和 `Sync` 的 `NonNull` 字段。
 
 ```rust
-// Cell、RefCell、Mutex、RwLock
 impl<T: ?Sized> !Sync for UnsafeCell<T> {}
 
-// Arc、Rc、Weak
 impl<T: ?Sized> !Send for NonNull<T> {}
 impl<T: ?Sized> !Sync for NonNull<T> {}
 ```
+
+手动为含有没有实现并发安全字段的类型实现 `Send` 和 `Sync` 涉及编写 Unsafe 代码，因此通常是不安全的。
 
 ## 线程间通信
 
@@ -1209,22 +1178,20 @@ fn main() {
 死锁通常在另一个锁还未被释放时就去获取新的锁时触发：
 
 ```rust
-let m = Mutex::new(5);
+let m = Mutex::new(1);
 let d1 = m.lock().unwrap();
 let d2 = m.lock().unwrap();
 ```
 
-由于 `d1` 已经获取了锁，且未离开作用域，因此 `d2` 永远也获取不到锁，但 `lock` 方法会阻塞当前线程，因此 `d2` 永远保持获取锁的状态，而 `d1` 也永远无法解锁，从而导致了死锁。
+由于 `d1` 已经获取了锁，且未离开作用域，因此 `d2` 永远也获取不到锁，但 `lock` 会阻塞当前线程，因此 `d2` 永远保持获取锁的状态，而 `d1` 也永远无法解锁，从而导致了死锁。
 
-和 `lock` 方法不同，`try_lock` 方法尝试获取一次锁，若无法获取则返回一个错误，因此不会发生阻塞。
+`try_lock` 用于非阻塞地获取锁：
 
 ```rust
-let m = Mutex::new(5);
-let d1 = m.lock().unwrap();
-let d2 = m.try_lock().unwrap();
+let m = Mutex::new(1);
+let d = m.lock().unwrap();
+assert!(m.try_lock().is_err());
 ```
-
-由于不会发生阻塞，因此 `d2` 尝试获取锁发现无法获取，则会直接导致 panic。
 
 ### Arc
 
