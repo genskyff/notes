@@ -847,7 +847,7 @@ use std::thread;
 use std::time::Duration;
 
 fn main() {
-    let handle = thread::spawn(|| {
+    let h = thread::spawn(|| {
         for i in 0..5 {
             println!("spawn: {i}");
             thread::sleep(Duration::from_millis(100));
@@ -859,7 +859,7 @@ fn main() {
         thread::sleep(Duration::from_millis(100));
     }
 
-    handle.join().unwrap();
+    h.join().unwrap();
 }
 ```
 
@@ -869,11 +869,11 @@ fn main() {
 let v = vec![1, 2, 3];
 
 // 若不使用 move，则报错
-let handle = thread::spawn(move || {
+let h = thread::spawn(move || {
     println!("{v:?}");
 });
 
-handle.join().unwrap();
+h.join().unwrap();
 ```
 
 若不使用 `move`，`println!` 以引用的方式使用值，因此自动推断为借用 `v`，但主线程可能使该值无效，因此报错。
@@ -887,21 +887,21 @@ use std::sync::{Arc, Barrier};
 use std::thread;
 
 fn main() {
-    let mut handles = vec![];
+    let mut hs = vec![];
     let b = Arc::new(Barrier::new(4));
 
     for i in 0..4 {
         let t = Arc::clone(&b);
-        let handle = thread::spawn(move || {
+        let h = thread::spawn(move || {
             println!("{i}: start");
             t.wait();
             println!("{i}: end");
         });
-        handles.push(handle);
+        hs.push(h);
     }
 
-    for handle in handles {
-        handle.join().unwrap();
+    for h in hs {
+        h.join().unwrap();
     }
 }
 ```
@@ -978,7 +978,7 @@ impl<T: ?Sized> !Sync for NonNull<T> {}
 
 手动为含有没有实现并发安全字段的类型实现 `Send` 和 `Sync` 涉及编写 Unsafe 代码，因此通常是不安全的。
 
-## 线程间通信
+## 消息传递
 
 一种确保并发安全的方式是**消息传递**，线程通过发送包含数据的消息来进行通信。
 
@@ -1134,180 +1134,149 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 使用信道来进行消息传递是实现并发的方式之一，信道类似于单所有权，一旦将一个值传送到信道中，就无法再使用这个值。共享内存类似于多所有权，多个线程可以同时访问相同内存的数据。
 
-### 互斥器
+### 互斥锁
 
-**互斥器**表示在任意时刻，只允许一个线程访问其中的数据。为了访问互斥器中的数据，线程需要先获取互斥器的**锁**。锁是一个作为互斥器一部分的数据结构，记录了谁有数据的访问权，互斥器通过锁避免数据竞争。
+**互斥锁**表示在任意时刻，再某种条件下，只允许一个线程访问其中的数据。为了访问互斥器中的数据，线程需要先获取互斥器的**锁**。锁是一个作为互斥器一部分的数据结构，记录了谁有数据的访问权，互斥器通过锁避免数据竞争。
 
-要使用互斥器，必须做到：
+使用互斥器需要注意：
 
 -   使用数据前获取锁；
--   使用完后必须解锁，这样其它线程才能获取锁。
+-   使用完后必须解锁，这样其它线程才能获取锁；
+-   互相等待对方线程解锁会造成死锁。
 
 ### Mutex
 
-`Mutex` 智能指针是一种互斥器，通过 `lock` 阻塞地返回一个 `Result`，成功时 `Ok` 包含一个具有内部可变性的 `MutexGuard` 智能指针。
-
-锁会在作用域结束后自动释放，但若线程在释放前发生了 panic，那么该锁就不会被释放，在这种情况下，锁不能再被任何对象获取，此时 `lock` 会返回 `Err`。
+`Mutex` 是一种互斥锁，`lock` 和 `try_lock` 用于获取锁，前者阻塞后者非阻塞。`RefCell` 只实现了 `Send` 而没有实现 `Sync`，因此没有实现并发安全。而 `Mutex` 实际上就是并发安全的 `RefCell`。
 
 ```rust
 use std::sync::Mutex;
 
 fn main() {
-    let m = Mutex::new(1);
+    let m = Mutex::new(0);
     {
-        let mut n = m.lock().unwrap();
-        *n = 2;
+        let mut v = m.lock().unwrap();
+        *v = 1;
     }
     println!("{}", m.lock().unwrap());
 }
 ```
 
+`Mutex` 对锁使用**中毒策略**。正常情况下锁会在作用域结束后自动释放，但若线程在释放前发生了 panic，锁就不会被释放也不能再被获取，该锁被视为**中毒的**。
+
+`lock` 和 `try_lock` 返回的 `Result` 指示锁的状态。`Ok` 是一个具有**内部可变性**的 `MutexGuard`，其中含有内部数据；而 `Err` 是一个 `PoisonError`，表示锁已中毒。
+
 >   获取的锁若不绑定到一个变量上，则相当于是一个临时变量，在当前语句结束后就会立即解锁。
-
-### 比较 Mutex 和 RefCell
-
-`RefCell` 只实现了 `Send` 而没有实现 `Sync`，因此不能在多线程间安全地共享。而 `Mutex` 实际上就是线程安全的 `RefCell`，但默认获得的就是可变引用。
-
-| 指针类型 | 线程安全 | 获取不可变引用 | 获取可变引用 |
-| -------- | -------- | -------------- | ------------ |
-| Mutex    | 是       |                | lock         |
-| RefCell  | 否       | borrow         | borrow_mut   |
-
-### 死锁
-
-死锁通常在另一个锁还未被释放时就去获取新的锁时触发：
-
-```rust
-let m = Mutex::new(1);
-let d1 = m.lock().unwrap();
-let d2 = m.lock().unwrap();
-```
-
-由于 `d1` 已经获取了锁，且未离开作用域，因此 `d2` 永远也获取不到锁，但 `lock` 会阻塞当前线程，因此 `d2` 永远保持获取锁的状态，而 `d1` 也永远无法解锁，从而导致了死锁。
-
-`try_lock` 用于非阻塞地获取锁：
-
-```rust
-let m = Mutex::new(1);
-let d = m.lock().unwrap();
-assert!(m.try_lock().is_err());
-```
 
 ### Arc
 
-```rust
-let counter = Mutex::new(0);
-let mut handles = vec![];
+`Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `Arc`，和 `Rc` 有相同的 API，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
 
-for _ in 0..10 {
-    // 错误，counter 已经移动到上一个线程中
-    let handle = thread::spawn(move || {
-        let mut num = counter.lock().unwrap();
-        *num += 1;
-    });
-    handles.push(handle);
-}
-
-for handle in handles {
-    handle.join().unwrap();
-}
-
-println!("Result = {}", *counter.lock().unwrap());
-```
-
-以上代码将启动 10 个线程，并在每个线程中对同一个 `counter` 值加 1，最终 `counter` 值为 10，但此代码还不能通过编译，因为 `counter` 已经移动到创建线程的闭包中，导致后面创建线程的闭包无法使用，因此 `Mutex<T>` 是单所有权的。
-
-在单线程中，可以使用 `Rc<T>` 来创建具有多所有权的不可变引用，但由于 `Rc<T>` 的操作不是**原子**的，因此不能安全的在线程间共享。当 `Rc<T>` 管理引用计数时，不能保证改变引用计数的操作不会被其它线程干扰。
-
-要安全的在线程间共享，必须实现 `Send` trait，而 `Rc<T>` 没有实现这个 trait，但可以使用**原子引用计数** 类型 `Arc<T>`。
-
->   `Arc<T>` 和 `Rc<T>` 有着相同的 API，但由于 `Arc<T>` 为了保证线程安全导致有些许性能损失，因此不是所有类型都默认使用 `Arc<T>` 进行实现。
+`Mutext` 提供了内部可变性，这与 `Rc` 配合 `RefCell` 使用类似，`Arc` 也会配合 `Mutex` 使用。
 
 ```rust
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
-let counter = Arc::new(Mutex::new(0));
-let mut handles = vec![];
+fn main() {
+    let a = Arc::new(Mutex::new(0));
+    let mut hs = vec![];
 
-for _ in 0..10 {
-    let counter = Arc::clone(&counter);
-    let handle = thread::spawn(move || {
-        let mut num = counter.lock().unwrap();
-        *num += 1;
-    });
-    handles.push(handle);
+    for _ in 0..10 {
+        let aa = Arc::clone(&a);
+        let h = thread::spawn(move || {
+            *aa.lock().unwrap() += 1;
+        });
+        hs.push(h);
+    }
+
+    for h in hs {
+        h.join().unwrap();
+    }
+
+    println!("{}", *a.lock().unwrap());
 }
-
-for handle in handles {
-    handle.join().unwrap();
-}
-
-println!("Result = {}", *counter.lock().unwrap());
 ```
 
-使用 `Arc<T>` 进行封装后，就可以安全的在线程间共享数据了。
+`Rc<RefCell>` 有造成**循环引用**的风险，而 `Arc<Mutex>` 也有造成**死锁**的风险，如一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
 
-### 结合 Arc 和 Mutex
+```rust
+use std::sync::{Arc, Barrier, Mutex};
+use std::thread;
 
-`counter` 本来是一个不可变的 `Arc`，但可以获得内部值的可变引用，这表示 `Mutex` 提供了内部可变性。和使用 `RefCell` 来改变 `Rc` 中的内容类似，可以使用 `Mutex` 来改变 `Arc` 中的内容。
+fn main() {
+    let a1 = Arc::new(Mutex::new(0));
+    let a2 = Arc::new(Mutex::new(1));
 
-| 指针类型   | 所有权 | 可变性 |
-| ---------- | ------ | ------ |
-| Mutex\<T\> | 唯一   | 可变   |
-| Arc\<T\>   | 多个   | 不可变 |
+    let aa1 = Arc::clone(&a1);
+    let aa2 = Arc::clone(&a2);
 
-需要注意的是，`Rc` 的内部可变性模式有造成引用循环的风险，同理 `Arc` 的内部可变性模式也有造成**死锁**的风险，如当一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
+    let b = Arc::new(Barrier::new(2));
+    let bb = Arc::clone(&b);
+
+    let h1 = thread::spawn(move || {
+        let _v1 = a1.lock().unwrap();
+        println!("h1 locked a1");
+        b.wait();
+        let _v2 = a2.lock().unwrap();
+        println!("h1 locked a2");
+    });
+
+    let h2 = thread::spawn(move || {
+        let _v2 = aa2.lock().unwrap();
+        println!("h2 locked a2");
+        bb.wait();
+        let _v1 = aa1.lock().unwrap();
+        println!("h2 locked a1");
+    });
+
+    h1.join().unwrap();
+    h2.join().unwrap();
+}
+```
+
+`h1` 线程以 `a1`、`a2` 的顺序获取锁，`h2` 线程以 `a2`、`a1` 的顺序获取锁，并使用线程屏障保证线程各自都在获取到第一个锁后再继续运行，此时就会造成死锁。
 
 ### RwLock
 
-`Mutex` 会对每次读写都进行加锁，因此当有大量的并发读就无法满足需求了，此时就可以使用读写锁 `RwLock`。
+`Mutex` 每次使用都需要加锁，这在高并发读时有较大性能损耗。而 `RwLock` 允许多个读操作同时进行，但同时只能有一个写操作，这十分适合高并发读的场景。
+
+`read`、`write` 用于阻塞地读写，`try_read` 和 `try_write` 用于非阻塞地读写。
 
 ```rust
+use std::sync::{Arc, Barrier, RwLock};
 use std::thread;
-use std::sync::{Arc, RwLock};
 
-let num = Arc::new(RwLock::new(5));
-let mut handles = vec![];
+fn main() {
+    let r = Arc::new(RwLock::new(0));
+    let b = Arc::new(Barrier::new(5));
+    let mut hs = vec![];
 
-for _ in 0..10 {
-    let n = Arc::clone(&num);
-    let h = thread::spawn(move || {
-        println!("{}", n.read().unwrap());
-    });
-    handles.push(h);
+    for i in 0..5 {
+        let rr = Arc::clone(&r);
+        let bb = Arc::clone(&b);
+        let h = thread::spawn(move || {
+            let v = rr.read().unwrap();
+            bb.wait();
+            println!("thread {i}: {v}");
+        });
+        hs.push(h);
+    }
+
+    for h in hs {
+        h.join().unwrap();
+    }
+
+    *r.write().unwrap() = 1;
+    println!("after write: {}", r.read().unwrap());
 }
-
-for h in handles {
-    h.join().unwrap();
-}
-
-*num.write().unwrap() = 10;
-
-println!("{}", num.read().unwrap());
 ```
 
->   `RwLock` 在使用上和 `Mutex` 基本相同。
+与 `Mutex` 类似，同样对锁使用**中毒策略**，但只在写模式下发生的 panic 才会导致锁中毒。
 
-无论是单线程还是多线程，都需要注意：
+`read`、`try_read`、`write`、`try_write` 返回的 `Result` 指示锁的状态。读模式下，`Ok` 是一个 `RwLockReadGuard`，其中含有内部数据；写模式下，`Ok` 是一个具有**内部可变性**的 `RwLockWriteGuard`，其中含有内部数据，而 `Err` 是一个 `PoisonError`，表示锁已中毒。
 
--   同时允许多个读，但同时只能有一个写；
--   读和写不能同时存在，否则会发生死锁。
+### Condvar
 
->   可以将 `read` 和 `write` 方法换成 `try_read` 和 `try_write` 方法来尝试进行一次读写，若失败则返回错误。
 
-### 比较 Mutex 和 RwLock
-
-和 `Mutex` 相比，使用 `RwLock` 时需要注意：
-
--   读和写不能同时发生；
--   当读多写少时，写操作可能会因为无法获得锁导致连续多次失败；
--   `RwLock` 由操作系统提供，具体实现比 `Mutex` 更复杂。
-
-两者使用场景：
-
--   通常使用 `Mutex`；
--   当进行高并发读取且需要长时间对数据进行操作时，使用 `RwLock`。
-
-### 条件变量
 
 ## 原子操作
