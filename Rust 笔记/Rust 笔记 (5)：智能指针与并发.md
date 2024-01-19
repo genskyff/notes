@@ -976,7 +976,50 @@ impl<T: ?Sized> !Send for NonNull<T> {}
 impl<T: ?Sized> !Sync for NonNull<T> {}
 ```
 
-手动为含有没有实现并发安全字段的类型实现 `Send` 和 `Sync` 涉及编写 Unsafe 代码，因此通常是不安全的。
+手动为含有没有实现并发安全字段的类型实现 `Send` 和 `Sync` 涉及编写 Unsafe 代码，因此通常是不安全的。如通过 newtype 为 `Rc` 实现并发安全：
+
+```rust
+use std::ops::Deref;
+use std::rc::Rc;
+use std::sync::Mutex;
+use std::thread;
+
+struct SafeRc<T>(Rc<T>);
+
+unsafe impl<T: Send + Sync> Send for SafeRc<T> {}
+unsafe impl<T: Send + Sync> Sync for SafeRc<T> {}
+
+impl<T> SafeRc<T> {
+    fn new(v: T) -> Self {
+        Self(Rc::new(v))
+    }
+
+    fn clone(&self) -> Self {
+        Self(Rc::clone(&self.0))
+    }
+}
+
+impl<T> Deref for SafeRc<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+fn main() {
+    let sr = SafeRc::new(Mutex::new(0));
+    let ssr = SafeRc::clone(&sr);
+
+    thread::spawn(move || {
+        *ssr.lock().unwrap() += 10;
+    })
+    .join()
+    .unwrap();
+
+    println!("{}", sr.lock().unwrap());
+}
+```
 
 ## 消息传递
 
@@ -1140,9 +1183,9 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 使用互斥器需要注意：
 
--   使用数据前获取锁；
--   使用完后必须解锁，这样其它线程才能获取锁；
--   互相等待对方线程解锁会造成死锁。
+-   使用数据前必须获取锁；
+-   使用完后必须释放锁，这样其它线程才能加锁；
+-   互相等待对方线程释放锁会造成死锁。
 
 ### Mutex
 
@@ -1277,7 +1320,115 @@ fn main() {
 
 ### Condvar
 
+互斥锁用于解决并发安全问题，但不能用于控制对并发数据的访问顺序。条件变量则可以控制线程的同步，它会让当前线程阻塞，直到满足特定条件后再继续执行，通常和 `Mutex` 配合使用。
 
+使用条件变量的典型步骤为：
+
+1.  创建一个 `Mutex<bool>` 和与其关联的 `Condvar`；
+2.  当需要等待特定条件时，线程先从 `Mutex` 获取锁 `f`，然后在 `Condvar` 上调用 `wait` 或 `wait_timeout` 释放锁 `f`，然后阻塞当前线程，等待其它线程发送通知；
+3.  另一个线程完成操作后，从 `Mutex` 获取锁 `f`，修改 `f` 使其满足条件，然后在 `Condvar` 上的调用 `notify_one` 或 `notify_all` 来通知等待的线程；
+4.  等待的线程接收到满足条件的通知后，继续执行。
+
+```rust
+use std::sync::{Arc, Condvar, Mutex};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    let pair2 = Arc::clone(&pair);
+
+    let h = thread::spawn(move || {
+        let (mtx, cvar) = &*pair2;
+        let mut flag = mtx.lock().unwrap();
+
+        while !*flag {
+            flag = cvar.wait(flag).unwrap(); // wait 会立即释放 flag
+        }
+
+        println!("thread done");
+    });
+
+    let (mtx, cvar) = &*pair;
+    thread::sleep(Duration::from_secs(1));
+    *mtx.lock().unwrap() = true;
+    cvar.notify_one();
+
+    h.join().unwrap();
+}
+```
 
 ## 原子类型
 
+基于信道的消息传递安全但有诸多限制，`Mutex` 简单但不支持并发读，`RwLock` 支持并发读但性能有限。而 CPU 本身提供原子操作指令，Rust 中的原子类型会利用这些指令，因此也是并发安全的，其性能优于消息传递和锁，并具有**内部可变性**。虽为无锁类型，但原子类型内部使用 CAS（Compare and Swap）循环，还是有等待阻塞的可能，但总体性能优于锁。实际上很多并发类型在内部就是使用原子类型来构建的。
+
+原子类型包括：
+
+-   有符号整数：`AtomicI8`、`AtomicI16`、`AtomicI32`、`AtomicI64`、`AtomicIsize`	
+
+-   无符号整数：`AtomicU8`、`AtomicU16`、`AtomicU32`、`AtomicU64`、`AtomicUsize`
+-   布尔：`AtomicBool`
+-   原始指针：`AtomicPtr`
+
+### 内存顺序
+
+由于 CPU 在访问内存时的顺序可能受以下因素的影响：
+
+-   代码中的顺序；
+-   编译器优化导致的重排序；
+-   运行阶段因 CPU 的缓存机制导致的重排序。
+
+因此操作原子类型的方法都接收一个 `Ordering` 枚举来限制操作内存的顺序，其包含五个变体：
+
+-   `Relaxed`：最宽松的规则，对编译器和 CPU 不做任何限制，可以乱序；
+-   `Release`：设定内存屏障，保证其之前的操作一定在前面，但后面的操作也有可能在前面；
+-   `Acquire`：设定内存屏障，保证其之后的操作问一定在后面，但之前的操作也有可能在后面；
+-   `AcqRel`：结合 `Acquire` 和 `Release`，同时提供两者的保证；
+-   `SeqCst`：加强版 `AcqRel`，提供绝对的顺序一致性，但性能会有所下降。
+
+这些规则由操作系统提供，通常 `Acquire` 用于读，而 `Release` 用于写，同时读写则用 `AcqRel`，要求强一致性则用 `SecCst`。
+
+### 使用原子类型
+
+原子类型虽然是并发安全的，但依然遵循所有权，因此通常会配合 `Arc` 使用。
+
+```rust
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
+use std::thread;
+
+fn main() {
+    let a = Arc::new(AtomicI32::new(0));
+    let mut hs = vec![];
+
+    for _ in 0..8 {
+        let aa = Arc::clone(&a);
+        let h = thread::spawn(move || {
+            for _ in 0..100000 {
+                aa.fetch_add(1, Ordering::Relaxed);
+            }
+        });
+        hs.push(h);
+    }
+
+    for h in hs {
+        h.join().unwrap();
+    }
+
+    println!("{a:?}");
+}
+```
+
+### 应用场景
+
+原子类型虽然具有优异的并发特性，但与信道和锁相比，还是存在一些局限性：
+
+-   支持类型有限；
+-   复杂场景不如信道和锁使用简单；
+-   一些场景必须使用锁，如 `Mutex` 配合 `Condvar`。
+
+虽然原子类型不太常用，但经常出现在标准库、高性能库中，是实现并发的基石，其通常出现在：
+
+-   无锁数据结构
+-   全局变量
+-   跨线程计数器
