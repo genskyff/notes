@@ -880,6 +880,43 @@ fn main() {
 
 用于比较和返回的是 `IntoIterator` 的关联类型 `Item`， 因此对 `T` 和 `T::Item` 都做出 trait 约束。
 
+### GATs
+
+GATs（Generic associated types，泛型关联类型）是一个较新的特性，允许在 trait 的关联类型上使用泛型。
+
+```rust
+use std::fmt::Debug;
+
+trait MyTrait {
+    type Item<T> where T: Debug;
+
+    fn foo<T: Debug>(data: T) -> Self::Item<T>;
+}
+
+struct Foo;
+
+impl MyTrait for Foo {
+    type Item<T> = Vec<T> where T: Debug;
+
+    fn foo<T: Debug>(data: T) -> Self::Item<T> {
+        vec![data]
+    }
+}
+
+fn main() {
+    let v = Foo::foo(1);
+    assert_eq!(vec![1], v);
+}
+```
+
+目前编译器对该特性的实现并不完善，存在以下限制：
+
+-   隐含 `'static` 约束：GATs 可能会导致编译器错误地要求某些类型比 `'static` 生命周期更长；
+-   非对象安全：带有 GATs 的 trait 无法作为 trait 对象使用；
+-   借用检查错误：GATs 可能会导致借用检查器对正确的代码检查出错。
+
+>   更多关于 GATs 的信息，可参考 [Rust Blog](https://blog.rust-lang.org/2022/10/28/gats-stabilization.html)。
+
 ### 默认泛型参数
 
 当使用泛型参数时，可以指定一个默认的具体类型。若默认类型就足够的话，则无需为具体类型实现 trait。在声明泛型时通过使用 `<PlaceholderType = ConcreteType>` 的方式指定默认类型。
@@ -1419,7 +1456,7 @@ outer;  // 错误
 
 ### 生命周期定义
 
-`longest` 接受两个引用作为参数，并返回其中一个。但这样无法通过编译，因为编译器并不知道将要返回的引用是来自 `x` 还是 `y`，也无法推断出参数与返回值之间生命周期的关系，因此无法确定返回的引用是否有效。
+`longest` 接受两个引用作为参数，并返回其中一个。但这样无法通过编译，因为编译器并不知道返回的引用是来自 `x` 还是 `y`，所以无法推断出参数与返回值之间生命周期的关系，导致无法确定返回的引用是否有效。
 
 ```rust
 // 错误
@@ -1461,32 +1498,32 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
 }
 ```
 
-在函数签名中声明了生命周期 `'a`，并且对参数和返回值都标注了 `'a`，这表示这三者的生命周期至少具有 `'a` 的约束，因此 `'a` 实际上是代表这三者**生命周期的交集，即其中的最小值**。显式标注并不会改变生命周期，而是让借用检查器分析这些引用是否遵循了标注的约束来使用。
+在函数签名中声明了生命周期 `'a`，并且对参数和返回值都标注了 `'a`，这表示这三者的生命周期至少具有 `'a` 的约束，因此 `'a` 实际上是代表这三者**生命周期的交集，即其中的最小值**。显式标注并不会改变生命周期，而是让借用检查器分析这些引用在使用时是否遵循了标注的约束。
 
 ```rust
 // 正确
-let s1 = String::from("foo");
+let s1 = String::from("foo");      // 'a
 {
-    let s2 = String::from("bar");
-    let result = longest(s1.as_str(), s2.as_str());
-    println!("{result}");
+    let s2 = String::from("bar");  // 'b
+    let r = longest(s1.as_str(), s2.as_str());
+    println!("{r}");
 }
 ```
 
-在这个例子中，`s1` 具有 `'a`，`s2` 具有 `'b`，`longest` 接收这两者的引用，因此 `result` 的生命周期与这两者中的最小值 `'b` 相同。在使用 `result` 时，借用检查器发现在 `'b` 内使用的，遵循了标注的约束，因此引用有效。
+在这个例子中，`s1` 具有 `'a`，`s2` 具有 `'b`，`longest` 接收这两者的引用，因此 `r` 的生命周期与这两者中的最小值 `'b` 相同。在使用 `r` 时，借用检查器发现是在 `'b` 内使用的，遵循了标注的约束，因此引用有效。
 
 ```rust
 // 错误
-let s1 = String::from("foo");
-let result;
+let s1 = String::from("foo");      // 'a
+let r;                             // ’t
 {
-    let s2 = String::from("bar");
-    result = longest(s1.as_str(), s2.as_str());
+    let s2 = String::from("bar");  // 'b
+    r = longest(s1.as_str(), s2.as_str());
 }
-println!("{result}");
+println!("{r}");
 ```
 
-在这个例子中，`s1` 具有 `'a`，`result` 具有 `'r`，`s2` 具有 `'b`，`longest` 把一个 `'b` 的值赋给了 `result`。在使用 `result` 时，借用检查器发现并不在 `'b` 内使用，因此报错。
+在这个例子中，`s1` 具有 `'a`，`r` 具有 `'t`，`s2` 具有 `'b`，`longest` 把一个 `'b` 的值赋给了 `r`。在使用 `r` 时，借用检查器发现并不在 `'b` 内使用，因此报错。
 
 ### 生命周期约束
 
@@ -1601,20 +1638,15 @@ println!("{outer}");
 
 ```rust
 static NUM: i32 = 10;
-static mut MUT_NUM: i32 = 20;
 ```
 
->   `static` 变量可以声明为 `mut`，但只能在 `unsafe` 块中进行访问和修改。
-
----
-
-要理解 `'static` 生命周期，需要区分类型和实例的生命周期。`'static` 生命周期通常关联于引用或借用，但也可以适用于类型。
+要理解 `'static` 生命周期，需要区分类型和实例的生命周期。`'static` 生命周期通常关联引用，但也适用于类型。
 
 -   **类型的 `'static` 资格**：当类型没有包含任何非 `'static` 引用字段时，该类型**能夠**拥有 `'static` 生命周期，但不代表类型的所有实例都具有 `'static` 生命周期；
--   **实例的生命周期**：类型的具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域。
+-   **实例的生命周期**：类型具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域。
 -   **`'static` 生命周期的实例**：要让具有 `'static` 资格的类型的实例拥有 `'static` 生命周期，需要在一个静态上下文中创建它，如声明为全局静态变量。
 
-对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn T + 'static>`是等价的。
+对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn 'static + T>`是等价的。
 
 ```rust
 struct Res<'a> {
@@ -1623,7 +1655,7 @@ struct Res<'a> {
 
 impl<'a> Res<'a> {
     fn new(val: &'a str) -> Self {
-        Res { val }
+        Self { val }
     }
 }
 
@@ -1666,7 +1698,7 @@ fn main() {
 // 等同于
 struct Wrap<'a> {
     name: &'a str,
-    callback: Option<Box<dyn Fn(&str) -> Res + 'static>>,
+    callback: Option<Box<dyn 'static + Fn(&str) -> Res>>,
 }
 ```
 
@@ -1703,7 +1735,7 @@ w.set(move |val| {
 ```rust
 struct Wrap<'a, 'b> {
     name: &'a str,
-    callback: Option<Box<dyn Fn(&str) -> Res + 'b>>,
+    callback: Option<Box<dyn 'b + Fn(&str) -> Res>>,
 }
 
 impl<'a, 'b> Wrap<'a, 'b> {
@@ -1714,7 +1746,7 @@ impl<'a, 'b> Wrap<'a, 'b> {
         }
     }
 
-    fn set(&mut self, f: impl Fn(&str) -> Res + 'b) {
+    fn set(&mut self, f: impl 'b + Fn(&str) -> Res) {
         self.callback = Some(Box::new(f));
     }
 }
@@ -1732,7 +1764,7 @@ let mut wrap = Wrap::new("foo");
 let local = String::from("local");
 ```
 
-这是因为在最后进行析构时，变量是按照创建的逆序进行析构的。如果将 `local` 后面，那么 `local` 会先进行析构，此时 `wrap` 依旧持有 `local` 的引用，在进行 `drop` 时可能会有操作其持有数据的可能性，那么引用就失效了。
+这是因为在最后进行析构时，变量是按照创建的逆序进行析构的。若 `local` 放后面，那么 `local` 会先进行析构，此时 `wrap` 依旧持有 `local` 的引用，在进行 `drop` 时可能有操作其持有数据的可能性，那么引用就失效了。
 
 ### 匿名生命周期
 
@@ -1961,7 +1993,7 @@ fn main() {
 }
 ```
 
-`foo` 期望接收两个具有相同生命周期的参数，若在一个保守的生命周期实现中，传递给 `foo` 的参数的生命周期是不一样的，可能就会报错。
+`foo` 期望接收两个具有相同生命周期的参数，若在一个保守的生命周期实现中，传递给 `foo` 的参数的生命周期不同时，可能就会报错。
 
 为了实现对生命周期的灵活使用，Rust 使用**子类型化**和**型变**。
 
@@ -2088,53 +2120,79 @@ struct Foo<'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mix> {
 
 ## 深入生命周期
 
-### 参数与返回值的关联性
+### 生命周期本质
 
-生命周期主要目的是为了将函数参数和返回值进行关联，标注后编译器就有了足够的信息来检查并阻止像悬垂引用这类违反内存安全的行为。
+生命周期本质上就是为了说明引用从哪来，到哪去。标注后编译器就有了足够的信息来检查并阻止像悬垂引用这类违反内存安全的行为。
 
-如 `ret_x` 只会返回 `x`，因此返回值仅与 `x` 有关联，因此这里 `y` 的生命周期就无关紧要。
+**函数**：引用从 `s` 中来，到返回值中去，因此 `s` 必须至少和返回值的生命周期相同。
 
 ```rust
-fn ret_x<'a>(x: &'a str, y: &str) -> &'a str {
-    x
+fn foo<'a>(s: &'a str) -> &'a str;
+```
+
+**结构体**：引用从 `self` 或 `s` 中来，到 `Self` 中去，因此 `s` 的生命周期必须至少和 `self` 相同，且这两者都必须至少和 `Self` 的生命周期相同。
+
+```rust
+struct S<'a>(&'a str);
+
+impl<'a> S<'a> {
+    fn get<'b: 'a>(&self, s: &'b str) -> Self {
+        if self.0.len() > s.len() {
+            Self(self.0)
+        } else {
+            Self(s)
+        }
+    }
 }
 ```
 
-若返回的引用没有与任何参数关联，那么可能指向函数内部创建的值。
+**trait**：对 `T`，引用从 `s` 中来，到返回值中去；对 `T2`，引用从实现它的 `Self` 中来，到返回值中去。
 
 ```rust
-// 错误，悬垂引用
-fn ret_str<'a>() -> &'a str {
+trait T<'a> {
+    fn foo(s: &'a str) -> &'a str;
+}
+
+trait T2<'a>
+where
+    Self: 'a,
+{
+    fn foo(self) -> &'a str;
+}
+```
+
+**HRTB**：引用不知道从哪来，因此用 `for<'a>` 表示从任意的地方来。
+
+```rust
+fn foo<T>(v: T) where T: for<'a> Fn(&'a str)
+```
+
+**GAT**：引用从实现它的 `Self` 中来，到 `Self::Item` 中去。
+
+```rust
+trait T {
+    type Item<'a> where Self: 'a;
+
+    fn foo<'a>(self) -> Self::Item<'a>;
+}
+```
+
+**内部静态值**：引用从 `s` 中来，到返回值中去。由于字面值具有 `'static` 生命周期，并可协变成 `'a`，因此是合法的。
+
+```rust
+fn foo<'a>() -> &'a str {
+    let s = "foo";
+    s
+}
+```
+
+**内部非静态值**：引用从 `s` 中来，到返回值中去。由于局部变量的生命周期小于返回值，造成了悬垂引用，因此报错。
+
+```rust
+fn foo<'a>() -> &'a str {
     let s = String::from("foo");
     &s
 }
-
-// 错误，需显式标注
-fn ret_static_str() -> &str {
-    let s = "bar";
-    s
-}
-
-fn ret_len(s: &str) -> usize {
-    s.len()
-}
-```
-
-`ret_str` 和 `ret_static_str` 都不能通过编译，因为所有省略规则都不适用，因此必须手动标注。而 `ret_len` 的输入生命周期可以根据规则一推断出，返回值不是引用，因此没有输出生命周期。
-
-对于 `ret_str` 即使手动标注了生命周期，也无法通过编译，因为 `s` 所指向的堆内存在函数返回后就被回收了，这会造成悬垂引用。生命周期参数只是用来给编译器检查实际传递的值是否符合约束条件，无法改变生命周期。
-
-```rust
-// 依旧错误
-fn ret_str<'a>() -> &'a str;
-```
-
-对于 `ret_static_str`，`s` 是一个字符串字面值，因此具有 `'static` 生命周期，由于函数在返回值上是协变的，因此可以手动标注 `'static` 或者 `'a`。
-
-```rust
-fn ret_static_str() -> &'static str;
-// 或
-fn ret_static_str<'a>() -> &'a str;
 ```
 
 ### 临时生命周期扩展
@@ -2297,4 +2355,8 @@ fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
 ```rust
 let clo: &dyn for<'a> Fn(&'a str) -> &'a str = &|s: &str| s;
 ```
+
+
+
+
 
