@@ -3,7 +3,7 @@
 >   -   [《C# 入门经典》](https://book.douban.com/subject/35863218/)
 >   -   [C# 语言入门详解](https://www.bilibili.com/video/BV13b411b7Ht)
 
-# 1 C# 概述
+# 1 概述
 
 >   由于 C# 有很多部分和 C 类似，因此在相同的部分不做过多赘述，本文重点介绍不同的地方。
 
@@ -74,40 +74,7 @@ C# 和 C / C++ 这类直接编译成机器码的语言不同，C# 的编译器 R
 
 CoreCLR 从程序集中加载 IL 代码后，再由 JIT 编译器将代码编译成机器指令，最后由 CPU 执行，因此，.NET 程序的 IL 代码是全平台通用的，可以使用诸如 ILSpy 这样的 .NET 反编译工具显示 IL 代码并还原成源代码。
 
-## dotnet 命令
-
-dotnet 命令的一般格式为：
-
-```shell
-dotnet [sdk-options] [command] [command-options] [arguments]
-```
-
-其常用选项如下：
-
-```
-sdk-options:
-  --info            显示 .NET 信息
-  --list-runtimes   显示安装的运行时
-  --list-sdks       显示安装的 SDK
-  --version         显示使用中的 .NET SDK 版本
-
-command:
-  add               将包或引用添加到 .NET 项目
-  build             生成 .NET 项目
-  clean             清理 .NET 项目的生成输出
-  help              显示命令行帮助
-  list              列出 .NET 项目的项目引用
-  new               创建新的 .NET 项目或文件
-  publish           发布 .NET 项目进行部署
-  remove            从 .NET 项目中删除包或引用
-  run               生成并运行 .NET 项目输出
-  sln               修改 Visual Studio 解决方案文件
-  test              使用 .NET 项目中指定的测试运行程序运行单元测试
-```
-
-要查看具体某个命令的帮助，可以使用 `dotnet [command] --help` 命令。
-
-# 2 C# 基础
+# 2 语言基础
 
 ## 声明
 
@@ -776,7 +743,7 @@ for (byte i = 0; i < 300; i++)  // 虽然会溢出，但不在编译期计算，
 }
 ```
 
-# 3 C# 面向对象
+# 3 面向对象
 
 对象指抽象或具体的事物，在 C# 中通常使用 `class` 或者 `struct` 关键字来定义。
 
