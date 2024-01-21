@@ -5,7 +5,7 @@
 >   -   [《C 和指针》](https://book.douban.com/subject/3012360/)
 >   -   [《深入理解计算机系统》](https://book.douban.com/subject/26912767/)
 
-# 1 C 概述
+# 1 概述
 
 ## 语言标准
 
