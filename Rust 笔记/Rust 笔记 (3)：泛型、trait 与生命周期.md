@@ -1278,7 +1278,7 @@ struct Point(i32, i32);
 
 ### Clone 和 Copy
 
--   `std::clone::Clone`：克隆语义；
+-   `std::clone::Clone`：显式深拷贝；
 -   `std::marker::Copy`：复制语义。
 
 ```rust
