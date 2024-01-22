@@ -15,7 +15,7 @@
 通常应用于：
 
 -   编译时大小未知但又需要在确切大小的上下文中使用的数据；
--   在确保数据不被拷贝的情况下转移所有权；
+-   在确保数据不被复制的情况下转移所有权；
 -   需要拥有一个值并确保是否实现了特定 trait。
 
 ```rust
@@ -70,7 +70,11 @@ fn main() {
 
 ## 智能指针 trait
 
-智能指针通常使用结构体实现，之所以能够像使用指针一样使用，是因为实现了 `Deref` 和 `Drop`。`Deref` 重载了解引用运算符 `*`，让智能指针可以像引用一样使用；`Drop` 用于智能指针离开作用域时的析构代码。而 `Box` 实现了 `Deref` 和 `Drop`，因此是一个智能指针。
+智能指针通常使用结构体实现，之所以能够像使用指针一样使用，是因为实现了 `Deref` 和 `Drop`。`Deref` 重载了解引用运算符 `*`，让智能指针可以像引用一样使用；`Drop` 用于智能指针析构。而 `Box` 实现了 `Deref` 和 `Drop`，因此是一个智能指针。
+
+### Deref
+
+`Deref` 用于重载不可变引用的 `*`。
 
 ```rust
 pub trait Deref {
@@ -78,15 +82,9 @@ pub trait Deref {
 
     fn deref(&self) -> &Self::Target;
 }
-
-pub trait Drop {
-    fn drop(&mut self);
-}
 ```
 
-### 自定义智能指针
-
-要让自定义类型也能使用解引用，就需要实现 `Deref` 的 `deref` 方法。
+要让类型值能解引用，就需要实现其中的 `deref`。
 
 ```rust
 struct MyBox<T>(T);
@@ -106,46 +104,29 @@ impl<T> std::ops::Deref for MyBox<T> {
 }
 
 fn main() {
-    let m = MyBox::new(0);
-    assert_eq!(0, *m);
+    let n = MyBox::new(0);
+    assert_eq!(0, *n);
 }
 ```
 
 解引用运算符只能对引用使用，即只能用 `*&T` 得到 `T`。而对智能指针 `T` 使用解引用，编译器实际上隐式地调用了 `deref` 方法，因此实际上是对内部值的引用进行解引用。
 
 ```rust
-// *m 等同于
-*(m.deref())
+// *n 相当于
+*(n.deref())
 ```
-
-### Deref 自动强转
-
-**Deref 自动强转**是在**函数或方法传参**上的一种便利，只能用于实现了 `Deref` 的类型。它将一个类型的引用转换为另一个类型的引用，如可以将 `&String` 转换为 `&str`，因为 `String` 实现了 `Deref` trait，因此可以返回 `&str`。当这种特定类型的引用作为实参传递给与形参类型不符的函数或方法时，**Deref 强制转换将自动发生**。这时会有一系列的 `deref` 方法被调用，把实参转换成符合形参的类型。
-
-```rust
-fn main() {
-    let s = MyBox::new(String::from("hello"));
-    hello(&s);
-}
-
-fn hello(s: &str) {
-    println!("{}", s);
-}
-```
-
-`&s` 是一个 `MyBox` 的引用，但由于与 `hello` 函数的形参不符，因此 Deref 强制转换自动发生，被转换为 `&String`，但 `String` 在标准库中也实现了 `Deref` trait，因此再次被强制转换为 `&str`，此时参数就符合函数签名了。
-
-若没有 Deref 强制转换，为了达到同样的效果，需要使用以下代码：
-
-```rust
-hello(&(*s)[..]);
-```
-
-`s` 先被解引用为 `String`，然后再获取字符串 slice。Deref 强制转换使得在进行函数和方法调用时无需过多显式使用 `&` 和 `*`。
 
 ### DerefMut
 
-类似使用 `Deref` trait 重载不可变引用的 `*` 运算符，`DerefMut` trait 用于重载可变引用的 `*` 运算符，只需要实现 `deref_mut` 方法，且在实现 `DerefMut` 前必须先实现 `Deref` trait。
+`DerefMut` 用于重载可变引用的 `*`。
+
+```rust
+pub trait DerefMut: Deref {
+    fn deref_mut(&mut self) -> &mut Self::Target;
+}
+```
+
+要实现 `DerefMut` 就必须先实现 `Deref`，且由于 `Deref` 已经定义了关联类型，因此在 `DerefMut` 中无需再定义，然后实现其中的 `deref_mut`。
 
 ```rust
 use std::ops::DerefMut;
@@ -157,27 +138,58 @@ impl<T> DerefMut for MyBox<T> {
 }
 
 fn main() {
-    let mut x = MyBox::new(5);
-    *x = 1;
-    assert_eq!(1, *x);
+    let mut m = MyBox::new(0);
+    *m = 1;
+    assert_eq!(1, *m);
 }
 ```
 
->   由于 `Deref` trait 已经定义了关联类型，因此在 `DerefMut` 中无需再定义。
+### Deref 自动强转
 
-类型和 trait 实现满足三种情况时会进行 Deref 强制转换：
+实现了 `Deref` 的类型作为参数传递或调用方法时，若与函数或方法签名不符，就会**自动隐式地递归调用** `deref`，返回值再次作为参数或调用方法，直到符合为止，这称为 **Deref 自动强转**。
 
--   当 `T: Deref<Target=U>` 时从 `&T` 到 `&U`；
--   当 `T: DerefMut<Target=U>` 时从 `&mut T` 到 `&mut U`；
--   当 `T: Deref<Target=U>` 时从 `&mut T` 到 `&U`。
+类型和 trait 实现满足以下条件时会进行 Deref 自动强转：
 
->   可以将可变引用强制转换为不可变引用，反之则不行。
+-   当 `T: Deref<Target = U>` 时，从 `&T` 或 `&mut T` 到 `&U`；
+-   当 `T: DerefMut<Target = U>` 时，从 `&mut T` 到 `&mut U`。
 
-### 实现 Drop
+`MyBox` 并没有实现 `abs`，因此发生 Deref 自动强转。隐式地调用 `deref` 获得了 `&i32`，而 `i32` 实现了 `abs`。
 
-智能指针还有一个重要的 trait 是 `Drop`，允许值在离开作用域时执行一些代码。`Drop` trait 几乎总是用于实现智能指针，如当 `Box<T>` 被丢弃时会释放 Box 指向的堆空间。
+```rust
+let n: MyBox<i32> = MyBox::new(-1);
+// 相当于 (*(n.deref()).abs()
+// 或 (*n).abs()
+println!("{}", n.abs());
+```
 
-指定值在离开作用域时应该执行的代码的方式是实现 `Drop` trait，它要求实现 `drop` 方法，其获取一个 `&mut self` 作为参数。
+`&s` 是一个 `&MyBox`，但由于与 `say` 的函数签名不符，因此发生 Deref 自动强转。隐式地调用 `deref` 获得了 `&String`，但依然不符合形参，而 `String` 在标准库中也实现了 `Deref`，再次强转获得了 `&str`，此时参数就符合函数签名了。
+
+```rust
+fn say(s: &str) {
+    println!("{s}");
+}
+
+fn main() {
+    let s = MyBox::new(String::from("foo"));
+    // 相当于 say(s.deref().deref())
+    // 或 say(&(*s)[..])
+    say(&s);
+}
+```
+
+使用 newtype 可以为外部类型实现外部 trait，从而绕过了孤儿规则，但这样不能使用类型已有的方法，但通过为类型实现 `Deref`，利用 Deref 自动强转则可避免这个问题，并在函数和方法调用时避免过多的 `&` 和 `*`。
+
+### Drop
+
+`Drop` 用于类型的析构，如 `Box` 被丢弃时会释放堆内存。
+
+```rust
+pub trait Drop {
+    fn drop(&mut self);
+}
+```
+
+要让类型值在离开作用域时执行代码，就需要实现其中的 `drop`。`drop` 会在值离开作用域时被自动调用，且调用的顺序与创建值的顺序相反。
 
 ```rust
 struct MyString {
@@ -192,62 +204,49 @@ impl Drop for MyString {
 
 fn main() {
     let s1 = MyString {
-        data: String::from("hello"),
+        data: String::from("foo"),
     };
     let s2 = MyString {
-        data: String::from("world"),
+        data: String::from("bar"),
     };
-    println!("ok");
+    println!("done");
 }
 ```
 
-执行结果：
-
-```
-ok
-world
-hello
-```
-
-在 `MyString` 上实现了 `Drop` trait，并提供了一个调用 `println!` 的 `drop` 方法实现。`drop` 方法会在类型实例离开作用域时被自动调用，且调用的顺序与创建变量的顺序相反。
-
-#### 使用 drop 函数
-
-不能直接调用实例上的 `drop` 方法，只能在离开作用域时由编译器自动调用，否则会导致**二次释放**。若要在作用域结束之前就强制释放变量，如在多线程中提前释放锁以供其它代码调用，则可使用标准库中的 `std::mem::drop` 函数。
+不能直接在实例上调用 `drop`，只能在离开作用域时由编译器自动调用，否则会导致二次释放。若要在作用域结束之前就强制释放值，可使用 `std::mem::drop`，它是一个析构函数，编译器会确保值只被释放一次。
 
 ```rust
-let s1 = MyString {
-    data: String::from("hello"),
+let s = MyString {
+    data: String::from("foo"),
 };
-s1.drop();    // 错误
-drop(s1);     // 正确
-```
 
-`drop` 是一个析构函数，编译器会确保值不再被使用时只释放一次。
+s.drop(); // 错误
+drop(s);  // 正确
+```
 
 ## Rc
 
-有时一个值可能会有多个所有者，如在图数据结构中，多个边可能指向相同的节点，这个节点被所有指向它的边拥有，直到没有任何边指向它之前都不应该被清理。
+所有权规则决定了一个值有且仅有一个所有者，但一个值有多个所有权也是常见的需求，而 `Rc` 就是用于模拟多所有权的类型。该类型持有一个指向堆数据的引用，并使用**引用计数**来记录值被引用的数量。若某个值有零个引用，就代表没有任何有效引用并可以被清理。
 
-Rust 的所有权规则决定了一个值有且只有一个所有者，为了模拟多所有权，需要使用 `Rc<T>` 类型，该类型使用**引用计数**来记录一个值引用的数量。若某个值有零个引用，就代表没有任何有效引用并可以被清理。
+`Rc` 主要用于在堆上分配内存并让程序的多个部分读取，且无法在编译时确定程序的哪一部分会最后使用。
 
-`Rc<T>` 主要用于在堆上分配一些内存供程序的多个部分读取，且无法在编译时确定程序的哪一部分会最后使用。
-
->   `Rc<T>` 是**非原子**性的，因此只能用于**单线程**场景。
+>   `Rc` 是**非原子**的，没有实现并发安全，只能用于**单线程**。
 
 ### 使用 Rc 共享数据
 
-![共享 List](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204291124165.png)
+列表 `a` 的所有权被列表 `b` 和 `c` 所共享。
 
-列表 `b` 和 `c` 共享列表 `a` 的所有权，若使用 Box 则不能工作，因为 `a` 的所有权已经移动到 `b`，因此 `c` 不能再获得 `a` 的所有权。
+<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202204291124165.png" alt="共享 List" style="zoom: 67%;" />
+
+这里不能使用 `Box`，因为 `a` 的所有权已经移动到 `b`，因此 `c` 不能再获得 `a` 的所有权。
 
 ```rust
 let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
-let b = Cons(3, Box::new(a));    // a 的所有权移动到 b
-let c = Cons(4, Box::new(a));    // 错误
+let b = Cons(3, Box::new(a));  // a 移动到 b
+let c = Cons(4, Box::new(a));  // 错误
 ```
 
-可以修改 `Cons` 的定义来存放一个引用，但必须指定生命周期参数，这样代码就会变得很复杂，更好的方法是使用 `Rc<T>` 代替 `Box<T>`。
+可以修改 `Cons` 的定义来存放一个引用，但必须指定生命周期参数，这样代码就会变得很复杂，更好的方法是使用 `Rc` 代替 `Box`。
 
 ```rust
 use std::rc::Rc;
@@ -257,7 +256,7 @@ enum List {
     Nil,
 }
 
-use self::List::{Cons, Nil};
+use List::{Cons, Nil};
 
 fn main() {
     let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
@@ -266,9 +265,9 @@ fn main() {
 }
 ```
 
-每一个 `Cons` 变量都包含一个值和一个指向 `List` 的 `Rc<T>`。创建 `a` 时，引用计数为 1。创建 `b` 时，会克隆 `a` 所包含的 `Rc<List>`，引用计数变为 2 并允许 `a` 和 `b` 共享 `Rc<List>` 中数据的所有权。创建 `c` 时也会克隆 `a`，引用计数变为 3。即每次调用 `Rc::clone` 函数，`Rc<List>` 中数据的引用计数都会增加，引用计数在减少到 0 之前其数据都不会被清理。
+`Rc` 实现了 `Clone`，但只会在栈上复制 `Rc` 并增加引用计数，不会进行堆上的复制。这里在实例上调用 `clone` 也是同样的效果，为了避免混淆，习惯使用 `Rc::clone`。
 
-也可以调用 `a.clone()` 而不是 `Rc::clone(&a)`，在 Rc 中这两者没有区别，都是只在栈上拷贝一个指向堆数据的 `Rc<T>` 并增加引用计数，并不会进行堆上的拷贝，为了避免与实例本身的方法混淆，习惯使用 `Rc::clone` 函数。
+创建 `a` 时，引用计数为 1。创建 `b` 时，会复制 `a` 所包含的 `Rc<List>`，引用计数变为 2 并允许 `a` 和 `b` 共享 `Rc<List>` 中数据的所有权。创建 `c` 时也会复制 `a`，引用计数变为 3。即每次调用 `Rc::clone`，`Rc<List>` 的引用计数都会增加，在减少到 0 之前其数据都不会被清理。
 
 ### 引用计数
 
@@ -722,7 +721,7 @@ leaf2 strong = 1, weak = 0
 
 ## Cow
 
-`Cow<T>` 是写时克隆智能指针，允许在需要的时候才进行克隆，可使代码更加高效。它封装并提供对借用数据的不可变访问，并在需要更改或获取所有权时延迟克隆数据。该类型旨在通过`Borrow`特征处理一般借用的数据。
+`Cow<T>` 是写时复制智能指针，允许在需要的时候才进行复制，可使代码更加高效。它封装并提供对借用数据的不可变访问，并在需要更改或获取所有权时延迟复制数据。该类型旨在通过`Borrow`特征处理一般借用的数据。
 
 ### 使用 Cow
 
@@ -745,24 +744,24 @@ fn abs_all(input: &mut Cow<'_, [i32]>) {
 }
 
 fn main() {
-    // 这里不需要克隆，因为没有负数
+    // 这里不需要复制，因为没有负数
     let slice = [0, 1, 2];
     let mut input = Cow::from(&slice[..]);
     abs_all(&mut input);
 
-    // 这里克隆了，因为含有负数
+    // 这里复制了，因为含有负数
     let slice = [-1, 0, 1];
     let mut input = Cow::from(&slice[..]);
     abs_all(&mut input);
 }
 ```
 
-`abs_all` 函数获取一个可变的 `Cow` 作为参数，里面的值为一个 `i32` 数组。由于是一个智能指针，因此也实现了 `Deref` trait，可以直接调用內部值的方法。当值为负数时，意味着需要修改这个引用的值，因此调用了 `to_mut` 方法，这将把内部值由 `Borrowed` 转变为 `Owned`。这样就只会在需要修改时才进行克隆，提高了运行时性能。
+`abs_all` 函数获取一个可变的 `Cow` 作为参数，里面的值为一个 `i32` 数组。由于是一个智能指针，因此也实现了 `Deref` trait，可以直接调用內部值的方法。当值为负数时，意味着需要修改这个引用的值，因此调用了 `to_mut` 方法，这将把内部值由 `Borrowed` 转变为 `Owned`。这样就只会在需要修改时才进行复制，提高了运行时性能。
 
 当编写既可以返回引用也可以返回拥有的数据的函数时，应该考虑使用 `Cow`：
 
 -   函数有时需要修改输入数据，有时则不需要；
--   避免不必要的克隆和和运行时内存分配。
+-   避免不必要的复制和和运行时内存分配。
 
 # 2 并发
 
