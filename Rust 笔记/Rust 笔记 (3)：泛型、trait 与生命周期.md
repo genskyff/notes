@@ -1103,28 +1103,35 @@ let dog = <Dog as Animal>::name();
 
 ### 父 trait
 
-定义 trait 时可以指定依赖的 trait：要为类型实现该 trait，这些依赖的 trait 也必须实现。
+定义 trait 时可以指定依赖的 trait：若要为类型实现该 trait，则这些依赖的 trait 也必须实现。
 
 ```rust
-trait Foo: Clone + PartialEq {}
+trait A: Clone + PartialEq {}
 
 #[derive(Clone, PartialEq)]
 struct Wrap(i32);
 
-impl Foo for Wrap {}
+impl A for Wrap {}
 ```
-
-`Wrap` 要实现 `Foo`，就必须实现 `Clone` 和 `PartialEq`。
 
 父 trait 的写法实际上就是为 trait 施加约束：
 
 ```rust
 // 两者等同
-trait Circle: Shape {}
+trait A: B {}
+trait A where Self: B {}
+```
 
-trait Circle where
-    Self: Shape,
-{}
+若父 trait 定义了关联类型，则该类型可直接使用父 trait 中的关联类型。
+
+```rust
+trait A {
+    type Item;
+}
+
+trait B: A {
+    fn foo() -> Self::Item;
+}
 ```
 
 ### newtype
