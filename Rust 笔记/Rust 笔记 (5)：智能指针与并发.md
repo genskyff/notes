@@ -226,7 +226,7 @@ drop(s);  // 正确
 
 ## 共享所有权
 
-所有权规则决定了一个值有且仅有一个所有者，但一个值有多个所有权也是常见的需求，而 `Rc` 就是用于模拟多所有权的类型。该类型在堆上分配内存，并持有一个指向堆数据的引用。通过**引用计数**来记录堆数据被引用的数量，若引用计数为 0，就表示没有任何有效引用，堆数据可以被清理。
+所有权规则决定了一个值有且仅有一个所有者，但一个值有多个所有权也是常见的需求，而 `rc::Rc` 就是用于模拟多所有权的类型。该类型在堆上分配内存，并持有一个指向堆数据的引用。通过**引用计数**来记录堆数据被引用的数量，若引用计数为 0，就表示没有任何有效引用，堆数据可以被清理。
 
 `Rc` 主要用于让程序的多个部分**只读地**共享数据，且无法在编译时确定程序的哪一部分会最后使用。
 
@@ -267,33 +267,37 @@ fn main() {
 
 ### 引用计数
 
-`Rc` 实现了 `Clone`，但只会在栈上复制 `Rc` 并增加引用计数，不会进行堆上的复制。在实例上调用 `clone` 也是同样的效果，为了避免混淆，习惯使用 `Rc::clone`。
+`Rc` 实现了 `Clone`，但只会在栈上复制 `Rc` 并增加引用计数，不会进行堆上的复制。`Rc` 的 `Drop` 实现会让 `Rc` 实例在离开作用域后减少引用计数，在减少到 0 之前堆上的数据都不会被清理。
 
-`Rc` 的 `Drop` 实现会让 `Rc` 实例在离开作用域后减少引用计数，在减少到 0 之前堆上的数据都不会被清理。
+>   为了避免与内部类型的方法发生冲突，`Rc` 的方法最好都使用关联函数的形式。
 
-引用计数分两类：**强引用**和**弱引用**。`Rc::clone` 增加的就是强引用，
+引用计数分两类：**强引用**和**弱引用**。`Rc::clone` 增加的就是强引用计数，`Rc::downgrade` 会创建一个 `rc::Weak` 类型，并增加弱引用计数。
+
+强引用代表共享 `Rc` 实例的所有权，计数为 0 时就会进行析构，因此强引用的循环会造成循环引用；而弱引用并不计入所有权，即使计数为 0 也不影响是否析构，因此弱引用的循环不会造成引用循环。
+
+`Rc::strong_count` 和 `Rc::weak_count` 可获得强引用和弱引用计数。
 
 ```rust
-let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-println!("a.count = {}", Rc::strong_count(&a));
-let b = Cons(3, Rc::clone(&a));
-println!("a.count = {}", Rc::strong_count(&a));
-{
-    let c = Cons(4, Rc::clone(&a));
-    println!("a.count = {}", Rc::strong_count(&a));
-}
-println!("a.count = {}", Rc::strong_count(&a));
+let a = Rc::new(1);
+assert_eq!(1, Rc::strong_count(&a));
+assert_eq!(0, Rc::weak_count(&a));
+
+let aa = Rc::clone(&a);
+assert_eq!(2, Rc::strong_count(&a));
+
+let w = Rc::downgrade(&a);
+assert_eq!(1, Rc::weak_count(&a));
 ```
 
-`Rc::strong_count` 函数可以获得强引用计数，每次调用计数会增加 1。当 `c` 离开作用域时，计数减 1。`Rc<T>` 的 `Drop` trait 的实现使得当值离开作用域时自动减少引用计数。
+由于 `Weak` 引用不计入所有权，不影响析构，因此不保证引用的值有效，当要使用 `Weak` 引用的数据时，需要先使用 `upgrade` 将其升级到 `Rc`，其返回一个 `Option`，当数据已经被丢弃时，会返回 `None`。
 
-在 `main` 函数的结尾 `a` 和 `b` 离开作用域时，引用计数会变为 0，同时 `Rc<List>` 被完全清理。使用 `Rc<T>` 允许一个值有多个所有者，只要引用计数不为 0，则值始终有效。通过不可变引用， `Rc<T>` 允许在程序的多个部分之间**只读地**共享数据。
-
-`Rc::clone` 会增加 `Rc<T>` 实例的 `strong_count`，只有在 `strong_count` 为 0 时才会释放 `Rc<T>` 实例。通过`Rc::downgrade` 函数来创建其值的**弱引用**，该函数返回 `Weak<T>` 类型的智能指针，并将 `weak_count` 加 1。`Rc<T>` 类型使用 `weak_count` 来记录其存在多少个 `Weak<T>` 引用，和强引用不同的是，`weak_count` 无需计数为 0 就能使 `Rc<T>` 实例被清理。
-
-强引用代表如何共享 `Rc<T>` 实例的所有权，但弱引用并不属于所有权关系，不会造成引用循环，因为任何弱引用的循环会在其相关的强引用计数为 0 时被打断。
-
-因为 `Weak<T>` 引用的值可能已经被释放了，为了使用 `Weak<T>` 所指向的值，必须确保其值仍然有效。为此可以调用 `Weak<T>` 实例的 `upgrade` 方法，这会返回一个 `Option<Rc<T>>`。**若 `Rc<T>` 值还未被丢弃，则为 `Some(Rc<T>)`，并将 `Rc<T>` 的 `strong_count` 加 1，否则为 `None`。**
+```rust
+let a = Rc::new(1);
+let w = Rc::downgrade(&a);
+let aa = w.upgrade().unwrap();
+assert_eq!(2, Rc::strong_count(&a));
+assert_eq!(1, Rc::weak_count(&a));
+```
 
 ## 内部可变性
 
@@ -407,13 +411,9 @@ fn main() {
 }
 ```
 
-执行结果：
+### OnceCell
 
-```
-a = Cons(RefCell { value: 10 }, Nil)
-b = Cons(RefCell { value: 3 }, Cons(RefCell { value: 10 }, Nil))
-c = Cons(RefCell { value: 4 }, Cons(RefCell { value: 10 }, Nil))
-```
+
 
 ## 循环引用
 
@@ -456,18 +456,6 @@ fn main() {
 
     // println!("{:?}", a);   // 若打印则栈溢出
 }
-```
-
-执行结果：
-
-```
-a.count = 1
-
-a.count = 2
-b.count = 1
-
-a.count = 2
-b.count = 2
 ```
 
 通过内部可变性修改了 `a` 使其指向 `b`，形成了一个循环链表，最后两者的引用计数都是 2，在离开作用域时两者的引用计数都不为 0，因此不会释放空间，导致内存泄漏，并且如果打印的话，会造成无限循环，最后发生栈溢出。
@@ -530,23 +518,6 @@ fn main() {
     );
     println!("{:?}", a.tail());
 }
-```
-
-执行结果：
-
-```
-a strong count = 1, weak count = 0
-
-a strong count = 1, weak count = 1
-b strong count = 1, weak count = 0
-
-a = Cons(1, RefCell { value: (Weak) })
-b = Cons(2, RefCell { value: (Weak) })
-
-a strong count = 1, weak count = 1
-b strong count = 1, weak count = 1
-
-Some(RefCell { value: (Weak) })
 ```
 
 ---
@@ -644,58 +615,6 @@ fn main() {
         Rc::weak_count(&leaf2)
     );
 }
-```
-
-执行结果：
-
-```
-leaf1.parent = None
-leaf1 strong = 1, weak = 0
-leaf2.parent = None
-leaf2 strong = 1, weak = 0
-
-branch = Node {
-    value: 1,
-    parent: RefCell {
-        value: (Weak),
-    },
-    children: RefCell {
-        value: [
-            Node {
-                value: 2,
-                parent: RefCell {
-                    value: (Weak),
-                },
-                children: RefCell {
-                    value: [],
-                },
-            },
-            Node {
-                value: 3,
-                parent: RefCell {
-                    value: (Weak),
-                },
-                children: RefCell {
-                    value: [],
-                },
-            },
-        ],
-    },
-}
-
-branch strong = 1, weak = 0
-
-leaf1.parent = true
-leaf1 strong = 2, weak = 0
-leaf2.parent = true
-leaf2 strong = 2, weak = 0
-
-branch strong = 1, weak = 2
-
-leaf1.parent = None
-leaf1 strong = 1, weak = 0
-leaf2.parent = None
-leaf2 strong = 1, weak = 0
 ```
 
 创建 `leaf1` 和 `leaf2` 后，强引用计数都为 1，弱引用计数都为 0。在内部作用域中创建了 `branch` 并与 `leaf1` 和 `leaf2` 相关联，此时 `branch` 的强引用计数为 1，弱引用计数为 2，而 `leaf1` 和 `leaf2` 的强引用计数都为 2，弱引用计数都为 0。
@@ -850,7 +769,7 @@ Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Syn
 
 ### Send
 
-实现了 `Send` 的类型可以在线程间安全地转移所有权。除了 `Rc`、`Weak`、裸指针等少数类型外，绝大部分类型都实现了 `Send` ，由实现了 `Send` 的类型组成的类型也是 `Send` 的。
+实现了 `Send` 的类型可以在线程间安全地转移所有权。除了除了裸指针和 `rc` 中的类型外，绝大部分类型都实现了 `Send` ，由实现了 `Send` 的类型组成的类型也是 `Send` 的。
 
 ### Sync
 
@@ -860,29 +779,29 @@ Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Syn
 
 -   若 `&T` 实现了 `Send`，则 `T` 为 `Sync` 的。
 
-除了 `Cell`、`RefCell`、`Rc`、`Weak`、裸指针等少数类型外，绝大部分类型都实现了 `Sync`，由实现了 `Sync` 的类型组成的类型也是 `Sync` 的。
+除了裸指针、`cell` 和 `rc` 中的类型外，绝大部分类型都实现了 `Sync`，由实现了 `Sync` 的类型组成的类型也是 `Sync` 的。
 
 ### Send 和 Sync 实现
 
 通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。
 
-`Rc`、`Weak` 和裸指针没有实现 `Send` 和 `Sync`，因此不是并发安全的。
+裸指针和 `rc` 中的类型没有实现 `Send` 和 `Sync`，因此不是并发安全的。
 
 ```rust
-impl<T: ?Sized> !Send for Rc<T> {}
-impl<T: ?Sized> !Sync for Rc<T> {}
-
-impl<T: ?Sized> !Send for Weak<T> {}
-impl<T: ?Sized> !Sync for Weak<T> {}
-
 impl<T: ?Sized> !Send for *const T {}
 impl<T: ?Sized> !Sync for *const T {}
 
 impl<T: ?Sized> !Send for *mut T {}
 impl<T: ?Sized> !Sync for *mut T {}
+
+impl<T: ?Sized> !Send for Rc<T> {}
+impl<T: ?Sized> !Sync for Rc<T> {}
+
+impl<T: ?Sized> !Send for Weak<T> {}
+impl<T: ?Sized> !Sync for Weak<T> {}
 ```
 
-`Cell` 和 `RefCell` 虽然实现了 `Send`，但没有实现 `Sync`，因此也不是并发安全的。
+`cell` 中的类型只实现了一种或都没有实现，因此也不是并发安全的。
 
 ```rust
 unsafe impl<T: ?Sized + Send> Send for Cell<T> {}
@@ -890,9 +809,11 @@ impl<T: ?Sized> !Sync for Cell<T> {}
 
 unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
 impl<T: ?Sized> !Sync for RefCell<T> {}
+
+impl<T> !Sync for OnceCell<T> {}
 ```
 
-`Arc`、`Mutex` 和 `RwLock` 都实现了 `Send` 和 `Sync`，因此是并发安全的。
+`sync` 中的类型都实现了 `Send` 和 `Sync`，因此是并发安全的。
 
 ```rust
 unsafe impl<T: ?Sized + Sync + Send> Send for Arc<T> {}
@@ -903,6 +824,9 @@ unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
 
 unsafe impl<T: ?Sized + Send> Send for RwLock<T> {}
 unsafe impl<T: ?Sized + Send + Sync> Sync for RwLock<T> {}
+
+unsafe impl<T: Sync + Send> Sync for OnceLock<T> {}
+unsafe impl<T: Send> Send for OnceLock<T> {}
 ```
 
 实现了并发安全的类型自身可能含有没有实现并发安全的字段，如 `Mutex`、`RwLock` 都含有没有实现 `Sync` 的 `UnsafeCell` 字段；而 `Arc` 含有没有实现 `Send` 和 `Sync` 的 `NonNull` 字段。
@@ -1150,7 +1074,7 @@ fn main() {
 
 ### Arc
 
-`Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `Arc`，和 `Rc` 有相同的 API，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
+`rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
 
 `Mutext` 提供了内部可变性，这与 `Rc` 配合 `RefCell` 使用类似，`Arc` 也会配合 `Mutex` 使用。
 
@@ -1297,6 +1221,10 @@ fn main() {
 ```
 
 `wait` 会自动解锁传递的锁，并阻塞当前线程，此时任何 `notify` 都可唤醒该线程。由于 `wait` 易受虚假唤醒的影响，因此使用 `while` 来对每次返回都进行检查。当 `Mutex` 中毒时，`wait` 将返回错误。
+
+### OnceLock
+
+### Once
 
 ## 原子类型
 
