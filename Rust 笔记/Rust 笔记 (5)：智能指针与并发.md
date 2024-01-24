@@ -230,7 +230,7 @@ drop(s);  // 正确
 
 `Rc` 主要用于让程序的多个部分**只读地**共享数据，且无法在编译时确定程序的哪一部分会最后使用。
 
->   `Rc` 是**非原子**的，没有实现并发安全，只能用于**单线程**。
+>   `rc` 中的类型都是**非原子**的，没有实现并发安全，只能用于**单线程**。
 
 ### 使用 Rc 共享数据
 
@@ -301,125 +301,99 @@ assert_eq!(1, Rc::weak_count(&a));
 
 ## 内部可变性
 
-**内部可变性**允许即使在有不可变引用时也可以在内部改变数据，这通常是借用规则所不允许的，因此该模式在内部的数据结构中使用 `unsafe` 代码来绕过借用规则，所涉及的 `unsafe` 代码被封装进安全的 API 中，而对外部类型而言仍然是不可变的。
+`cell` 中的类型提供了**内部可变性**，允许通过不可变引用修改内部数据。而 Rust 的借用规则通常不允许这样做，因此在其内部的数据结构中使用了 Unsafe 代码来绕过，并被封装进安全的 API 中。
 
-Rust 提供了 `Cell<T>` 和 `RefCell<T>` 用于内部可变性，两者在功能上没有区别，但 `Cell<T>` 适用于实现了 `Copy` trait 的类型。
+>   `cell` 中的类型都是**非原子**的，没有实现并发安全，只能用于**单线程**。
 
 ### Cell
 
+`Cell` 用于实现了 `Copy` 的类型，通过移入移出来实现内部可变性，因此无法获得内部值的可变引用，也就不会范围借用规则。
+
+常用方法：
+
+-   `new`、`get`、`take`
+-   `swap`、`set`、`replace`
+
 ```rust
-use std::cell:Cell;
+use std::cell::Cell;
+
+struct Wrap {
+    value: Cell<i32>,
+}
 
 fn main() {
-    let x = Cell::new(5);
-    x.set(10);
-    println!("{}", x.get());
+    let w = Wrap {
+        value: Cell::new(0),
+    };
+    
+    assert_eq!(0, w.value.replace(10));
+    assert_eq!(10, w.value.get());
 }
 ```
-
--   `5` 是 `i32` 类型，实现了 `Copy` trait；
--   `get` 方法获取值，`set` 方法设置值。
-
-这个用法违背了借用规则和可变性，但使用 `Cell` 可以做到通过内部方法来修改值。
-
-`Cell<T>` 只能用于实现了 `Copy` trait 的类型：
-
-```rust
-// 错误，String 不是 Copy 的
-let s = Cell::new(String::from("hello"));
-
-// 正确，引用类型是 Copy 的
-let s = String::from("hello");
-let s2 = String::from("ok");
-let x = Cell::new(&s);
-x.set(&s2);
-println!("{}", x.get());
-```
-
-对实现了 `Copy` trait 的类型使用 `Cell<T>` 意义不大，通常是对非 `Copy` 的类型使用 `RefCell<T>`。
 
 ### RefCell
 
-不同于 `Rc<T>`，`RefCell<T>` 拥有数据的唯一所有权。对于引用和 `Box<T>`，借用规则的不可变性作用于编译期，对于 `RefCell<T>`，则作用于**运行时**。对于引用和 `Box<T>`，若违反借用规则，则编译错误，对于 `RefCell<T>`，则会在运行时 panic。
+`RefCell` 用于没有实现 `Copy` 的类型，并**在运行时进行借用检查**，当通过如 `borrow` 和 `borrow_mut` 这类方法获得内部值的引用时，若违反了借用规则会导致 panic。通过其上的方法获得引用时，实际上是获得一个 `Ref` 或 `RefMut` 智能指针，`RefCell` 会对这两种指针进行计数，类似借用规则，同时只能有多个 `Ref` 或一个 `RefMut`。
 
-| 指针类型        | 所有权 | 可变性       | 违反规则     |
-| --------------- | ------ | ------------ | ------------ |
-| 引用和 `Box<T>` | 唯一   | 不可变或可变 | 编译期错误   |
-| `Rc<T>`         | 多个   | 不可变       | 编译期错误   |
-| `RefCell<T>`    | 唯一   | 不可变或可变 | 运行时 panic |
+常用方法：
 
-通常在编译期检查借用规则，但由于编译器是保守的，因此会拒绝掉所有不符合借用规则的代码，这在有些时候会很不方便，`RefCell<T>` 正是用于确信代码遵守借用规则，而编译器无法在编译期正确检查的时候使用。
-
->   `RefCell<T>` 也是**非原子**性的，因此也只能用于**单线程**场景。
-
-使用 `RefCell<T>` 不代表就无需遵守借用规则了，而是把这一检查过程放到了运行时，当在运行时违反了借用规则时，会发生 panic。
-
----
-
-根据借用规则，无法可变的借用一个不可变的值：
-
-```rust
-let x = 5;
-let y = &mut x;  // 错误
-```
-
-可以通过把值封装到 `RefCell<T>` 中来可变的借用一个值：
-
-```rust
-let x = RefCell::new(String::from("hello"));
-x.borrow_mut().push_str(" world");
-println!("{}", x.borrow());
-```
-
--   `borrow` 方法获取不可变引用，`borrow_mut` 方法获取可变引用；
--   `borrow` 方法返回 `Ref<T>` 类型的智能指针，`borrow_mut` 方法返回 `RefMut` 类型的智能指针；
--   `RefCell<T>` 会记录当前有多少个 `Ref<T>` 和 `RefMut<T>` 智能指针；
--   每次调用 `borrow` 或 `borrow_mut`方法，`RefCell<T>` 将不可变或可变的借用计数加 1；
--   当 `Ref<T>` 或 `RefMut<T>` 值离开作用域时，不可变或可变的借用计数减 1。
-
-类似编译时借用规则，`RefCell<T>` 在任意时刻只允许有多个 `Ref<T>` 或一个 `RefMut<T>`。
-
-```rust
-let x = RefCell::new(String::from("hello"));
-let y1 = x.borrow_mut();
-let y2 = x.borrow_mut();  // 运行时 panic
-```
-
-`RefCell<T>` 的一个常见用法是与 `Rc<T>` 结合。`Rc<T>` 通过不可变的引用使数据有多个所有者，若数据被 `RefCell<T>` 封装，则可以修改数据。
+-   `new`、`take`
+-   `swap`、`replace`、`replace_with`
+-   `borrow`、`borrow_mut`
+-   `try_borrow`、`try_borrow_mut`
 
 ```rust
 use std::cell::RefCell;
-use std::rc::Rc;
 
-#[derive(Debug)]
-enum List {
-    Cons(Rc<RefCell<i32>>, Rc<List>),
-    Nil,
+struct Wrap {
+    value: RefCell<String>,
 }
 
-use self::List::{Cons, Nil};
-
 fn main() {
-    let v = Rc::new(RefCell::new(5));
-    let a = Rc::new(Cons(Rc::clone(&v), Rc::new(Nil)));
-    let b = Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
-    let c = Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
-    *v.borrow_mut() = 10;
-    println!("{:?}", a);
-    println!("{:?}", b);
-    println!("{:?}", c);
+    let w = Wrap {
+        value: RefCell::new("foo".to_string()),
+    };
+
+    assert_eq!("foo", w.value.borrow().as_str());
+
+    w.value.borrow_mut().push_str("bar");
+    assert_eq!("foobar", w.value.borrow().as_str());
 }
 ```
 
 ### OnceCell
 
+`OnceCell` 用于只需要设置一次的值，除非 `OnceCell` 是可变的，否则一旦设置则不能更新。这表示无需移动或复制内部值，也无需运行时检查即可获得内部值的不可变引用。
 
+常用方法：
+
+-   `new`、`take`
+
+-   `get`、`set`、`get_or_init`
+
+```rust
+use std::cell::OnceCell;
+
+struct Wrap {
+    value: OnceCell<String>,
+}
+
+fn main() {
+    let w = Wrap {
+        value: OnceCell::new(),
+    };
+
+    assert!(w.value.get().is_none());
+    assert!(w.value.set("foo".to_string()).is_ok());
+
+    assert!(w.value.get().is_some());
+    assert!(w.value.set("bar".to_string()).is_err());
+}
+```
 
 ## 循环引用
 
-Rust 虽然拥有极高的内存安全性，无法轻易引起内存泄漏，但可以通过 `Rc<T>` 和 `RefCell<T>` 创造循环引用，导致内存泄漏，因为每一项的引用计数永远也到不了 0，其值也永远不会被丢弃。
-
-### 制造循环引用
+Rust 虽然拥有极高的内存安全性，无法轻易引起内存泄漏，但也可以通过 `Rc` 和 `RefCell` 创造循环引用导致内存泄漏，因为引用计数永远也到不了 0，值也就永远不会被丢弃。
 
 ```rust
 use std::cell::RefCell;
@@ -440,31 +414,27 @@ impl List {
     }
 }
 
-use self::List::{Cons, Nil};
+use List::{Cons, Nil};
 
 fn main() {
     let a = Rc::new(Cons(1, RefCell::new(Rc::new(Nil))));
-    println!("a.count = {}\n", Rc::strong_count(&a));
     let b = Rc::new(Cons(2, RefCell::new(Rc::clone(&a))));
-    println!("a.count = {}", Rc::strong_count(&a));
-    println!("b.count = {}\n", Rc::strong_count(&b));
+
     if let Some(link) = a.tail() {
         *link.borrow_mut() = Rc::clone(&b);
     }
-    println!("a.count = {}", Rc::strong_count(&a));
-    println!("b.count = {}\n", Rc::strong_count(&b));
 
-    // println!("{:?}", a);   // 若打印则栈溢出
+    println!("a: {} b: {}", Rc::strong_count(&a), Rc::strong_count(&b));
+
+    // println!("{a:?}");  // 无限打印
 }
 ```
 
-通过内部可变性修改了 `a` 使其指向 `b`，形成了一个循环链表，最后两者的引用计数都是 2，在离开作用域时两者的引用计数都不为 0，因此不会释放空间，导致内存泄漏，并且如果打印的话，会造成无限循环，最后发生栈溢出。
-
-上面的代码可以改为使用 `Weak<T>` 来避免循环引用：
+将 `Rc` 改为 `Weak` 可避免循环引用：
 
 ```rust
-use std::rc::{Rc, Weak};
 use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 #[derive(Debug)]
 enum List {
@@ -481,149 +451,22 @@ impl List {
     }
 }
 
-use self::List::{Cons, Nil};
+use List::{Cons, Nil};
 
 fn main() {
     let a = Rc::new(Cons(1, RefCell::new(Rc::downgrade(&Rc::new(Nil)))));
-    println!(
-        "a strong count = {}, weak count = {}\n",
-        Rc::strong_count(&a),
-        Rc::weak_count(&a)
-    );
     let b = Rc::new(Cons(2, RefCell::new(Rc::downgrade(&a))));
-    println!(
-        "a strong count = {}, weak count = {}",
-        Rc::strong_count(&a),
-        Rc::weak_count(&a)
-    );
-    println!(
-        "b strong count = {}, weak count = {}\n",
-        Rc::strong_count(&b),
-        Rc::weak_count(&b)
-    );
-    println!("a = {:?}", a);
-    println!("b = {:?}\n", b);
+
     if let Some(link) = a.tail() {
         *link.borrow_mut() = Rc::downgrade(&b);
     }
-    println!(
-        "a strong count = {}, weak count = {}",
-        Rc::strong_count(&a),
-        Rc::weak_count(&a)
-    );
-    println!(
-        "b strong count = {}, weak count = {}\n",
-        Rc::strong_count(&b),
-        Rc::weak_count(&b)
-    );
-    println!("{:?}", a.tail());
+
+    println!("a: {} b: {}", Rc::strong_count(&a), Rc::strong_count(&b));
+    println!("a: {} b: {}", Rc::weak_count(&a), Rc::weak_count(&b));
+
+    println!("{a:?}");
 }
 ```
-
----
-
-设有一个树型数据结构，父节点可以拥有多个子节点，因此使用 `Rc` 和 `Vec` 来封装，子节点可以访问父节点，为了避免循环引用，因此子节点拥父节点弱引用，父节点拥有子节点的强引用，同时父和子节点皆可被修改，因此都需要使用 `RefCell` 封装。
-
-```rust
-use std::rc::Rc;
-use std::{cell::RefCell, rc::Weak};
-
-#[derive(Debug)]
-struct Node {
-    value: i32,
-    parent: RefCell<Weak<Node>>,
-    children: RefCell<Vec<Rc<Node>>>,
-}
-
-impl Node {
-    fn new(value: i32) -> Self {
-        Self {
-            value,
-            parent: RefCell::new(Weak::new()),
-            children: RefCell::new(vec![])
-        }
-    }
-}
-
-fn main() {
-    let leaf1 = Rc::new(Node::new(1));
-    let leaf2 = Rc::new(Node::new(2));
-
-    println!("leaf1.parent = {:?}", leaf1.parent.borrow().upgrade());
-    println!(
-        "leaf1 strong = {}, weak = {}",
-        Rc::strong_count(&leaf1),
-        Rc::weak_count(&leaf1)
-    );
-    println!("leaf2.parent = {:?}", leaf2.parent.borrow().upgrade());
-    println!(
-        "leaf2 strong = {}, weak = {}\n",
-        Rc::strong_count(&leaf2),
-        Rc::weak_count(&leaf2)
-    );
-
-    {
-        let branch = Rc::new(Node::new(0));
-        branch.children.borrow_mut().push(Rc::clone(&leaf1));
-        branch.children.borrow_mut().push(Rc::clone(&leaf2));
-
-        println!("branch = {:#?}\n", branch);
-        println!(
-            "branch strong = {}, weak = {}\n",
-            Rc::strong_count(&branch),
-            Rc::weak_count(&branch)
-        );
-
-        *leaf1.parent.borrow_mut() = Rc::downgrade(&branch);
-        *leaf2.parent.borrow_mut() = Rc::downgrade(&branch);
-
-        println!(
-            "leaf1.parent = {}",
-            leaf1.parent.borrow().upgrade().is_some()
-        );
-        println!(
-            "leaf1 strong = {}, weak = {}",
-            Rc::strong_count(&leaf1),
-            Rc::weak_count(&leaf1)
-        );
-        println!(
-            "leaf2.parent = {}",
-            leaf2.parent.borrow().upgrade().is_some()
-        );
-        println!(
-            "leaf2 strong = {}, weak = {}\n",
-            Rc::strong_count(&leaf2),
-            Rc::weak_count(&leaf2)
-        );
-        println!(
-            "branch strong = {}, weak = {}\n",
-            Rc::strong_count(&branch),
-            Rc::weak_count(&branch)
-        );
-    }
-
-    println!("leaf1.parent = {:?}", leaf1.parent.borrow().upgrade());
-    println!(
-        "leaf1 strong = {}, weak = {}",
-        Rc::strong_count(&leaf1),
-        Rc::weak_count(&leaf1)
-    );
-    println!("leaf2.parent = {:?}", leaf2.parent.borrow().upgrade());
-    println!(
-        "leaf2 strong = {}, weak = {}\n",
-        Rc::strong_count(&leaf2),
-        Rc::weak_count(&leaf2)
-    );
-}
-```
-
-创建 `leaf1` 和 `leaf2` 后，强引用计数都为 1，弱引用计数都为 0。在内部作用域中创建了 `branch` 并与 `leaf1` 和 `leaf2` 相关联，此时 `branch` 的强引用计数为 1，弱引用计数为 2，而 `leaf1` 和 `leaf2` 的强引用计数都为 2，弱引用计数都为 0。
-
-当内部作用域结束时，`branch` 离开作用域，强引用计数减少为 0，所以 `branch` 被丢弃，即使弱引用计数仍然为 2。
-
-在内部作用域结束后尝试访问 `leaf1` 和 `leaf2` 的父节点，会得到 `None`。在程序的结尾，`leaf1` 和 `leaf2` 的强引用计数都为 1，弱引用计数都为 0。
-
-通过在 `Node` 定义中指定从子节点到父节点的关系为一个 `Weak<T>` 引用，就能够拥有父和子节点之间的双向引用而不会造成循环引用和内存泄漏。
 
 ## Cow
 
@@ -1051,7 +894,7 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ### Mutex
 
-`Mutex` 是一种互斥锁，`lock` 和 `try_lock` 用于获取锁，前者阻塞后者非阻塞。`RefCell` 只实现了 `Send` 而没有实现 `Sync`，因此没有实现并发安全。而 `Mutex` 实际上就是并发安全的 `RefCell`。
+`Mutex` 是一种互斥锁，`lock` 和 `try_lock` 用于获取锁，前者阻塞后者非阻塞。
 
 ```rust
 use std::sync::Mutex;
@@ -1076,7 +919,7 @@ fn main() {
 
 `rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
 
-`Mutext` 提供了内部可变性，这与 `Rc` 配合 `RefCell` 使用类似，`Arc` 也会配合 `Mutex` 使用。
+`Mutext` 提供了内部可变性，这与 `Rc` 配合 `cell` 中的类型，`Arc` 也会配合 `sync` 中的类型使用。
 
 ```rust
 use std::sync::{Arc, Mutex};
@@ -1102,48 +945,9 @@ fn main() {
 }
 ```
 
-`Rc<RefCell>` 有造成**循环引用**的风险，而 `Arc<Mutex>` 也有造成**死锁**的风险，如一个操作需要锁住两个资源而两个线程各持一个锁，这会造成它们之间永远相互等待。
-
-```rust
-use std::sync::{Arc, Barrier, Mutex};
-use std::thread;
-
-fn main() {
-    let a1 = Arc::new(Mutex::new(0));
-    let a2 = Arc::new(Mutex::new(1));
-
-    let aa1 = Arc::clone(&a1);
-    let aa2 = Arc::clone(&a2);
-
-    let b = Arc::new(Barrier::new(2));
-    let bb = Arc::clone(&b);
-
-    let h1 = thread::spawn(move || {
-        let _v1 = a1.lock().unwrap();
-        println!("h1 locked a1");
-        b.wait();
-        let _v2 = a2.lock().unwrap();
-        println!("h1 locked a2");
-    });
-
-    let h2 = thread::spawn(move || {
-        let _v2 = aa2.lock().unwrap();
-        println!("h2 locked a2");
-        bb.wait();
-        let _v1 = aa1.lock().unwrap();
-        println!("h2 locked a1");
-    });
-
-    h1.join().unwrap();
-    h2.join().unwrap();
-}
-```
-
-`h1` 线程以 `a1`、`a2` 的顺序获取锁，`h2` 线程以 `a2`、`a1` 的顺序获取锁，并使用线程屏障保证线程各自都在获取到第一个锁后再继续运行，此时就会造成死锁。
-
 ### RwLock
 
-`Mutex` 每次使用都需要加锁，这在高并发读时有较大性能损耗。而 `RwLock` 允许多个读操作同时进行，但同时只能有一个写操作，这十分适合高并发读的场景。
+`Mutex` 每次使用都需要加锁，这在高并发读时有较大性能损耗。而 `RwLock` 作为并发安全的 `RefCell`，允许多个读操作同时进行，但同时只能有一个写操作，这十分适合高并发读的场景。
 
 `read`、`write` 用于阻塞地读写，`try_read` 和 `try_write` 用于非阻塞地读写。
 
@@ -1220,11 +1024,15 @@ fn main() {
 }
 ```
 
-`wait` 会自动解锁传递的锁，并阻塞当前线程，此时任何 `notify` 都可唤醒该线程。由于 `wait` 易受虚假唤醒的影响，因此使用 `while` 来对每次返回都进行检查。当 `Mutex` 中毒时，`wait` 将返回错误。
+`wait` 会自动解锁传递的锁，并阻塞当前线程，此时任何 `notify` 都可唤醒该线程。由于 `wait` 易受虚假唤醒的影响，因此使用 `while` 来对每次返回都进行检查。当 `Mutex` 中毒时，`wait` 将返回 `Err`。
 
 ### OnceLock
 
+
+
 ### Once
+
+
 
 ## 原子类型
 
