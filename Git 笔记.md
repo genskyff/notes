@@ -56,10 +56,10 @@ git config --show-origin <key>
 
 ```shell
 # 配置用户信息
-git config --global user.name "usename"
-git config --global user.email "email@example.com"
+git config --global user.name <name>
+git config --global user.email <email>
 
-# 指定默认编辑器
+# 默认编辑器为 VSCode
 git config --global core.editor "code --wait"
 
 # 显示非 ASCII 字符
@@ -67,6 +67,12 @@ git config --global core.quotepath false
 
 # 自动解决冲突
 git config --global rerere.enabled true
+
+# 默认密钥管理 - Windows
+git config --global credential.helper "Credential Manager"
+
+# 默认密钥管理 - macOS
+git config --global credential.helper osxkeychain
 
 # 取消配置
 git config --unset <key>
