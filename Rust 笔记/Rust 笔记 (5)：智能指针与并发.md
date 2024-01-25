@@ -479,7 +479,7 @@ pub enum Cow<'a, B: ?Sized + ToOwned + 'a> {
 }
 ```
 
-当需要可变或所有权时，`Cow` 变量本身需要可变，其上的 `to_mut` 返回数据的可变引用。
+当需要可变或所有权时，`Cow` 变量本身需要可变，其上的 `to_mut` 返回含有数据。
 
 ```rust
 use std::borrow::Cow;
@@ -1024,11 +1024,20 @@ fn main() {
 
 ### OnceLock
 
+`OnceLock` 就是并发安全的 `OnceCell`，同样只能写入一次，API 也是相同的，但可用于静态值。
 
+```rust
+use std::sync::OnceLock;
 
-### Once
+static ONCE: OnceLock<String> = OnceLock::new();
 
-
+fn main() {
+    std::thread::spawn(|| ONCE.get_or_init(|| "foo".to_string()))
+        .join()
+        .unwrap();
+    println!("{}", ONCE.get().unwrap());
+}
+```
 
 ## 原子类型
 
