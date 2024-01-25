@@ -69,7 +69,7 @@ git config --global core.quotepath false
 git config --global rerere.enabled true
 
 # 默认密钥管理 - Windows
-git config --global credential.helper "Credential Manager"
+git config --global credential.helper "redential Manager"
 
 # 默认密钥管理 - macOS
 git config --global credential.helper osxkeychain
