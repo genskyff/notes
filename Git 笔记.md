@@ -65,9 +65,6 @@ git config --global core.editor "code --wait"
 # 显示非 ASCII 字符
 git config --global core.quotepath false
 
-# 自动解决冲突
-git config --global rerere.enabled true
-
 # 默认密钥管理 - Windows
 git config --global credential.helper manager
 
