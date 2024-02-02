@@ -85,17 +85,18 @@ irm get.scoop.sh | iex
 
 -   [Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)：个性化终端。要使用默认以外的主题，需从可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 下载配置文件，并重命名为 `starship.toml` 后放在 `~\.config\`；
 -   [gsudo](https://gerardog.github.io/gsudo/docs/install)：Windows 版 `sudo`；
--   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：可以在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
+-   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
 -   [Neofetch](https://github.com/dylanaraps/neofetch/wiki/Installation)：美化显示操作系统和软硬件信息；
 -   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：增强版 `ls`；
 -   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：增强版 `cat`；
 -   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
--   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`。
+-   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`；
+-   [Neovim](https://github.com/neovim/neovim?tab=readme-ov-file#install-from-package)：增强版 `vim`。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git neofetch lsd bat cloc ripgrep
+scoop install starship gsudo posh-git neofetch lsd bat cloc ripgrep neovim
 ```
 
 # 4 配置 PowerShell
