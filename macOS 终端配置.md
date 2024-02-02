@@ -121,30 +121,3 @@ plugins=(
 ```shell
 source ~/.zshrc
 ```
-
-# 4 其它终端工具
-
-## [Neofetch](https://github.com/dylanaraps/neofetch)
-
-美化显示操作系统、软硬件信息。
-
-```shell
-brew install neofetch
-```
-
-## [LSD](https://github.com/lsd-rs/lsd)
-
-增强版 `ls` 命令，美化了输出结果，并增加了颜色、图标、树视图等更多格式选项。
-
-```shell
-brew install lsd
-```
-
-## [BAT](https://github.com/sharkdp/bat)
-
-增强版 `cat` 命令，但集成了 Git 和语法高亮。
-
-```shell
-brew install bat
-```
-

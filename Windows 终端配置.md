@@ -4,13 +4,9 @@
 
 # 1 终端环境
 
-## winget
-
-Windows 10 / 11 已经默认安装了 [winget](https://learn.microsoft.com/zh-cn/windows/package-manager/winget/)，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9NBLGGH4NNS1) 安装。
-
 ## PowerShell
 
-Windows 10/11 默认安装了 PowerShell 5，需要将其升级到 PowerShell 7。
+Windows 10/11 默认安装了 PowerShell 5，需要通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 升级到 PowerShell 7。
 
 ```powershell
 # 查看 PowerShell 版本
@@ -19,21 +15,15 @@ $PSVersionTable
 
 ![查看 PowerShell 版本](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082043223.png)
 
-要升级到 PowerShell 7，可通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 安装，或使用 winget：
-
-```powershell
-winget install --id Microsoft.Powershell --source winget
-```
-
-PowerShell 5 与 7 是共存的，安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
+PowerShell 5 与 7 是共存的，但安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
 
 5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`；7 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
 
 ```powershell
-# 配置文件路径
+# 查看配置文件路径
 $PROFILE | Select-Object *Host* | Format-List
 
-# 模块路径
+# 查看模块路径
 $env:PSModulePath -split (';')
 ```
 
@@ -46,10 +36,14 @@ $env:PSModulePath -split (';')
 PowerShell 7 附带了 PSReadLine 2.2.6，也可以手动升级：
 
 ```powershell
+# 查看版本
+Get-Module PSReadLine | Select-Object Name, Version
+
+# 手动升级
 Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease
 ```
 
->   PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
+>   关于 PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
 
 ## Windows Terminal
 
@@ -59,7 +53,7 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 ![设置 PowerShell 7 为默认配置](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082138565.png)
 
-# 2 终端工具
+# 2 字体配置
 
 ## Nerd Fonts
 
@@ -75,95 +69,34 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 ![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
 
+# 3 终端工具
+
 ## Scoop
 
-[Scoop](https://scoop.sh/) 是 Windows 下和 winget 类似的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 winget 或  scoop 来安装。
+[Scoop](https://scoop.sh/) 是 Windows 下的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 Scoop 来安装。
 
 ```powershell
-# 安装 scoop
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+# 安装
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 irm get.scoop.sh | iex
 ```
 
-## gsudo
+## 实用工具
 
-[gsudo](https://gerardog.github.io/gsudo/docs/intro) 是一个类似 Linux 上 sudo 的工具，可以将命令提权执行。
-
-```powershell
-# 通过 winget 安装
-winget install --id gerardog.gsudo -s winget
-
-# 通过 scoop 安装
-scoop install gsudo
-```
-
-## posh-git
-
-[posh-git](https://github.com/dahlbyk/posh-git) 可以在 PowerShell 中显示 Git 状态的摘要信息并自动补全 Git 命令。
+-   [Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)：个性化终端。要使用默认以外的主题，需从可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 下载配置文件，并重命名为 `starship.toml` 后放在 `~\.config\`；
+-   [gsudo](https://gerardog.github.io/gsudo/docs/install)：Windows 版 `sudo`；
+-   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：可以在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
+-   [Neofetch](https://github.com/dylanaraps/neofetch/wiki/Installation)：美化显示操作系统和软硬件信息；
+-   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：增强版 `ls`；
+-   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：增强版 `cat`；
+-   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
+-   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`。
 
 ```powershell
-# 通过 scoop 安装
 scoop bucket add extras
-scoop install posh-git
+scoop update
+scoop install starship gsudo posh-git neofetch lsd bat cloc ripgrep
 ```
-
-## Terminal-Icons
-
-[Terminal-Icons](https://github.com/devblackops/Terminal-Icons) 可以在 PowerShell 中显示项目图标并以颜色区分。
-
-![图标效果](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202203280547128.png)
-
-```powershell
-# 通过 scoop 安装
-scoop bucket add extras
-scoop install terminal-icons
-```
-
-# 3 个性化终端
-
-## Oh My Posh
-
-[Oh My Posh](https://ohmyposh.dev/docs/) 是一款终端个性化工具，可通过 [Microsoft Store](https://apps.microsoft.com/detail/XP8K0HKJFRXGCK) 安装，或使用 winget 或 scoop。
-
-```powershell
-# 通过 winget 安装
-winget install --id JanDeDobbeleer.OhMyPosh -s winget
-
-# 通过 scoop 安装
-scoop install https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/oh-my-posh.json
-```
-
-启用主题，并可选地使用 `--config` 选项指定主题：
-
-```powershell
-oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\multiverse-neon.omp.json | Invoke-Expression
-```
-
-可在 [预设主题](https://ohmyposh.dev/docs/themes) 查看所有预设主题的效果，或在启用主题后使用命令查看所有预设主题的效果。
-
-```powershell
-# 主题目录
-$env:POSH_THEMES_PATH
-
-# 查看所有预设主题效果（只有在启用主题后该命令才有效）
-Get-PoshThemes
-```
-
-主题配置文件也被安装在 Oh My Posh 的主题目录下，后缀为 `.omp.json`，自定义主题配置文件也需要放在该目录。
-
-## Starship
-
-[Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation) 也是一款终端个性化工具，特点是快速、简洁。
-
-```powershell
-# 通过 winget 安装
-winget install --id Starship.Starship -s winget
-
-# 通过 scoop 安装
-scoop install starship
-```
-
-可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 查看所有预设主题效果。要使用默认以外的主题，需从预设主题中下载配置文件，并需要重命名为 `starship.toml` 并放在 `~\.config\` 下。
 
 # 4 配置 PowerShell
 
@@ -182,13 +115,11 @@ code $PROFILE
 然后在其中添加：
 
 ```powershell
-# oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\multiverse-neon.omp.json | Invoke-Expression
 Invoke-Expression (&starship init powershell)
 
 Import-Module PSReadLine
 Import-Module gsudoModule
 Import-Module posh-git
-Import-Module Terminal-Icons
 
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
@@ -203,9 +134,11 @@ function OpenCurrentFolder {
 
 Set-Alias -Name open -Value OpenCurrentFolder
 Set-Alias -Name sudo -Value gsudo
+Set-Alias -Name ls -Value lsd
+Set-Alias -Name cat -Value bat
 ```
 
-修改后需要重启 PowerShell 或用命令来使配置生效：
+使配置生效：
 
 ```powershell
 . $PROFILE
