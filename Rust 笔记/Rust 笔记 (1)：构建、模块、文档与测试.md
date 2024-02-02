@@ -2,8 +2,8 @@
 >
 >   主要参考：
 >
->   -   [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
->   -   [Programming Rust](https://book.douban.com/subject/36547630/)
+>   -   [Rust 程序设计语言](https://kaisery.github.io/trpl-zh-cn/)
+>   -   [Rust 程序设计](https://book.douban.com/subject/36547630/)
 >   -   [Rust 语言圣经](https://course.rs/about-book.html)
 >   -   [Rust 参考手册](https://minstrel1977.gitee.io/rust-reference/introduction.html)
 >   -   [The Rust Standard Library](https://doc.rust-lang.org/std/)
