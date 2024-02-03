@@ -139,12 +139,12 @@ Function LsTree {
 }
 
 Function LsPure {
-	$params = @('--icon', 'never', '--icon', 'never') + $args
+	$params = @('--icon', 'never', '--color', 'never') + $args
     lsd @params
 }
 
 Function LsTreePure {
-	$params = @('--tree', '--depth', '1', '--icon', 'never', '--icon', 'never') + $args
+	$params = @('--tree', '--depth', '1', '--icon', 'never', '--color', 'never') + $args
     lsd @params
 }
 
