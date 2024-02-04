@@ -121,3 +121,4 @@ plugins=(
 ```shell
 source ~/.zshrc
 ```
+
