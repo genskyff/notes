@@ -91,12 +91,13 @@ irm get.scoop.sh | iex
 -   [Neovim](https://github.com/neovim/neovim?tab=readme-ov-file#install-from-package)：增强版 `vim`；
 -   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`；
 -   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
--   [Neofetch](https://github.com/dylanaraps/neofetch/wiki/Installation)：美化显示操作系统和软硬件信息。
+-   [Neofetch](https://github.com/dylanaraps/neofetch/wiki/Installation)：美化显示操作系统和软硬件信息；
+-   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：模糊查找。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat neovim ripgrep cloc neofetch
+scoop install starship gsudo posh-git lsd bat neovim ripgrep cloc neofetch fzf
 ```
 
 # 4 配置 PowerShell
