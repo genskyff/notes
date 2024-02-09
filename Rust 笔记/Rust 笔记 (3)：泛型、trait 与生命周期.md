@@ -781,8 +781,7 @@ trait A {
     type B: Copy;
 }
 
-trait A where
-    Self::B: Copy,
+trait A where Self::B: Copy,
 {
     type B;
 }
