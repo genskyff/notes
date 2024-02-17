@@ -6,7 +6,7 @@
 
 ### 自动强转点
 
-类型自动强转只能发生在特定位置，被称为**自动强转点**。
+类型自动强转只能发生在特定位置，称为**自动强转点**。
 
 自动强转点包括：
 
@@ -141,7 +141,7 @@ let p = &v as *mut i32;
 `std::borrow` 则提供了另一种针对引用转换的 trait：
 
 -   `ToOwned`：`&T` 到 `U` 的转换；
--   `Borrow` 和 `Borrow`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`。
+-   `Borrow` 和 `BorrowMut`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`。
 
 ### From 和 Into
 
