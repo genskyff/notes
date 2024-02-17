@@ -29,7 +29,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 默认会在 *~/.rustup* 中安装工具链，在 *~/.cargo* 安装 Cargo 相关工具、二进制 Crate 和依赖包。
 
-*~/.rustup/settings.toml* 保存了工具链相关的配置，对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置。构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级从高到低为：
+*~/.rustup/settings.toml* 保存了工具链相关的配置。对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置，构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级从高到低为：
 
 -   通过命令行 `--config <key>=<value>` 传递的参数
 -   环境变量
@@ -303,7 +303,7 @@ cc = "1.0"
 `profile` 为发布配置，默认包含四种：
 
 -   **dev**：`cargo build/run/check/rustc` 使用；
--   **release**：构建时使用 `-r` 选项和 `cargo install` 使用；
+-   **release**：构建时使用 `-r` 和 `cargo install` 使用；
 -   **test**：`cargo test` 使用，基于 dev，用于单元、集成和文档测试；
 -   **bench**：`cargo bench` 使用，基于 release，用于基准测试。
 
@@ -625,7 +625,7 @@ cc = "1.0"
 └── main.rs（二进制 Crate）
 ```
 
-默认情况下，`cargo build` 会编译包含库 Crate 在内的所有 Crate，若想单独编译 *src/bin* 中的二进制 Crate，可以使用 `--bin` 选项。
+默认情况下，`cargo build` 会编译包含库 Crate 在内的所有 Crate，若想单独编译 *src/bin* 中的二进制 Crate，可以使用 `--bin`。
 
 ```shell
 cargo build --bin <crate>
@@ -637,11 +637,11 @@ cargo build --bin <crate>
 cargo build --bin <package>
 ```
 
-库 Crate 也能被单独编译。默认情况下，Cargo 使用 Crate 名、rustc 使用文件名，并加上 `lib` 前缀作为输出。
+库 Crate 也能被单独编译。默认情况下，Cargo 使用 Crate 名、rustc 使用文件名，并加上 `lib` 前缀作为输出文件名。
 
 ```shell
 # 输出 lib<filename>.rlib
-rustc --crate-type lib <filename>.rs
+rustc --crate-type=lib <filename>.rs
 
 # 输出 lib<crate>.rlib
 cargo build --lib
@@ -670,7 +670,7 @@ pub fn hello() {
 rustc hello.rs
 ```
 
-实际上使用 `cargo build` 也是调用的 `rustc`，可以使用 `-v` 参数来查看实际传递的参数：
+实际上使用 `cargo build` 也是调用的 `rustc`，可以使用 `-v` 来查看实际传递的参数：
 
 ```shell
 rustc --crate-name mylib
@@ -1070,7 +1070,7 @@ mod a {
 
 除了最常见的通过 `pub` 来控制可见性外，还可以指定作用域内的可见性：
 
--   `pub(self)`：默认值，仅在当前模块可见；
+-   `pub(self)`：默认值，仅在当前或子模块中可见；
 
 -   `pub`：完全公开；
 -   `pub(crate)`：仅 Crate 内可见；
@@ -1200,7 +1200,7 @@ use std::io::prelude::*;
 
 工作区是一系列包的集合，这些包被称为**工作区成员**，并被一起管理。
 
--   通用命令可以在所有工作区成员上运行，如 `cargo check --workspace`；
+-   命令可以在所有工作区成员上运行，如 `cargo check --workspace`；
 -   所有工作区成员共享工作区根目录下的 *Cargo.lock* 和 *target*；
 -   共享包元数据。
 
@@ -1264,7 +1264,7 @@ members = ["foo", "foo-*", "bar/*"]
 
 ### 配置
 
-可以为工作区的所有包进行统一配置，如 `[dependencies]`、`[package.authors]` 等，然后在各个包自己的 *Cargo.toml* 中设定 `key.workspace = true` 来继承工作区的配置。
+可以为工作区的所有包进行统一配置，如 `[dependencies]`、`[package.authors]` 等，然后在各个包自己的 *Cargo.toml* 中设定 `key.workspace = true` 来继承工作区配置。
 
 ```toml
 # Cargo.toml
@@ -1297,7 +1297,7 @@ rand.workspace = true
 cc.workspace = true
 ```
 
-对于继承的依赖，其 `features` 会相加。
+对于继承的依赖，其 `features` 会合并。
 
 >   更多工作区配置相关的信息，可参考 [工作区字段](https://doc.rust-lang.org/cargo/reference/workspaces.html#the-members-and-exclude-fields)。
 
@@ -1314,7 +1314,7 @@ frontend = { path = "../frontend" }
 
 ### 构建
 
-当工作区只包含一个包时，可以直接构建运行。但若包含多个包，就需要使用 `-p` 选项来指定到底运行哪个包。
+当工作区只包含一个包时，可以直接构建运行。但若包含多个包，就需要使用 `-p` 来指定到底运行哪个包。
 
 ```shell
 cargo run -p <package>
@@ -1328,7 +1328,7 @@ members = ["backend", "backend2", "frontend"]
 default-members = ["backend"]
 ```
 
-若一个包中含有多个二进制 Crate，则还需要使用 `--bin` 选项指明运行哪个。
+若一个包中含有多个二进制 Crate，则还需要使用 `--bin` 指明运行哪个。
 
 ```shell
 cargo run -p <package> --bin <crate>
@@ -1520,12 +1520,12 @@ fn fuzz() {}
 -   `no_link`：防止链接外部 Crate；
 -   `repr`：控制类型的内存布局；
 -   `crate_type`：指定 Crate 类型；
+-   `crate_name`：指定 Crate 名；
 -   `no_main`：禁止 main 符号；
 -   `export_name`：指定函数或静态项导出的符号名；
 -   `link_section`：指定函数或静态项在所在的段；
 -   `no_mangle`：禁用对符号名编码；
--   `used`：强制编译器在输出对象文件中保留静态项；
--   `crate_name`：指定 Crate 名。
+-   `used`：强制编译器在输出对象文件中保留静态项。
 
 ### 代码生成
 
@@ -1593,9 +1593,9 @@ cargo doc --open
 
 rustdoc 默认会在当前目录下生成 *doc* 目录，把 Crate 根文件名作为文档名，且不会生成依赖的文档。而使用 cargo 生成的文档则会在 *target* 下生成，把项目名作为文档名，依赖的文档也会生成。
 
-Cargo 生成依赖的的文档有时候会导致构建时间过长，`--no-deps` 选项可以不生成依赖的文档，`--open` 选项可以在生成后自动在浏览器中打开。
+Cargo 生成依赖的的文档有时候会导致构建时间过长，`--no-deps` 可以不生成依赖的文档，`--open` 可以在生成后自动在浏览器中打开。
 
-```
+```shell
 cargo doc --open --no-deps
 ```
 
@@ -1673,15 +1673,15 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 # 5 Crates.io
 
-[Crates.io](https://crates.io/) 是 Rust 官方的 Crate 仓库，每个人都可以使用这上面的 Crate，或发布自己的 Crate。
+[Crates.io](https://crates.io/) 是 Rust 官方的 Crate 仓库，每个人都可以在这上面使用和发布 Crate。
 
 在发布 Crate 之前，需要注册账号并获取一个 API Token，然后使用 `cargo login` 登录：
 
 ```shell
-cargo login ciojS4rXq47rWZVmOvHRLh6Sac3mXm7wzeA
+cargo login <token>
 ```
 
-这会将 API Token 储存在本地的 *~/.cargo/credentials* 文件中。
+这会将 API Token 储存在 *~/.cargo/credentials* 中。
 
 ## 发布准备
 
@@ -1867,7 +1867,7 @@ fn test_div_by_0() {
 }
 ```
 
-可以给 `#[should_panic]` 增加一个可选的 `expected` 参数，测试会匹配 panic 发生时的信息是否包含 `expected` 参数所中的字符串，可以避免是其它情况导致的 panic。
+可以给 `#[should_panic]` 增加一个可选的 `expected` 参数，测试会匹配 panic 发生时的信息是否包含 `expected` 参数所中的字符串，可以避免由其它情况导致的 panic。
 
 ### 使用 Result
 
@@ -2137,7 +2137,7 @@ fn bench_slow(b: &mut test::Bencher) {
 }
 ```
 
->   实际上 `black_box` 函数不能保证不会进行优化。
+>   实际上 `black_box` 函数也不能保证不会进行优化。
 
 执行基准测试：
 
@@ -2147,7 +2147,7 @@ cargo bench
 
 #### 第三方基准测试
 
-要在 stable 版本上进行基准测试，可以使用第三方 Crate。目前最流行的第三方基准测试框架为 [criterion](https://crates.io/crates/criterion)，可以提供更详细的统计数据，还能生成图表，要使用 criterion 提供的图表功能，还需安装 [Gnuplot](http://www.gnuplot.info/)，否则会使用 [Plotters](https://crates.io/crates/plotters) 来绘图。
+要在 stable 版本上进行基准测试，可以使用第三方 Crate。目前最流行的第三方基准测试框架为 [criterion](https://crates.io/crates/criterion)，可以提供更详细的统计数据，并能生成图表，要使用 criterion 提供的图表功能，还需安装 [Gnuplot](http://www.gnuplot.info/)，否则会使用 [Plotters](https://crates.io/crates/plotters) 来绘图。
 
 切换回 stable 版本：
 
@@ -2166,7 +2166,7 @@ name = "bench_sum"
 harness = false
 ```
 
-基准测试只会在开发中进行，因此在 `[dev-dependencies]` 中添加依赖。此外还添加了一个 `[[bench]]` 项，`name` 字段为测试名，`harness` 字段表示是否使用内置的基准测试工具，这里不使用所以为 `false`。
+基准测试只会在开发阶段进行，因此在 `[dev-dependencies]` 中添加依赖。此外还添加了一个 `[[bench]]` 项，`name` 字段为测试名，`harness` 字段表示是否使用内置的基准测试工具，这里不使用所以为 `false`。
 
 criterion 要求将用于基准测试的代码放在项目根目录下的 *benches* 中，且每个测试文件名要与 `[[bench]]` 中 `name` 字段的值相同。
 
