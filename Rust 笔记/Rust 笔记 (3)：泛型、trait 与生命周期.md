@@ -1992,7 +1992,7 @@ fn main() {
     let outer = "foo";  // 'static
     {
         let inner = &String::from("bar"); // 'a
-        foo(outer, inner);
+        foo(outer, inner); // 若为保守生命周期实现，则报错
     }
 }
 ```
@@ -2002,6 +2002,8 @@ fn main() {
 为了实现对生命周期的灵活使用，Rust 使用**子类型化**和**型变**。
 
 ### 子类型化
+
+子类型化是指一种类型可以替代另一种类型的概念。设 `T` 是 `U` 的子类型，这表示 `T` 至少包含 `U`。
 
 泛型参数 `T: U` 的含义：
 
@@ -2077,14 +2079,18 @@ fn main() {
 
 将值赋给同一类型是可以的，因此 `assign` 的实现没有错误，但问题在于外部作用域使用了内部作用域创建的值，这会导致 UAF 错误。深入分析可以发现传递了两个参数，分别是 `&mut &'static str` 和 `&'a str`，由于 `&mut T` 在 `T` 上是不变的，所以不能对第一个参数进行子类型化，因此 `T` 必须是 `&'static str`。
 
-Rust 中的逆变非常少，仅用于函数参数，对于 `fn(T) -> U`：
+Rust 中的逆变非常少，仅来源于函数参数，对于 `fn(T) -> U`：
 
 ```rust
-fn store_get_str<'a>(s: &'a str) -> &'a str;
-fn store_get_static(s: &'static str) -> &'static str;
+fn f1(s: &'static str) -> &'static str;
+fn f2<'a>(s: &'a str) -> &'a str;
 ```
 
-对参数类型 `T`，`&'static str` 是 `&'a str` 的子类型，但对于函数来说，一个接受 `&'static str` 作为参数的函数，也可以接受 `&'a str` 作为参数，因此函数在 `T` 上是一个逆变，但是对返回值类型 `U`，一个返回 `&'a str` 函数也可以返回 `&'static str`，因此函数在 `U` 上是一个协变。
+设 `f1` 的参数 `&'static str` 为 `T1`，`f2` 的参数 `&'a str` 为 `T2`，显然 `T1` 是 `T2` 的子类型。
+
+而函数就相当于是类型 `T` 构造器 `F<T>`。能够使用 `f1<T1>` 的地方不一定能够使用 `f2<T2>`，因为 `f2` 能够处理的范围是比 `f1` 大的，因此任何使用 `f1` 的地方，都能够使用 `f2` 来处理，即 `f2` 是 `f1` 的子类型，因此函数在 `T` 上是一个逆变。
+
+对返回值类型 `U`，一个返回 `&'a str` 函数也可以返回 `&'static str`，因此函数在 `U` 上是一个协变。
 
 ---
 
@@ -2359,5 +2365,4 @@ fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
 ```rust
 let clo: &dyn for<'a> Fn(&'a str) -> &'a str = &|s: &str| s;
 ```
-
 
