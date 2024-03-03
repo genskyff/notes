@@ -333,17 +333,13 @@ git add <new>
 `log` 用来查看提交历史：
 
 ```shell
-git log <branch> --oneline --abbrev-commit --graph
+git log <branch> --oneline --graph --abbrev-commit 
 ```
 
 -   可选指定分支的历史；
-
 -   `--oneline` 以一行的形式简洁输出结果；
-
--   `--abbrev-commit` 将 `commit id` 缩短显示；
-
 -   `--graph` 以图形形式显示提交历史，包括分支历史；
-
+-   `--abbrev-commit` 将 `commit id` 缩短显示；
 -   `--reverse` 倒序显示提交历史。
 
  `-p` 可以显示每次提交的差异， `-数字` 可以指定显示条数：
