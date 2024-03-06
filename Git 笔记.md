@@ -71,6 +71,9 @@ git config --global credential.helper manager
 # 默认密钥管理 - macOS
 git config --global credential.helper osxkeychain
 
+# 配置 pull 策略为 rebase
+git config --global pull.rebase true
+
 # 取消配置
 git config --unset <key>
 ```

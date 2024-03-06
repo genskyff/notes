@@ -644,7 +644,7 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 -   Sequences：`Vec`、`VecDeque`、`LinkedList`
 -   Maps：`HashMap`、`BTreeMap`
 -   Sets：`HashSet`、`BTreeSet`
--   Misc：`BinaryHeap`
+-   Heap：`BinaryHeap`
 
 其中最广泛使用的四种集合：
 
