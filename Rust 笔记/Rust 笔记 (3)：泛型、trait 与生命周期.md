@@ -1412,8 +1412,6 @@ fn main() {
 }
 ```
 
-
-
 >   更多关于运算符重载的 trait，可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
 
 # 3 生命周期

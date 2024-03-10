@@ -206,7 +206,7 @@ pub trait FromStr: Sized {
 }
 ```
 
-而 `Display` 则用于将类型转换为用于显式输出的字符串，实现了该 trait 则自动实现了 `ToString`，并且拥有 `to_string` 方法，因此不应该直接实现 `ToString`。
+而 `Display` 则用于将类型转换为用于显式输出的字符串，实现了该 trait 则自动实现了 `ToString`，并拥有 `to_string` 方法，因此不应该直接实现 `ToString`。
 
 ```rust
 pub trait Display {
