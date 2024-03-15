@@ -88,19 +88,15 @@ irm get.scoop.sh | iex
 -   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
 -   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：增强版 `ls`；
 -   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：增强版 `cat`；
--   [Neovim](https://github.com/neovim/neovim?tab=readme-ov-file#install-from-package)：增强版 `vim`；
 -   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`；
--   [bottom](https://github.com/ClementTsang/bottom?tab=readme-ov-file#scoop)：增强版 `top`；
 -   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
 -   [Neofetch](https://github.com/dylanaraps/neofetch/wiki/Installation)：美化显示操作系统和软硬件信息；
--   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：模糊查找；
--   [gdu](https://github.com/dundee/gdu?tab=readme-ov-file#installation)：磁盘使用分析；
--   [lazy-git](https://github.com/jesseduffield/lazygit?tab=readme-ov-file#scoop-windows)：Git tui。
+-   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：模糊查找。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat neovim ripgrep bottom cloc neofetch fzf gdu lazygit
+scoop install starship gsudo posh-git lsd bat ripgrep cloc neofetch fzf
 ```
 
 # 4 配置 PowerShell
