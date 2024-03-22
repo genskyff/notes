@@ -223,10 +223,11 @@ cargo metadata
     └── release
 ```
 
-此外通常还会添加：
+此外通常还会包含：
 
 ```
 .
+├── ...
 ├── benches（基准测试）
 │   ├── bench1.rs
 │   └── bench2.rs
