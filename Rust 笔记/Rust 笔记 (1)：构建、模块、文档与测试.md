@@ -2093,7 +2093,7 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
 
 Rust 内置了基准测试框架来通过多次运行迭代来评估性能。
 
->   截至 1.72 版本，需要使用 nightly 版本才能使用内置的基准测试。
+>   目前需要使用 nightly 版本才能使用内置的基准测试。
 
 将当前项目切换为 nightly 版本：
 
