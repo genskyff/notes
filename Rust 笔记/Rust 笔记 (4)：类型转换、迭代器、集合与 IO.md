@@ -128,6 +128,18 @@ let p = &v as *const i32 as *mut i32;
 let p = &v as *mut i32;
 ```
 
+通过 `as` 对原始切片进行转换时，长度保持不变：如 `*const [T]` 到 `*const [U]`，两者长度相同，但是实际大小可能不同。
+
+```rust
+let raw_slice = &[1, 2, 3, 4, 5, 6] as *const [i32];
+let cast = raw_slice as *const [i8];
+unsafe {
+    assert_eq!((*raw_slice).len(), (*cast).len());
+    assert_eq!(24, std::mem::size_of_val(&*raw_slice));
+    assert_eq!(6, std::mem::size_of_val(&*cast));
+}
+```
+
 ## 转换相关 trait
 
 `as` 只能用于基本类型，对于自定义类型，标准库提供了一系列用于类型转换相关的 trait。
