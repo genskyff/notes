@@ -86,16 +86,18 @@ irm get.scoop.sh | iex
 -   [Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)：个性化终端。要使用默认以外的主题，需从可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 下载配置文件，并重命名为 `starship.toml` 后放在 `~\.config\`；
 -   [gsudo](https://gerardog.github.io/gsudo/docs/install)：Windows 版 `sudo`；
 -   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
--   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：增强版 `ls`；
--   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：增强版 `cat`；
--   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：增强版 `grep`；
+-   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：替代 `ls`；
+-   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：替代 `cat`；
+-   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：替代 `grep`；
+-   [fd](https://github.com/sharkdp/fd?tab=readme-ov-file#on-macos)：替代 `find`；
+-   [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)：替代 `cd`
 -   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
--   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：模糊查找。
+-   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep cloc fzf
+scoop install starship gsudo posh-git lsd bat ripgrep fd zoxide cloc fzf
 ```
 
 # 4 配置 PowerShell
