@@ -92,12 +92,13 @@ irm get.scoop.sh | iex
 -   [fd](https://github.com/sharkdp/fd?tab=readme-ov-file#on-macos)：替代 `find`；
 -   [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)：替代 `cd`
 -   [cloc](https://github.com/AlDanial/cloc?tab=readme-ov-file#install-via-package-manager)：统计代码行数；
--   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找。
+-   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找；
+-   [yazi](https://yazi-rs.github.io/docs/installation)：终端文件浏览工具。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep fd zoxide cloc fzf
+scoop install starship gsudo posh-git lsd bat ripgrep fd zoxide cloc fzf yazi
 ```
 
 # 4 配置 PowerShell
