@@ -1285,9 +1285,11 @@ struct Point(i32, i32);
 
 >   要实现 `Copy`，必须同时实现 `Clone`。
 
-### Iterator
+### Iterator 和 IntoIterator
 
-`std::iter::Iterator`：定义迭代器。
+`std::iter::Iterator`：定义迭代器；
+
+`use std::iter::IntoIterator`：转换为迭代器。
 
 ```rust
 struct Counter {
@@ -1307,10 +1309,22 @@ impl Iterator for Counter {
     }
 }
 
+struct Gen;
+
+impl IntoIterator for Gen {
+    type Item = usize;
+    type IntoIter = Counter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Counter { count: 0 }
+    }
+}
+
 fn main() {
-    let c = Counter { count: 2 };
-    for i in c {
-        println!("{i}");
+    let mut c = Counter { count: 0 };
+    let g = Gen;
+    for e in g.into_iter() {
+        assert_eq!(e, c.next().unwrap());
     }
 }
 ```
