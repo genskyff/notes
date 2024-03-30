@@ -525,7 +525,7 @@ foo = ["utils/foo"]
 // build.rs
 fn main() {
     // 一旦指定的文件发生了改变，Cargo 就重新运行当前的构建脚本
-    println!("cargo:rerun-if-changed=src/hello.c");
+    println!("cargo::rerun-if-changed=src/hello.c");
     
     // 使用 cc 来构建一个 C 文件，然后进行静态链接
     cc::Build::new()
@@ -560,16 +560,17 @@ Cargo 在构建 Rust 项目之前会先将这个脚本编译为可执行文件�
 
 ### Cargo 识别指令
 
--   `cargo:rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行脚本；
--   `cargo:rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行脚本；
--   `cargo:rustc-link-search=[KIND=]PATH`：添加库搜索路径；
--   `cargo:rustc-link-lib=LIB`：添加要链接的库；
--   `cargo:rustc-link-arg=FLAG`：将标志传递给链接器；
--   `cargo:rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器；
--   `cargo:rustc-flags=FLAGS`：将标志传递给编译器；
--   `cargo:rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置；
--   `cargo:rustc-env=VAR=VALUE`：传递环境变量；
--   `cargo:KEY=VALUE`：元数据，由脚本使用 `links`。
+-   `cargo::rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行脚本；
+-   `cargo::rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行脚本；
+-   `cargo::rustc-link-search=[KIND=]PATH`：添加库搜索路径；
+-   `cargo::rustc-link-lib=LIB`：添加要链接的库；
+-   `cargo::rustc-link-arg=FLAG`：将标志传递给链接器；
+-   `cargo::rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器；
+-   `cargo::rustc-flags=FLAGS`：将标志传递给编译器；
+-   `cargo::rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置；
+-   `cargo::rustc-env=VAR=VALUE`：传递环境变量；
+-   `cargo::warning=MESSAGE`：显示警告信息；
+-   `cargo::KEY=VALUE`：元数据，由脚本使用 `links`。
 
 >   更多关于 Cargo 识别指令的信息，可参考 [Cargo Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargorustc-link-argflag)。
 
