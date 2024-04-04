@@ -92,13 +92,12 @@ irm get.scoop.sh | iex
 -   [fd](https://github.com/sharkdp/fd?tab=readme-ov-file#on-macos)：替代 `find`；
 -   [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)：替代 `cd`
 -   [tokei](https://github.com/XAMPPRocky/tokei?tab=readme-ov-file#tokei-%E6%99%82%E8%A8%88)：统计代码行数；
--   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找；
--   [yazi](https://yazi-rs.github.io/docs/installation)：终端文件浏览工具。
+-   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep fd zoxide tokei fzf yazi
+scoop install starship gsudo posh-git lsd bat ripgrep fd zoxide tokei fzf
 ```
 
 # 4 配置 PowerShell
@@ -158,7 +157,6 @@ Set-Alias -Name lt -Value LsTree
 Set-Alias -Name lp -Value LsPure
 Set-Alias -Name ltp -Value LsTreePure
 Set-Alias -Name cat -Value bat
-Set-Alias -Name vim -Value nvim
 ```
 
 使配置生效：
