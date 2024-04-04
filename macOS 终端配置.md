@@ -105,17 +105,6 @@ brew install zsh-syntax-highlighting
 
 根据安装提示需要在 `~.zshrc` 中添加行，其中 `zsh-syntax-highlighting` 必须添加在文件末尾。
 
-安装完成后在 `~/.zshrc` 中找到 `plugins` 选项并在其中添加插件名：
-
-```shell
-plugins=(
-  git
-  autojump
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-)
-```
-
 使配置生效：
 
 ```shell
