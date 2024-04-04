@@ -316,6 +316,7 @@ opt-level = 3
 debug = false
 strip = true
 lto = true
+codegen-units = 1
 panic = "abort"
 ```
 
@@ -335,10 +336,14 @@ panic = "abort"
     -   `false`：默认值，保留所有信息；
     -   `true`：删除调试和符号信息；
 -   **lto**：`-C lto` 标志，控制链接时优化策略，会增加编译时间和内存消耗；
-    -   `false`：默认值，只对代码生成单元中的本地包进行优化，若代码生成单元数为 1 或 `opt-level` 为 0，则不进行优化；
+    -   `false`：默认值，只对代码生成单元中的本地包进行优化，若 `codegen-units` 为 1 或 `opt-level` 为 0，则不进行优化；
     -   `true`：最大程度优化，但最消耗资源；
+-   **codegen-units**：`-C codegen-units` 标志，控制一个 Crate 会被拆分成多少个代码生成单元。多个单元可以并行处理，以减少编译时间，但生成后的代码性能可能较低。
+    -   增量构建，默认为 256
+    -   非增量构建，默认为 16
+
 -   **panic**：`-C panic` 标志，控制 panic 发生时的策略，单元、集成、文档和基准测试，以及构建脚本、过程宏只能使用 `unwind`。
-    -   `unwind`：默认值，panic 后进行栈展开；
+    -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源；
     -   `abort`：panic 后直接中止程序，由操作系统回收资源。
 
 >   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)。
