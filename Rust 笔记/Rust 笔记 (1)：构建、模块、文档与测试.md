@@ -346,7 +346,8 @@ panic = "abort"
     -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源；
     -   `abort`：panic 后直接中止程序，由操作系统回收资源。
 
->   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)。
+>   -   针对编译优化，可参考 [min-sized-rust](https://github.com/johnthagen/min-sized-rust)；
+>   -   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)。
 
 ### 自定义 profile
 
