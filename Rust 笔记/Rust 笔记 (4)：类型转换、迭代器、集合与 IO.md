@@ -169,10 +169,28 @@ pub trait Into<T>: Sized {
 }
 ```
 
--   若实现了 `From<U> for T`，则自动实现 `Into<T> for U`，因此推荐实现 `From` 而不是 `Into`；
--   若实现了 `From<U> for T`，则自动实现 `From<T> for T` 和 `Into<T> for T`；
+-   若实现了 `From<T> for U`，则自动实现 `Into<U> for T`，因此推荐实现 `From` 而不是 `Into`，这是因为：
+
+```rust
+impl<T, U> Into<U> for T where U: From<T> {
+    fn into(self) -> U {
+        U::from(self)
+    }
+}
+```
+
+-   `From` 和 `Into` 是自反的：把 `T` 转换为 `T`，会直接返回，这是因为：
+
+```rust
+impl<T> From<T> for T {
+    fn from(t: T) -> T {
+        t
+    }
+}
+```
+
 -   这两种转换 trait 虽然都是用作转换，但是用途不同：
-    -   `From` 主要用在构造函数，用于从 `U` 构造 `T` 的实例；
+    -   `From` 主要用在构造函数，用于从 `T` 构造 `U` 的实例；
     -   `Into` 主要用在函数参数，让参数类型更灵活。
 
 ```rust
@@ -203,6 +221,78 @@ fn main() {
     get_wrap(w);
     get_wrap(1);
     get_wrap(1.1);
+}
+```
+
+### TryFrom 和 TryInto
+
+`From` 和 `Into` 用于不会失败的转换，`TryFrom` 和 `TryInto` 用于可能会失败的转换。
+
+```rust
+pub trait TryFrom<T>: Sized {
+    type Error;
+
+    fn try_from(value: T) -> Result<Self, Self::Error>;
+}
+
+pub trait TryInto<T>: Sized {
+    type Error;
+
+    fn try_into(self) -> Result<T, Self::Error>;
+}
+
+impl<T, U> TryInto<U> for T where U: TryFrom<T> {
+    type Error = U::Error;
+
+    fn try_into(self) -> Result<U, U::Error> {
+        U::try_from(self)
+    }
+}
+```
+
+-   若实现了 `TryFrom<T> for U`，则自动实现 `TryInto<U> for T`，因此推荐实现 `TryFrom` 而不是 `TryInto`，这是因为：
+
+```rust
+impl<T, U> TryInto<U> for T where U: TryFrom<T> {
+    type Error = U::Error;
+
+    fn try_into(self) -> Result<U, U::Error> {
+        U::try_from(self)
+    }
+}
+```
+
+`TryFrom` 和 `TryInto` 的使用场景与 `From` 和 `Into` 基本相同，但有可能发生错误。
+
+```rust
+struct Positive(u32);
+
+#[derive(Debug)]
+struct TryPositiveError;
+
+impl TryFrom<i32> for Positive {
+    type Error = TryPositiveError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        if value <= 0 {
+            Err(TryPositiveError)
+        } else {
+            Ok(Positive(value as u32))
+        }
+    }
+}
+
+fn get_positive<T: TryInto<Positive>>(value: T) -> Result<Positive, TryPositiveError> {
+    match value.try_into() {
+        Ok(v) => Ok(v),
+        Err(_) => Err(TryPositiveError),
+    }
+}
+
+fn main() {
+    let p = Positive::try_from(1);
+    get_positive(p.unwrap());
+    get_positive(1);
 }
 ```
 
@@ -268,59 +358,6 @@ fn main() {
 }
 ```
 
-### TryFrom 和 TryInto
-
-`From` 和 `Into` 用于不会失败的转换，`TryFrom` 和 `TryInto` 用于可能会失败的转换。
-
-```rust
-pub trait TryFrom<T>: Sized {
-    type Error;
-
-    fn try_from(value: T) -> Result<Self, Self::Error>;
-}
-
-pub trait TryInto<T>: Sized {
-    type Error;
-
-    fn try_into(self) -> Result<T, Self::Error>;
-}
-```
-
--   若实现了 `TryFrom<U> for T`，则自动实现 `TryInto<T> for U`，因此推荐实现 `TryFrom` 而不是 `TryInto`；
--   若实现了 `TryFrom<U> for T`，则自动实现 `TryFrom<T> for T` 和 `TryInto<T> for T`。
-
-```rust
-struct Positive(u32);
-
-#[derive(Debug)]
-struct TryPositiveError;
-
-impl TryFrom<i32> for Positive {
-    type Error = TryPositiveError;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        if value <= 0 {
-            Err(TryPositiveError)
-        } else {
-            Ok(Positive(value as u32))
-        }
-    }
-}
-
-fn get_positive<T: TryInto<Positive>>(value: T) -> Result<Positive, TryPositiveError> {
-    match value.try_into() {
-        Ok(v) => Ok(v),
-        Err(_) => Err(TryPositiveError),
-    }
-}
-
-fn main() {
-    let p = Positive::try_from(1);
-    get_positive(p.unwrap());
-    get_positive(1);
-}
-```
-
 ### AsRef 和 AsMut
 
 `AsRef` 和 `AsMut` 用于引用之间的转换，前者用于不可变引用，后者用于可变引用，这种转换要求**不能失败**。
@@ -337,8 +374,8 @@ pub trait AsMut<T: ?Sized> {
 
 `AsRef` 和 `AsMut` 都会自动解引用：
 
--   若实现了 `AsRef<U> for T`，则 `&T`、`&mut T`、`&&mut T` 都能调用 `as_ref`；
--   若实现了 `AsMut<U> for T`，则 `&mut T`、`&mut &mut T` 都能调用 `as_mut`。
+-   若实现了 `AsRef<T> for U`，则 `&U`、`&mut U`、`&&mut U` 都能调用 `as_ref`；
+-   若实现了 `AsMut<T> for U`，则 `&mut U`、`&mut &mut U` 都能调用 `as_mut`。
 
 ```rust
 struct Wrap {
