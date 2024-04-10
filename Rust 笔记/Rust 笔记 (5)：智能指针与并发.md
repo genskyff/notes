@@ -224,6 +224,8 @@ s.drop(); // 错误
 drop(s);  // 正确
 ```
 
+>   `Drop` 与 `Copy` 是互斥的。
+
 ## 共享所有权
 
 所有权规则决定了一个值有且仅有一个所有者，但一个值有多个所有权也是常见的需求，而 `rc::Rc` 就是用于模拟多所有权的类型。该类型在堆上分配内存，并持有一个指向堆数据的引用。通过**引用计数**来记录堆数据被引用的数量，若引用计数为 0，就表示没有任何有效引用，堆数据可以被清理。
@@ -604,7 +606,14 @@ fn main() {
 
 ## 并发 trait
 
-Rust 有两个标识可以进行安全并发的 trait：`std::marker::{Send, Sync}`。其中 `marker` 代表**标记 trait**，表示该 trait 不含任何方法，仅用于标记是否满足相关性质。实现了 `Send` 和 `Sync` 的类型是并发安全的。
+Rust 有两个标记并发安全的 trait：`std::marker::{Send, Sync}`。实现了 `Send` 和 `Sync` 的类型就是并发安全的。
+
+```rust
+pub unsafe auto trait Send {}
+pub unsafe auto trait Sync {}
+```
+
+`auto` 表示编译器会在适当的情况下，自动为数据结构实现该 trait；`unsafe` 表示手动实现该 trait 是不安全的。
 
 ### Send
 

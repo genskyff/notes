@@ -238,6 +238,10 @@ trait MyTrait {
 }
 ```
 
+### 标记 trait
+
+在 `std::marker` 中有一系列**标记 trait**，如 `Sized`、`Copy`、`Send`、`Sync` 和 `Unpin` 等，其中不含任何方法，仅用于标记是否满足相关性质，并在类型检查时起作用。
+
 ## trait 实现
 
 要为类型实现该 trait，就必须实现 trait 中声明的所有项（除非有默认实现），且签名一致。与结构体和枚举的实现类似，通过 `impl` 和 `for` 来定义。
