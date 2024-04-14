@@ -1009,3 +1009,4 @@ git switch -c feat/xxx
 git commit -m "style: xxx"
 ```
 
+>   关于 Git 提交的最佳实践，可参考 [这篇文章](https://medium.com/@saeid/10-essential-practices-for-better-git-commits-and-why-they-matter-3cfc420bf53e)。
