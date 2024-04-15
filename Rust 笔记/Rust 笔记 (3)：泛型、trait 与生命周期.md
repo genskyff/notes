@@ -213,6 +213,52 @@ fn main() {
 }
 ```
 
+## PhantomData
+
+Rust 不允许有未被使用的泛型参数，如两个结构体都含有一个相同类型的字段，但是不允许互相比较，这时可以将字段用泛型结构体来包装一层：
+
+```rust
+struct User {
+    id: Id<Self>,
+}
+
+struct Product {
+    id: Id<Self>,
+}
+
+// 错误，不允许未使用的泛型参数
+struct Id<T> {
+    id: usize,
+}
+```
+
+但由于 Rust 不允许有未使用的泛型参数，因此这样无法通过编译。
+
+在 `std::marker` 中有一个零大小的结构体类型 `PhantomData<T>`，用于那些需要用泛型来做类型检查但实际又用不到或无法使用的情况。
+
+```rust
+use std::marker::PhantomData;
+
+// 正确
+struct Id<T> {
+    id: usize,
+    _marker: PhantomData<T>,
+}
+```
+
+在类型中添加 `PhantomData<T>` 字段将告诉编译器，该类型的行为就好像存储了 `T` 类型的值一样，即使实际上并非如此。
+
+对生命周期参数也是如此，如裸指针是无法使用生命周期的，也可以通过这种方式来解决：
+
+```rust
+struct Foo<'a, T> {
+    data: *const T,
+    _marker: PhantomData<&'a T>,
+}
+```
+
+>   更多关于 `PhantomData` 的信息，可参考 [PhantomData in std::marker](https://doc.rust-lang.org/std/marker/struct.PhantomData.html)。
+
 # 2 trait
 
 **特设多态**指相同行为有多个不同实现，**子类型多态**指子类型可被当成父类型使用。在 Rust 中，前者通过 trait 来支持、后者通过 trait 对象来支持。
