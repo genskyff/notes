@@ -987,19 +987,22 @@ git cherry-pick <commit>[..<end_commit>]
 
 在常见的分支和 commit 消息中，通常使用一些常见的前缀来标识提交的类型。这些前缀并不强制，但可以帮助更好地组织和理解提交历史。
 
--   `style`：代码风格的变更；
+-   `style`：代码风格的更改；
+-   `lint`：代码格式检查和修正；
 -   `refactor`：重构代码；
 -   `fix`：修复 Bug；
 -   `feat`：添加新功能；
--   `chore`：构建过程及相关工具的更改；
--   `test`：测试相关的代码；
+-   `chore`：构建相关的更改；
+-   `test`：测试相关的更改；
 -   `docs`：更新文档或注释；
 -   `perf`：性能优化相关的更改；
 -   `config`：更新配置文件；
--   `cleanup`：清理代码、删除无用的文件或代码片段；
--   `init`：初始化项目或模块；
--   `security`：与安全性相关的更改；
--   `deps`：更新依赖项。
+-   `cleanup`：清理无用的代码或文件；
+-   `init`：初始化相关的更改；
+-   `security`：安全相关的更改；
+-   `deps`：更新依赖；
+-   `wip`：尚未完成的更改；
+-   `ci`：CI 相关的更改。
 
 ```shell
 # 创建用于添加功能的新分支
@@ -1007,6 +1010,9 @@ git switch -c feat/xxx
 
 # 用于修复代码格式的提交
 git commit -m "style: xxx"
+
+# 还可用括号说明具体更改的部分
+git commit -m "chore(webpack): xxx"
 ```
 
 >   关于 Git 提交的最佳实践，可参考 [这篇文章](https://medium.com/@saeid/10-essential-practices-for-better-git-commits-and-why-they-matter-3cfc420bf53e)。
