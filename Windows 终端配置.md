@@ -135,25 +135,29 @@ Function OpenCurrentFolder {
 	Invoke-Item $Path
 }
 
+Function Lsd-Invoke {
+	$params = @('-N') + $args
+    lsd @params
+}
+
 Function LsTree {
 	$params = @('--tree', '--depth', '1') + $args
-    lsd @params
+    Lsd-Invoke @params
 }
 
 Function LsPure {
 	$params = @('--classic') + $args
-    lsd @params
+    Lsd-Invoke @params
 }
 
 Function LsTreePure {
-	$params = @('--tree', '--depth', '1', '--classic') + $args
-    lsd @params
+	$params = @('--classic') + $args
+    LsTree @params
 }
 
 Set-Alias -Name open -Value OpenCurrentFolder
 Set-Alias -Name sudo -Value gsudo
-Set-Alias -Name ls -Value lsd
-Set-Alias -Name ll -Value 'lsd -l'
+Set-Alias -Name ls -Value Lsd-Invoke
 Set-Alias -Name lt -Value LsTree
 Set-Alias -Name lp -Value LsPure
 Set-Alias -Name ltp -Value LsTreePure
