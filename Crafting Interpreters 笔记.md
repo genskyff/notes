@@ -50,7 +50,7 @@
 
 如常量折叠，若某个表达式求值得到的始终是完全相同的值，则可以在编译时进行求值，而非在运行时进行计算，并用其结果替换该表达式的代码。
 
-```c
+```javascript
 a = 10 + 20 + (30 / 2);
 // 替换为
 a = 45;
@@ -58,7 +58,7 @@ a = 45;
 
 更进一步，对更为复杂的表达式也同样可以进行优化：
 
-```c
+```javascript
 sum = 0;
 for (int i = 1; i <= 100; i++)
     sum += i;
@@ -125,3 +125,359 @@ IR 不一定非得是某种特定的中间代码，还可以是其它语言的�
 如 GCC 和 Clang 就是接受 C 代码然后编译为机器码，最终用户可执行生成的文件。而早期的 MRI Ruby 会在遍历语法树时就解析执行，期间没有其它转换。CPython 会将源代码解析转换为字节码，然后在 VM 中执行，所以这两种都可以看做解释器，虽然 CPython 在内部也做了一些编译的工作。实际上在很多语言中，这两种是同时存在的。
 
 ![编译器和解释器](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202404202358866.png)
+
+# 3 The Lox Language
+
+## 3.1 Hello, Lox
+
+```javascript
+// comment
+print "hello world!";
+```
+
+Lox 有着类似 C 的语法，`print` 不是函数，而是内置语句。
+
+## 3.2 A High-Level Language
+
+### 3.2.1 Dynamic typing
+
+Lox 是动态类型的，变量可以存储任何值，同一个变量可以在不同时刻存储不同类型的值。若对类型进行错误的操作（如数字除以字符串），则运行时报错。不使用静态类型的原因是动态类型实现起来更加简单。
+
+### 3.2.2 Automatic memory management
+
+手动管理内存是繁琐且容易出错的，因此使用自动内存管理。
+
+存在两种内存管理技术：
+
+-   引用计数（Reference counting）
+-   垃圾收集（Garbage collection）
+
+## 3.3 Data Types
+
+在 Lox 中，具有以下几种基本类型：
+
+-   Booleans：仅有 `true` 和 `false` 两种值；
+-   Numbers：仅有双精度浮点数，如 `1.23`、`10`；
+-   Strings：使用双引号包裹的字符串，如 `""`、`"foo"`；
+-   Nil：代表没有值，使用 `nil` 表示。
+
+## 3.4 Expressions
+
+内置的基本类型是原子，那么表达式就是分子。
+
+### 3.4.1 Arithmetic
+
+Lox 具备基本算术运算功能：
+
+```javascript
+a + b;
+a - b;
+a * b;
+a / b;
+```
+
+操作符两边的子表达式都是操作数，有两个操作数的运算符称为二元运算符。操作符在中间，也称为中缀操作符。
+
+正负号 `+` / `-` 是一元运算符同时也是前缀操作符，但表达加减法时又是中缀运算符。所有操作符都是针对数字的，其它类型使用是错误的，除了可以使用 `+` 来将两个字符串连接起来。
+
+### 3.4.2 Comparison and equality
+
+Lox 支持返回一个布尔值的比较运算（只支持数字）：
+
+```javascript
+a > b;
+a >= b;
+a < b;
+a <= b;
+```
+
+以及比较任意类型值之间是否相等，操作数可以是不同的类型：
+
+```javascript
+1 == 2;
+"a" != "b";
+1 == "a";
+```
+
+### 3.4.3 Logical operators
+
+Lox 支持逻辑运算：
+
+```javascript
+!true;
+true and false;
+true or false;
+```
+
+`and` 和 `or` 进行的是短路运算。
+
+### 3.4.4 Precedence and grouping
+
+Lox 的操作符都与 C 有着相同优先级，同时还可以使用 `()` 来分组。
+
+```javascript
+var avg = (min + max) / 2;
+```
+
+## 3.5 Statements
+
+表达式的主要作用是产生一个**值**，语句的主要作用是产生一个副作用。如修改某些状态、读取输入或产生输出等。
+
+如 `print` 就是一个语句：
+
+```javascript
+print "hello"
+```
+
+在表达式后跟 `;` 就可以将表达式提升为语句，称为**表达式语句**。
+
+要将一系列语句打包成一个语句，可以放在一个**块**中，同时块还会影响作用域：
+
+```javascript
+{
+    print "hello";
+    print "world";
+}
+```
+
+## 3.6 Variables
+
+使用 `var` 声明变量，如果没有初始化，则默认为 `nil`：
+
+```javascript
+var init_var = 123;
+var uninit_var; // nil
+```
+
+一旦声明完成，则可以通过变量名对其进行访问：
+
+```javascript
+var a = 1;
+print a;
+```
+
+## 3.7 Control Flow
+
+Lox 从 C 中借鉴了几种控制流语句：
+
+```javascript
+if (cond) {
+    print true;
+} else {
+    print false;
+}
+
+while (i < 10) {
+    print i;
+    i = i + 1;
+}
+
+for (var a = 1; a < 10; a = a + 1) {
+    print a;
+}
+```
+
+## 3.7 Functions
+
+Lox 的函数调用与 C 相同：
+
+```javascript
+hello();
+foo(a, b, c);
+```
+
+调用函数必须使用括号，否则就仅仅是指向该函数。
+
+Lox 中通过 `fun` 定义函数：
+
+```javascript
+fun add(a, b) {
+    print a + b;
+}
+```
+
+函数体总是一个块，可以使用 `return` 返回一个值：
+
+```javascript
+fun add(a, b) {
+    return a + b;
+}
+```
+
+若结尾没有 `return`，则隐式返回 `nil`。
+
+### 3.8.1 Closures
+
+在 Lox 中，函数是一等公民，这代表函数也是一种类型，具有值，可以将其存储在变量中，对其传递、引用等。
+
+```javascript
+fun add(a, b) {
+    return a + b;
+}
+
+fun ret_fun(f) {
+    return f
+}
+
+ret_fun(add)(1, 2);
+```
+
+函数声明是语句，因此可以在另一个函数中声明局部函数：
+
+```javascript
+fun f1() {
+    fun f2() {
+        print "nest fun";
+    }
+    
+    f2();
+}
+```
+
+将局部函数、头等函数、块作用域组合在一起：
+
+```javascript
+fun ret_fun() {
+    var value = 123;
+    
+    fun inner() {
+        print value;
+    }
+    
+    return inner;
+}
+
+var f = ret_fun();
+f();
+```
+
+`inner` 函数访问了其外部的局部变量，这代表即使外层函数返回后，`inner` 也保存着这些变量的引用，这些变量依然存在。能做到这一点的函数称为**闭包**。
+
+## 3.9 Classes
+
+Lox 具有动态类型，词法（块）作用域和闭包，所以离函数式和面向对象都比较接近。
+
+### 3.9.3 Classes or prototypes
+
+涉及对象时，有两种方法：**类**和**原型**。在基于类的语言中，有两个核心概念：类和实例。
+
+类包含方法和继承链，是创建实例的模板，实例存储每个对象的状态。要在实例上调用方法，总是需要通过一个中间层查到到实例的类，然后在其中查找方法。
+
+![img](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202404211624224.png)
+
+基于原型的语言融合了这两个概念——只有对象没有类。每个对象都可以包含状态和方法，对象之间可以继承。
+
+![img](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202404211626815.png)
+
+### 3.9.4 Classes in Lox
+
+在 Lox 中，类也是一等公民，可以这样声明一个类及其方法：
+
+```javascript
+class Foo {
+    f1() {
+        print "f1"
+    }
+    
+    f2(name) {
+        print "hello, " + name;
+    }
+}
+
+var alias = Foo;
+```
+
+类的主体包含方法，看起来像没有 `fun` 的函数声明。类声明生效时， Lox 将创建一个类对象，并存储在与类名相同的变量中。
+
+为了简单起见，Lox 不使用 `new` 类创建类实例，而是把类本身当作一个工厂函数，调用一个类就可以生成一个实例：
+
+```javascript
+var foo = Foo();
+print foo;
+```
+
+### 3.9.5 Instantiation and initialization
+
+类除了包含方法，还会包含状态，因此还需要字段。Lox 允许动态地向对象添加属性。
+
+```javascript
+foo.a = 1;
+foo.b = "hello";
+```
+
+若字段不存在，进行赋值时就会先创建。
+
+在方法内部访问对象上的字段或方法，使用 `this`：
+
+```javascript
+class Foo {    
+    hello() {
+        print "hello, " + this.name;
+    }
+}
+```
+
+在对象中封装数据的目的之一是确保对象在创建时处于有效状态。可以定义一个初始化器，若类中包含一个 `init` 方法，则在构造对象时会自动调用该方法：
+
+```javascript
+class User {
+    init(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+  
+    hello() {
+        print "hello, " + this.name;
+    }
+}
+
+var user = User("Alice", 18);
+user.hello();
+```
+
+### 3.9.6 Inheritance
+
+在面向对象的语言中，不仅可以定义方法，而且可以在多个类或对象中重用。Lox 支持使用 `<` 进行单继承：
+
+```javascript
+class VipUser < User {
+    vip() {
+        print "VIP User"
+    }
+}
+```
+
+`VipUser` 是 `User` 的子类或派生类，而 `User` 是基类、父类或超类。子类可以使用父类中的方法，即使是 `init` 方法也会被继承。子类通常也会定义自己的 `init` 方法，但还需要调用父类的初始化方法，以便父类能够维护其状态。这通过 `super` 来实现：
+
+```javascript
+class VipUser < User {
+    init(name, age, lv) {
+        super.init(name, age);
+        this.lv = lv;
+    }
+}
+```
+
+Lox 不是一个纯粹的面向对象语言，在真正的 OOP 语言中，每一个对象都是一个类的实例，包括数字、布尔值这样的基本类型。
+
+## 3.10 The Standard Library
+
+除了语言本身的定义外，剩下的就是用于在解释器中实现的功能集合，称为标准库。在 Lox 中，`print` 属于内置语句而不是标准库的一部分。能够实际可用的语言，其标准库通常包含了徐多功能，如字符串操作，数学库，I/O 操作，网络库等。
+
+## DESIGN NOTE: EXPRESSIONS AND STATEMENTS
+
+Lox 既有表达式也有语句，而有些语言省略了语句，并将声明和控制流也视为表达式。这类语言往往具有函数式的血统，如 Lisp、Haskell、Ruby 等。
+
+对于语言中的每个类似于语句的构造，需要决定其计算的值是什么：
+
+-   `if` 表达式的计算结果是所选分支的结果。同理，`switch` 或其它多路分支的计算结果取决于所选择的情况；
+-   变量声明的计算结果是变量的值；
+-   块的计算结果是块中最后一个表达式的值。
+
+而有些是比较复杂的，如循环应该如何计算？同时还必须决定这些类似语句的表达式如何与其它表达式组合，如 Ruby 允许这种写法：
+
+```
+puts 1 + if true then 2 else 3 end + 4
+```
+
+取消了语句的语言通常还具有**隐式返回**的特点——函数自动返回其函数主体最后一个表达式的值，而不需要显式的 `return`。
