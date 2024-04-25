@@ -606,18 +606,25 @@ trait MyTrait {}
 struct Foo;
 impl MyTrait for Foo {}
 
-// 可以
-fn foo() -> impl MyTrait {
+// 正确
+fn foo1() -> impl MyTrait {
     Foo
 }
 
-// 不可以
-fn foo<T: MyTrait>() -> T {
+// 错误
+fn foo2<T: MyTrait>() -> T {
     Foo
+}
+
+// 正确
+fn foo3<T: MyTrait>(value: T) -> T {
+    value
 }
 ```
 
-因为 `T` 本质上是一个泛型参数，在语义上表示返回任意实现了 `MyTrait` 的类型。这个类型动态的，并在运行时决定，即使函数体中始终返回 `Foo` 这个固定的类型。对于调用者来说，只期望返回一个实现了该 trait 的类型，这个类型可能不是 `Foo`，而 `impl Trait` 在语义上表示始终返回一个确定的类型。
+-   对于 `foo1`，返回实现了 `MyTrait` 的类型，而 `impl MyTrait` 指定了返回值是某个具体实现了 `MyTrait` 的类型，但不指定具体是哪一种类型，而返回值 `Foo` 实现了 `MyTrait`，因此正确。
+-   对于 `foo2`，返回类型 `T` 的值，其中 `T` 是任何实现了 `MyTrait` 的类型。**这里的 `T` 由调用者决定，而不是由函数内部指定**。因此内部返回固定的 `Foo` 类型的实例，这可能不符合调用者的期望，因为调用者可以使用 `foo2::<Bar>()` 这样的形式来调用，导致返回类型不匹配。
+-   对于 `foo3`，接收类型为 `T` 的参数，并返回同样类型为 `T` 的值。这里的 `T` 同样由调用者指定。但函数内部没有假定任何具体的类型，返回什么类型都由调用者来决定，因此正确。
 
 ### 特殊约束
 
@@ -906,26 +913,26 @@ counter.next();
 泛型和关联类型还可以结合使用，如 `max` 接受一个实现了 `IntoIterator` 的作为参数，返回其中的最大值。
 
 ```rust
-fn max<T>(iter: T) -> T::Item
+fn max<T>(v: T) -> T::Item
 where
     T: IntoIterator,
-    T::Item: Ord + Copy,
+    T::Item: Ord,
 {
-    let list: Vec<T::Item> = iter.into_iter().collect();
-    let mut max = list[0];
-    for &e in &list[1..] {
-        if e > max {
-            max = e;
+    let mut iter = v.into_iter();
+    let mut max = iter.next().unwrap();
+    for item in iter {
+        if item > max {
+            max = item;
         }
     }
     max
 }
 
 fn main() {
-    let l1 = [5, 2, 3, 6, 4, 9];
-    let l2 = vec![2, 4, 3, 6, 8, 1];
-    println!("{}", max(l1));
-    println!("{}", max(l2));
+    let v1 = [5, 2, 3, 6, 4, 9];
+    let v2 = vec![2, 4, 3, 6, 8, 1];
+    println!("{}", max(&v1));
+    println!("{}", max(&v2));
 }
 ```
 

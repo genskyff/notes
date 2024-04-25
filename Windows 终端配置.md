@@ -90,14 +90,14 @@ irm get.scoop.sh | iex
 -   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：替代 `cat`；
 -   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：替代 `grep`；
 -   [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)：替代 `cd`；
--   [nvim](https://github.com/neovim/neovim/blob/master/INSTALL.md#scoop)：替代 `vim`；
+-   [neovim](https://github.com/neovim/neovim/blob/master/INSTALL.md#scoop)：替代 `vim`；
 -   [tokei](https://github.com/XAMPPRocky/tokei?tab=readme-ov-file#tokei-%E6%99%82%E8%A8%88)：统计代码行数；
 -   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找。
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep zoxide nvim tokei fzf
+scoop install starship gsudo posh-git lsd bat ripgrep zoxide nveovim tokei fzf
 ```
 
 # 4 配置 PowerShell
