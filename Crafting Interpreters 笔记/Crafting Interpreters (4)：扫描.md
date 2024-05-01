@@ -97,3 +97,91 @@ var language = "lox";
 
 ### 4.2.1 标记类型
 
+**关键字**（Keyword）是语法的重要组成，一个**标识符**（Identifier）不应该和关键字有冲突，因此关键字也是**保留字**（Reserved word）。
+
+解释器在识别词素时，要记住是哪种类型的词素，每个关键字、操作符、标点、字面量等都有不同的类型。
+
+`token_type.rb` 文件：创建一个 `TokenType` 枚举，用于保存标记的类型。由于 Ruby 原生不支持枚举类型，因此在 `Gemfile` 中添加一个 `ruby-enum` 包。
+
+```ruby
+class TokenType
+  include Ruby::Enum
+
+  # Single-character tokens
+  define :LEFT_PAREN, 'LEFT_PAREN'
+  define :RIGHT_PAREN, 'RIGHT_PAREN'
+  define :LEFT_BRACE, 'LEFT_BRACE'
+  define :RIGHT_BRACE, 'RIGHT_BRACE'
+  define :COMMA, 'COMMA'
+  define :DOT, 'DOT'
+  define :MINUS, 'MINUS'
+  define :PLUS, 'PLUS'
+  define :SEMICOLON, 'SEMICOLON'
+  define :SLASH, 'SLASH'
+  define :STAR, 'STAR'
+
+  # One or two character tokens
+  define :BANG, 'BANG'
+  define :BANG_EQUAL, 'BANG_EQUAL'
+  define :EQUAL, 'EQUAL'
+  define :EQUAL_EQUAL, 'EQUAL_EQUAL'
+  define :GREATER, 'GREATER'
+  define :GREATER_EQUAL, 'GREATER_EQUAL'
+  define :LESS, 'LESS'
+  define :LESS_EQUAL, 'LESS_EQUAL'
+
+  # Literals
+  define :IDENTIFIER, 'IDENTIFIER'
+  define :STRING, 'STRING'
+  define :NUMBER, 'NUMBER'
+
+  # Keywords
+  define :AND, 'AND'
+  define :CLASS, 'CLASS'
+  define :ELSE, 'ELSE'
+  define :FALSE, 'FALSE'
+  define :FUN, 'FUN'
+  define :FOR, 'FOR'
+  define :IF, 'IF'
+  define :NIL, 'NIL'
+  define :OR, 'OR'
+  define :PRINT, 'PRINT'
+  define :RETURN, 'RETURN'
+  define :SUPER, 'SUPER'
+  define :THIS, 'THIS'
+  define :TRUE, 'TRUE'
+  define :VAR, 'VAR'
+  define :WHILE, 'WHILE'
+
+  # End of file
+  define :EOF, 'EOF'
+end
+```
+
+### 4.2.2 字面量
+
+字面量有对应词素——数字和字符串等。由于扫描器必须遍历每个字符才能正确识别，所以它还可以将值的文本表示转换为运行时对象，解释器后续将使用该对象。
+
+### 4.2.3 位置信息
+
+当发生错误时，需要抛出错误，并且附上错误对应的行号和其它必要信息。为了简单起见，只实现行号信息，而不包括列位置和长度。
+
+`token.rb` 文件：将这些标记信息都存放在 `Token` 类中。
+
+```ruby
+class Token
+  def initialize(type, lexeme, literal, line)
+    @type = type
+    @lexeme = lexeme
+    @literal = literal
+    @line = line
+  end
+
+  def to_s
+    "#{@type} #{@lexeme} #{@literal}"
+  end
+end
+```
+
+## 4.3 正则语言和表达式
+
