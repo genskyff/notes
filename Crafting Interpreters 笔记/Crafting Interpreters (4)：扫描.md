@@ -68,15 +68,15 @@ end
 
 ```ruby
 class Lox
-  def error(line, message)
+  def error(line, column, message, where = '')
     @has_error = true
-    report(line, '', message)
+    report(line, column, message, where)
   end
 
   private
 
-  def report(line, where, message)
-    puts "[line #{line}] Error #{where}: #{message}"
+  def report(line, column, message, where)
+    puts "[line #{line}:#{column}] Error - #{message}: #{where}"
   end
 end
 ```
@@ -178,7 +178,7 @@ class Token
   end
 
   def to_s
-    "#{@type} #{@lexeme} #{@literal}"
+    format('type: %-13s lexeme: %-13s literal: %s', @type, @lexeme, @literal)
   end
 end
 ```
@@ -266,28 +266,28 @@ end
 
 其中，也使用了一些辅助方法：
 
--   `advance`：从源代码中获取下一个字符并返回；
+-   `advance`：从源代码中获取后面指定个数的字符并返回；
 -   `add_token`：为当前词素添加一个 Token 类型。
 
 ```ruby
 class Scanner
   private
 
-  def advance
-    @current += 1
-    @source[@current - 1]
+  def advance(by = 1)
+    @current += by
+    @source[@current - by...@current]
   end
 
   def add_token(type, literal = nil)
-    text = @source[@start...@current]
-    @tokens << Token.new(type, text, literal, @line)
+    lexeme = @source[@start...@current]
+    @tokens << Token.new(type, lexeme, literal, @line)
   end
 end
 ```
 
 ### 4.5.1 词法错误
 
-当源代码包含了一些 Lox 中不使用的字符，这些无法被识别为词素，就会抛出错误，同时该字符也会被消费，并将 `@current` 加 1。
+当源代码包含了一些 Lox 中不使用的字符，这些无法被识别为词素，就会抛出错误，同时该字符也会被消费，并更新 `@current`。
 
 在 `case` 中添加处理错误的逻辑：
 
@@ -300,7 +300,7 @@ class Scanner
     case char
     # ...
     else
-      @lox.error(@line, 'Unexpected character')
+      @lox.error(@line, @current, 'Unexpected character', @source[@start...@current])
     end
   end
 end
@@ -329,7 +329,7 @@ class Scanner
 end
 ```
 
-其中使用了 `match` 辅助方法，由于在 `advance` 中已经将 `@current` 加 1 了，所以这里直接可以获得下一个字符。
+其中使用了 `match` 辅助方法，由于在 `advance` 中已经将 `@current` 更新了，所以这里直接可以获得下一个字符。
 
 ```ruby
 def match(expected)
@@ -342,7 +342,7 @@ end
 
 ## 4.6 更长的词素
 
-还缺少一个 `/` 操作符，但这个操作符不仅可以表示除法，还可以表示注释，当为注释时，需要把当前行之后的所有字符都消费掉然后调至下一行开始继续识别。
+还缺少一个 `/` 操作符，但这个操作符不仅可以表示除法，还可以表示注释，当为注释时，判断是单行注释还是多行注释，并把表示注释的所有字符都消费掉，然后更新 `@line`
 
 在 `case` 中添加处理 `/` 的逻辑：
 
@@ -356,11 +356,34 @@ class Scanner
     # ...
     when '/'
       if match('/')
-        advance while peek != "\n" && !at_end?
+        skip_line_comment
+      elsif match('*')
+        skip_block_comment
       else
         add_token(TokenType::SLASH)
       end
     # ...
+  end
+end
+```
+
+添加 `skip_line_comment` 和 `skip_block_comment` 辅助方法：
+
+```ruby
+class Scanner
+  private
+
+  def skip_line_comment
+    advance while peek != "\n" && !at_end?
+  end
+
+  def skip_block_comment
+    advance
+    while !(peek == '*' && peek(1) == '/') && !at_end?
+      @line += 1 if peek == "\n"
+      advance
+    end
+    advance(2)
   end
 end
 ```
@@ -383,7 +406,7 @@ class Scanner
 end
 ```
 
-对于注释选择无视，对于空白字符，同样也可以无视，当遇到换行符时，将 `@line` 加 1。
+对于注释选择无视，对于空白字符，同样也可以无视，当遇到换行符时，更新 `@line`。
 
 ```ruby
 class Scanner
@@ -431,10 +454,13 @@ class Scanner
       @line += 1 if peek == "\n"
       advance
     end
-    @lox.error(@line, 'Unterminated string') if at_end?
+    if at_end?
+      @lox.error(@line, @current, 'Unterminated string', @source[@start...@current])
+      return
+    end
     advance
-    value = @source[(@start + 1)...(@current - 1)]
-    add_token(TokenType::STRING, value)
+    literal = @source[(@start + 1)...(@current - 1)]
+    add_token(TokenType::STRING, literal)
   end
 end
 ```
@@ -469,7 +495,7 @@ class Scanner
     char = advance
     case char
     # ...
-    when '0'..'9' then number
+    when /[0-9]/ then number
     # ...
   end
 end
@@ -492,7 +518,103 @@ class Scanner
 end
 ```
 
-由于在运行时所有数字都已浮点数表示，因此最后使用 `to_f` 转换。
+由于在运行时所有数字都由浮点数表示，因此最后使用 `to_f` 转换。
 
 ## 4.7 保留字和标识符
 
+词法语法中还需要实现的部分仅剩保留字和标识符了。如果采用之前多字符操作符匹配的方法，那么当遇到 `orchid` 这种标识符时，会直接将前两个字符 `or` 识别为 `OR` Token，这样肯定是不对的。
+
+针对这种情况，扫描器采取**最长匹配**（Maximal munch）原则：当多个语法规则都能匹配扫描器正在处理的一段代码时，使用匹配字符最多的那个。这表示只有在扫描完一个可能是标识符的全部片段，才能确认是否是一个保留字，因为保留字本质上也是一个标识符，只不过被语言本身所使用。
+
+可以将 `orchid` 匹配为一个 `or` 关键字和一个 `chid` 标识符，也可以匹配为一个 `orchid` 标识符，根据该原则，则使用后者。
+
+首先任何以字母或下划线开头的词素都是一个标识符：
+
+```ruby
+class Scanner
+  private
+
+  def scan_token
+    char = advance
+    case char
+    # ...
+    when /[a-zA-Z_]/ then identifier
+    # ...
+  end
+end
+```
+
+添加辅助方法 `identifier`，先一直匹配属于标识符的字符，然后判断该标识符是否属于保留字。
+
+```ruby
+class Scanner
+  private
+
+  def identifier
+    advance while peek.match?(/[a-zA-Z0-9_]/)
+    lexeme = @source[@start...@current]
+    type = TokenType.key(lexeme.upcase) if TokenType.key?(lexeme.upcase.to_sym)
+    type ||= TokenType::IDENTIFIER
+    add_token(type)
+  end
+end
+```
+
+## 设计笔记：隐藏的分号
+
+很多语言对表达式和语句的处理是有差别的。如使用 `;` 作为语句的结束，或使用换行作为语句的结束。尽管大多数的语句都是在同一行，但如果需要将一个语句扩展到多行，这其中的换行符就不应该被视为语句结束符。
+
+在大多数明显忽略换行的情况下都比较容易辨别，但也有少数难以区分的情况。
+
+-   返回值在下一行：
+
+```javascript
+if (cond) return
+"value"
+```
+
+`"value"` 是代表返回值还是一个单纯的放在 `if` 后的字符串字面量的表达式语句？
+
+-   下一行中带有圆括号的表达式：
+
+```javascript
+foo
+(a)
+```
+
+这是一个 `foo(a)` 的函数调用还是两个表达式语句？
+
+-   `-` 在下一行：
+
+```javascript
+a
+-b
+```
+
+这是一个 `a - b` 表达式还是两个表达式语句？
+
+在所有上面这些情况下，无论是否将换行视为分隔符，都会产生有效的代码，虽然可能和代码的意图不一样。在不同的语言中，有不同的规则来区分哪些是换行那些是分隔符。
+
+-   Lua 完全忽略换行，下面代码是合法的：
+
+```lua
+a = 1 b = 2
+```
+
+Lua 还要求 `return` 必须是块中最后一条语句。
+
+-   Go 会处理换行符，如果在词法单元之后出现，且该词法标记是已知可能结束语句的少数标记类型之一，则将其视为分隔符，否则就忽略。
+
+-   Python 将所有换行符视为有效，除非在行末使用 `\` 来延续到下一行，但 `[]`、`()` 和 `{}` 内的任何换行都会被忽略。因此 Python 要求 Lambda 必须在同一行上，否则还需要一套不同的隐式连接行的规则。
+
+    这确保了语句永远不会出现在表达式内。C 语言也是如此，但是很多带有 Lambda 的语言则不然，如 JavaScript：
+
+```javascript
+console.log(() => {
+    foo();
+});
+```
+
+`console.log()` 表达式包含了一个函数，这个函数又包含了 `foo` 语句。
+
+-   JavaScript 还有自动分号插入规则。在很多语言中，大部分的换行都是有意义的，只有少数换行应该在多行语句中被忽略。而 JavaScript 相反，将所有换行都视为无意义空白，除非遇到解析错误，如果遇到了，则会把前面遇到的换行变成分号以期望得到正确的语法。
