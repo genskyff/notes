@@ -136,6 +136,7 @@ IR 不一定非得是某种特定的中间代码，还可以是其它语言的�
 
 ```javascript
 // comment
+/* comment */
 print "hello world!";
 print "hello " + "world!";
 ```
