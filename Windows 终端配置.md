@@ -97,7 +97,7 @@ irm get.scoop.sh | iex
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep zoxide nveovim tokei fzf
+scoop install starship gsudo posh-git lsd bat ripgrep zoxide neovim tokei fzf
 ```
 
 # 4 配置 PowerShell
