@@ -20,7 +20,7 @@
 
 ### 2.1.2 语法分析
 
-然后是**语法分析**（Parsing），解析器（Parser）将由词法分析得到的词法单元序列转化为树形结构，也叫**解析树**（Parse tree）或**抽象语法树**（Abstract syntax tree，AST），该结构能够反映语法的嵌套关系。此外，解析器还会分析词法单元序列中的语法错误。
+然后是**语法分析**（Parsing），解析器（Parser）将由词法分析得到的词法单元序列（Tokens）转化为树形结构，也叫**解析树**（Parse tree）或**抽象语法树**（Abstract syntax tree，AST），该结构能够反映语法的嵌套关系。此外，解析器还会分析词法单元序列中的语法错误。
 
 ![AST](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202404202359566.png)
 

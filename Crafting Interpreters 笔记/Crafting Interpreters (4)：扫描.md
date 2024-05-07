@@ -202,11 +202,12 @@ class Scanner
     @start = 0
     @current = 0
     @line = 1
+    @column = 0
   end
 end
 ```
 
-`@tokens` 用于保存每次扫描后的 Token，`@start` 表示当前词素开头的字符下标，`@current` 表示当前扫描的字符下标，`@line` 表示 `@current` 所在行数。
+`@tokens` 用于保存每次扫描后的 Token，`@start` 表示当前词素开头的字符下标，`@current` 表示当前扫描的字符下标，`@line` 表示 `@current` 所在行数，`@column` 表示当前字符所在列数。
 
 然后添加 `scan_tokens` 方法：
 
@@ -275,6 +276,7 @@ class Scanner
 
   def advance(by = 1)
     @current += by
+    @column += by
     @source[@current - by...@current]
   end
 
@@ -300,7 +302,7 @@ class Scanner
     case char
     # ...
     else
-      @lox.error(@line, @current, 'Unexpected character', @source[@start...@current])
+      @lox.error(@line, @column, 'Unexpected character', @source[@start...@current])
     end
   end
 end
@@ -336,6 +338,7 @@ def match(expected)
   return false if at_end? || @source[@current] != expected
 
   @current += 1
+  @column += 1
   true
 end
 ```
@@ -420,6 +423,7 @@ class Scanner
       # Ignore whitespace
     when "\n"
       @line += 1
+      @column = 0
     # ...
   end
 end
@@ -455,7 +459,7 @@ class Scanner
       advance
     end
     if at_end?
-      @lox.error(@line, @current, 'Unterminated string', @source[@start...@current])
+      @lox.error(@line, @column, 'Unterminated string', @source[@start...@current])
       return
     end
     advance
@@ -465,7 +469,7 @@ class Scanner
 end
 ```
 
-可以看到，Lox 支持多行字符串，并在遇到新行时更新 `@line` 值，并在创建 Token 时，把前后的引号剥离，因此取 `@start + 1...@current - 1`。
+可以看到，Lox 支持多行字符串，并在遇到新行时更新 `@line` 和重置 `@column`，并在创建 Token 时，把前后的引号剥离，因此取 `@start + 1...@current - 1`。
 
 ### 4.6.2 数字字面量
 
