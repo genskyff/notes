@@ -1,13 +1,15 @@
-1.  **逻辑运算符**：
+# 常用数学符号的 Latex 写法
+
+1.  **联结词**
     -   逻辑与：`\and`
     -   逻辑或：`\or`
     -   逻辑非：`\neg`
     -   蕴含：`\rightarrow`
     -   等价：`\leftrightarrow`
-2.  **量词**：
+2.  **量词**
     -   存在量词：`\exists`
     -   全称量词：`\forall`
-3.  **集合和关系**：
+3.  **集合和关系**
     -   属于：`\in`
     -   不属于：`\notin`
     -   子集：`\subset`
@@ -18,7 +20,7 @@
     -   交集：`\cap`
     -   差集：`\setminus`
     -   对称差集：`\oplus`
-4.  **证明结束符号**：
+4.  **证明结束符号**
     -   QED 符号：`\blacksquare`
 
 # 1 命题逻辑
@@ -179,7 +181,7 @@ n 个命题变项，共有 $2^n$ 个可能的赋值，对于每个赋值，$F$ �
 
 ### 常用等值式
 
-| 等值式         | 命题公式                                                     |
+| 名称           | 命题公式                                                     |
 | -------------- | ------------------------------------------------------------ |
 | 双重否定律     | $\neg\neg A \Leftrightarrow A$                               |
 | 幂等律         | $A \or A \Leftrightarrow A$<br />$A \and A \Leftrightarrow A$ |
@@ -209,4 +211,184 @@ n 个命题变项，共有 $2^n$ 个可能的赋值，对于每个赋值，$F$ �
 >   由于 A 与 B 等值，对任意赋值，A 与 B 的值都相等，分别带入 $\Phi$，其结果显然相同。
 
 ## 1.4 范式
+
+同一真值函数所对应的所有命题公式具有相同的标准型：主析取范式和主合取范式。
+
+>   **定义 1.12**
+>
+>   仅由有限个命题变项或其否定构成的析取式称为**简单析取式**，仅由有限个命题变项或其否定构成的合取式称为**简单合取式**。
+
+如 $p$、$\neg p$、$p \or q$、$p \or \neg q$ 都是简单析取式，$p$、$\neg p$、$p \and q$、$p \and \neg q$​ 都是简单合取式。
+
+从定义可以看出：
+
+-   一个简单析取式是重言式，当且仅当同时含有一个命题变项及其否定
+-   一个简单合取式是矛盾式，当且仅当同时含有一个命题变相及其否定
+
+>   **定义 1.13**
+>
+>   仅由有限个简单合取式构成的析取式称为**析取范式**，仅由有限个简单析取式构成的合取式称为**合取范式**。
+
+如 $p \or q \or \neg r$、$(p \and q) \or (\neg p \and r)$ 是析取范式，$p \or q \or \neg r$、$(p \or q) \and (\neg p \or r)$ 是合取范式，其中 $p \or q \or \neg r$ 既可看作是含 3 个简单合取式的析取范式，也可看作是含 1 个简单析取式的合取范式。
+
+析取范式与合取范式具有以下性质：
+
+-   一个析取范式是矛盾式，当且仅当每个简单合取式都是矛盾式
+-   一个合取范式是重言式，当且仅当每个简单析取式都是重言式。
+
+给定任意命题公式，都能通过等值演算求出与之等值的析取范式与合取范式：
+
+1.   消去 $\rightarrow$ 和 $\leftrightarrow$
+     $$
+     p \rightarrow q \Leftrightarrow \neg p \or q \\
+     p \leftrightarrow q \Leftrightarrow (\neg p \or q) \and (p \or \neg q)
+     $$
+
+2.   消去 $\neg$ 或内移
+     $$
+     \neg\neg p \Leftrightarrow p \\
+     \neg (p \and q) \Leftrightarrow \neg p \or \neg q \\
+     \neg (p \or q) \Leftrightarrow \neg p \and \neg q
+     $$
+     
+3.   求析取范式应使用 $\and$ 对 $\or$ 求分配律，求合取范式应使用 $\or$ 对 $\and$ 求分配律
+
+任意命题公式，经过以上三步演算，都可得到与它等值的析取范式或合取范式。
+
+>   **定理 1.2** 
+>
+>   范式存在定理：任一命题公式都存在与之等值的析取范式和合取范式，但不唯一。
+
+求 $((p \or q) \rightarrow r) \rightarrow p$ 的析取范式和合取范式。
+
+1.   求析取范式
+     $$
+     (\neg (p \or q) \or r) \rightarrow p \\
+     \Leftrightarrow \neg (\neg (p \or q) \or r) \or p \\
+     \Leftrightarrow \neg ((\neg p \and \neg q) \or r) \or p \\
+     \Leftrightarrow (\neg (\neg p \and \neg q) \and \neg r) \or p \\
+     \Leftrightarrow ((p \or q) \and \neg r) \or p \\
+     \Leftrightarrow (p \and \neg r) \or (q \and \neg r) \or p \\
+     \Leftrightarrow p \or (q \and \neg r)
+     $$
+
+2.   求合取范式
+
+     前 4 步相同，第 5 步应用不同的分配律。
+     $$
+     (\neg (p \or q) \or r) \rightarrow p \\
+     \Leftrightarrow ((p \or q) \and \neg r) \or p \\
+     \Leftrightarrow (p \or q \or p) \and (\neg r \or p) \\
+          \Leftrightarrow (p \or q) \and (\neg r \or p)
+     $$
+
+由于析取范式与合取范式的不唯一性，因而析取范式与合取范式不能作为同一真值函数所对应的命题公式的标准形式。
+
+>   **定义 1.14**
+>
+>   设有 n 个命题变项，若在简单合取式中每个命题变项与其否定有且仅有一个出现一次，则这样的简单合取式称为**极小项**。在极小项中，命题变项与其否定通常按下角标或字典顺序排列。
+
+3 个命题变项 p、q、r 可形成 $2^3$​ 个极小项。若将命题变项看成 1，命题变项的否定看成0，则每个极小项对应一个二进制数，这个二进制数正好是该极小项的成真赋值，其对应的十进制数作为该极小项符号的角码。
+
+|            简单合取式            | 二进制 | 记作  |
+| :------------------------------: | :----: | :---: |
+| $\neg p \and \neg q \and \neg r$ |  000   | $m_0$ |
+|   $\neg p \and \neg q \and r$    |  001   | $m_1$ |
+|   $\neg p \and q \and \neg r$    |  010   | $m_2$ |
+|      $\neg p \and q \and r$      |  011   | $m_3$ |
+|   $p \and \neg q \and \neg r$    |  100   | $m_4$ |
+|      $p \and \neg q \and r$      |  101   | $m_5$ |
+|      $p \and q \and \neg r$      |  110   | $m_6$ |
+|        $p \and q \and r$         |  111   | $m_7$ |
+
+通常 n 个命题变项共产生 $2^n$ 个极小项，分别记为 $m_0, \, m_1, \, m_2, \, ..., \, m_{n - 1}$。
+
+>   **定义 1.15**
+>
+>   若命题公式 A 的析取范式中的简单合取式全是极小项，则称该析取范式为 A 的**主析取范式**。
+
+>   **定理 1.3**
+>
+>   任何命题公式都有唯一的主析取范式。
+
+求命题公式 A 的主析取范式的步骤：
+
+1.   求 A 的析取范式 A'
+
+2.   若 A' 的某简单合取式 B 种不含命题变项 $p_i$，也不含 $\neg p_i$，则将 B 展开成：
+     $$
+     B \Leftrightarrow B \and 1 \Leftrightarrow B \and (p_i \or \neg p_i) \Leftrightarrow (B \and p_i) \or (B \and \neg p_i)
+     $$
+     若 B 种不含多个这样的 $p_i$，则同时合取所有这样的 $p_i$ 与 $\neg p_i$ 的析取
+
+3. 消去重复出现的命题变项、极小项和矛盾式
+
+4. 将极小项按角标升序排序
+
+求 $((p \or q) \rightarrow r) \rightarrow p$ 的主析取范式：
+$$
+((p \or q) \rightarrow r) \rightarrow p \\
+\Leftrightarrow p \or (q \and \neg r) \quad (析取范式) \\
+\Leftrightarrow p \and (q \or \neg q) \and (r \or \neg r) \or (p \or \neg p) \and (q \and \neg r) \\
+\Leftrightarrow (p \and \neg q \and \neg r) \or (p \and q \neg r) \or (p \and \neg q \and r) \\
+\or (p \and q \and r) \or (\neg p \and q \and \neg r) \or (p \and q \and \neg r) \\
+\Leftrightarrow m_4 \or m_6 \or m_5 \or m_7 \or m_2 \or m_6 \\
+\Leftrightarrow m_2 \or m_4 \or m_5 \or m_6 \or m_7
+$$
+由极小项的定义可知，上式中，2、4、5、6、7 的二进制表示就为原公式的成真赋值，而此公式的主析取范式中没出现的极小项 $m_0$、$m_1$、$m_3$ 则为原公式的成假赋值。
+
+因此只要知道了一个命题公式的主析取范式，可立即写出其真值表，反之亦然。
+
+主析取范式有以下用途：
+
+1.   判断两命题公式是否等值：由于任何命题公式的主析取范式都是唯一的，因此若 $A \leftrightarrow B$，说明 A 与 B 有相同的主析取范式，反之亦然。
+2.   判断命题公式类型：设 A 是含 n 个命题变项的命题公式
+     -   A 为重言式，当且仅当 A 的主析取范式中含全部 $2^n$ 个极小项
+     -   A 为矛盾式，当且仅当 A 的主析取范式中不含任何极小项，此时记 A 的主析取范式为 0
+     -   若 A 的主析取范式中至少含一个极小项，则 A 是可满足式
+
+主析取范式的对偶形式为主合取范式。
+
+>   **定义 1.16**
+>
+>   设有 n 个命题变项，若在简单析取式中每个命题变项与其否定有且仅有一个出现一次，则这样的简单析取式称为**极大项**。在极大项中，命题变项与其否定通常按下角标或字典顺序排列。
+
+n 个命题变项可产生 $2^n$ 个极大项，分别记为 $M_0, \, M_1, \, M_2, \, ..., \, M_{n - 1}$。每个极大项对应一个二进制数，这个二进制数正好是该极大项的成假赋值，其对应的十进制数作为该极大项符号的角码。
+
+>   **定义 1.17**
+>
+>   若命题公式 A 的合取范式中的简单析取式全是极大项，则称该合取范式为**主合取范式**。
+
+>   **定理 1.4**
+>
+>   任一命题公式都有唯一的主合取范式。
+
+求命题公式 A 的主合取范式与求主析取范式的步骤类似，也是先求出合取范式 A'，若 A' 的某简单析取式 B 中不含命题变项 $p_i$，也不含 $\neg p_i$，则将 B 展开成：
+$$
+B \Leftrightarrow B \or 0 \Leftrightarrow B \or (p_i \and \neg p_i) \Leftrightarrow (B \or p_i) \and (B \or \neg p_i)
+$$
+只要求出了命题公式 A 的主析取范式，就可以立即得到主合取范式，反之亦然。
+
+极小项与极大项之间的关系为：
+$$
+\neg m_i \Leftrightarrow M_i, \quad \neg M_i \Leftrightarrow m_i
+$$
+设命题公式 A 中含 n 个命题变项，且设 A 的主析取范式中含 k 个极小项，则 $\neg A$ 的主析取范式中必含其余的 $2^{n - k}$​ 个极小项。
+
+由此可得出由命题公式 A 的主析取范式求主合取范式的步骤：
+
+1.   求出 A 的主析取范式
+2.   A 的主析取范式中没出现的极小项的角码为极大项的角码
+3.   由这些极大项构成的合取式即为 A 的主合取范式
+
+如 A 含有三个命题变项，其主析取范式为：
+$$
+A \Leftrightarrow m_0 \or m_1 \or m_5 \or m_7
+$$
+则主合取范式为：
+$$
+A \Leftrightarrow M_2 \and M_3 \and M_4 \and M_6
+$$
+
+## 1.5 联结词全功能集
 
