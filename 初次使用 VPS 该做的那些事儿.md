@@ -318,4 +318,3 @@ cat /etc/group
 ```bash
 cut -d: -f1 /etc/passwd
 ```
-
