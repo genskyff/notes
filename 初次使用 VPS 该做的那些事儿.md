@@ -9,7 +9,7 @@
 ## 更新软件包
 
 ```shell
-apt update && apt -y upgrade
+apt update && apt upgrade -y
 ```
 
 ## 安装软件包
