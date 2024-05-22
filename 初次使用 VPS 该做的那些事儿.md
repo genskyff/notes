@@ -1,44 +1,30 @@
+>   Linux 环境：Debian 12
+
 # 1 前言
 
-一般来说，从 IDC 购买 VPS 后，需要通过 SSH 登录来进行操作，第一次通常以 root 登录，默认端口通常为 22 ，之后建议做以下几件事，本文以 Debian 为例。
+一般来说，从 IDC 购买 VPS 后，需要通过 SSH 登录来进行操作，第一次通常以 root 登录，默认端口通常为 22 ，之后建议做以下几件事。
 
 # 2 更新及安装软件包
 
 ## 更新软件包
 
-```bash
+```shell
 apt update && apt -y upgrade
 ```
 
-## 安装基本软件包
+## 安装软件包
 
-- 文本编辑器 `vim`
-- 下载工具 `wget`、`curl`
-- 分布式版本控制系统 `git`
-- 时间同步服务 `ntp`
-- 解压缩工具 `unzip`
-- 窗口管理工具 `screen`
-- 系统信息工具 `neofetch`
-- 进程监控与管理工具 `htop`
-- 网络工具 `net-tools`、`socat`、`netcat`
-- 编译工具 `build-essential`
-- 编程接口 `libunwind8`
-- 虚拟技术查询工具 `virt-what`
-
-
-执行以下命令全部安装：
-
-```bash
-apt -y install vim wget curl git ntp unzip screen neofetch htop net-tools socat netcat build-essential libunwind8 virt-what
+```shell
+apt install -y bat build-essential curl fzf git iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat sudo tmux unzip vim virt-what wget zsh zsh-autosuggestions zsh-syntax-highlighting
 ```
 
 # 3 登录设置
 
 ## 用户设置
 
-### 更改当前用户密码
+### 修改当前用户密码
 
-```bash
+```shell
 passwd
 ```
 
@@ -46,27 +32,32 @@ passwd
 
 ### 添加用户
 
-由于 root 拥有全部权限，且默认使用 root 有安全隐患，所以需要添加一个普通用户，并加入到 sudo 组：
+若默认使用 root，则添加一个普通用户，并加入到 sudo 组：
 
-```bash
-useradd -G sudo -d /home/admin -s /bin/bash -m admin && passwd admin
+```shell
+useradd -G sudo -d /home/<username> -s /bin/bash -m <username> 
+passwd <username>
+```
+
+若要把已存在用户添加到 sudo 组：
+
+```shell
+sudo usermod -aG sudo <username>
 ```
 
 使 sudo 组用户免密码使用 sudo 命令，编辑 sudo 配置文件：
 
-```bash
-visudo
+```shell
+sudo visudo
 ```
 
-找到：
+修改配置：
 
-```
+```shell
+# 找到
 %sudo   ALL=(ALL:ALL) ALL
-```
 
-替换为：
-
-```
+# 替换为
 %sudo   ALL=(ALL:ALL) NOPASSWD:ALL
 ```
 
@@ -74,13 +65,13 @@ visudo
 
 切换为普通用户：
 
-```bash
-su - admin
+```shell
+su - <username>
 ```
 
 切换为 root：
 
-```bash
+```shell
 su -
 ```
 
@@ -88,21 +79,21 @@ su -
 
 编辑 SSH 配置文件：
 
-```bash
-vim /etc/ssh/sshd_config
+```shell
+sudo vim /etc/ssh/sshd_config
 ```
 
 ### 修改默认 SSH 端口
 
-一般默认端口为 `22`，找到这一行，把前面的注释 `#` 去掉（如果有），再把端口号改为其它的（1024 ~ 65535）。
+找到这行，改为其它端口（1024 ~ 65535）。
 
-```
-Port 22 # 改为其它端口
+```shell
+Port 12345
 ```
 
 ### 禁用 root 登录（可选）
 
-找到这一行，并把参数改为 `no`：
+找到这行，并把改为 `no`：
 
 ```
 PermitRootLogin no
@@ -114,40 +105,40 @@ PermitRootLogin no
 
 若需要更好的安全性，可以使用密钥进行登录，以普通用户为例，先切换为普通用户：
 
-```bash
-su - admin
+```shell
+su - <username>
 ```
 
 生成密钥：
 
-```bash
+```shell
 ssh-keygen -t ed25519
 ```
 
-这时会在 `~/.ssh` 目录下生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，分别是**私钥**和**公钥**，公钥是放在服务器上的，私钥是放在自己主机上的。
+这时会在 `~/.ssh` 目录下生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，分别是**私钥**和**公钥**，公钥放服务器，私钥放本机。
 
->   **推荐使用自己主机上的 SSH 工具来生成密钥文件（如 SSH-Keygen 或 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH 的尴尬局面**。
+>   推荐使用本机上 SSH 工具来生成密钥文件（如 SSH-Keygen 或 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH。
 
-在服务器上安装公钥：
+在服务器上放置公钥：
 
-```bash
-cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
+```shell
+cat ~/.ssh/id_ed25519.pub > ~/.ssh/auth_key
 ```
 
-修改 `~/.ssh` 目录和 `~/.ssh/authorized_keys` 文件的权限：
+修改 `~/.ssh` 目录和 `~/.ssh/auth_key` 文件的权限：
 
-```bash
-chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh
+```shell
+chmod 600 ~/.ssh/auth_key && chmod 700 ~/.ssh
 ```
 
 在配置文件中找到以下几行，把前面的注释 `#` 去掉（如果有），并修改为以下参数：
 
-```
+```shell
 # 允许公钥验证
 PubkeyAuthentication yes
 
 # 指定公钥文件
-AuthorizedKeysFile .ssh/authorized_keys
+AuthorizedKeysFile ~/.ssh/auth_key
 
 # 禁用密码登录
 PasswordAuthentication no
@@ -159,8 +150,8 @@ PasswordAuthentication no
 
 每次修改配置后，需重启 SSH 服务：
 
-```bash
-service ssh restart
+```shell
+systemctl restart ssh 
 ```
 
 # 4 开启 Google BBR
@@ -169,35 +160,18 @@ BBR 具有 TCP 加速的作用，可以用来提升网络性能，一般 4.9 及
 
 ## 修改 sysctl 配置
 
-```bash
-bash -c 'echo "fs.file-max = 51200
-net.core.rmem_max = 67108864
-net.core.wmem_max = 67108864
-net.core.netdev_max_backlog = 250000
-net.core.somaxconn = 4096
-net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_tw_recycle = 0
-net.ipv4.tcp_fin_timeout = 30
-net.ipv4.tcp_keepalive_time = 1200
-net.ipv4.ip_local_port_range = 10000 65000
-net.ipv4.tcp_max_syn_backlog = 8192
-net.ipv4.tcp_max_tw_buckets = 5000
-net.ipv4.tcp_fastopen = 3
-net.ipv4.tcp_mem = 25600 51200 102400
-net.ipv4.tcp_rmem = 4096 87380 67108864
-net.ipv4.tcp_wmem = 4096 65536 67108864
-net.ipv4.tcp_mtu_probing = 1
-net.ipv4.tcp_congestion_control = hybla" >> /etc/sysctl.conf && sysctl -p'
+```shell
+sudo sh -c 'echo "net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && sysctl -p'
 ```
 
 ## 确认 BBR 已启用
 
 以下三条命令执行完后，若结果中带有 `bbr` 字样就算成功启用：
 
-```bash
+```shell
 sysctl net.ipv4.tcp_available_congestion_control
-sysctl -n net.ipv4.tcp_congestion_control
+sysctl net.ipv4.tcp_congestion_control
 lsmod | grep bbr
 ```
 
@@ -205,7 +179,7 @@ lsmod | grep bbr
 
 由于一般系统对资源都有限制，这里修改其数值以放宽限制来提升性能。
 
-```bash
+```shell
 echo "* soft nofile 51200
 * hard nofile 51200" >> /etc/security/limits.conf && ulimit -n 51200
 ```
@@ -216,7 +190,7 @@ echo "* soft nofile 51200
 
 查看 iptables 配置：
 
-```bash
+```shell
 iptables -L
 ```
 
@@ -224,8 +198,8 @@ iptables -L
 
 根据需求进行配置，这里仅作参考（以下全部复制粘贴执行）：
 
-```bash
-bash -c 'echo "*filter
+```shell
+sh -c 'echo "*filter
 
 # 允许所有出
 -A OUTPUT -j ACCEPT
@@ -258,63 +232,29 @@ COMMIT" > /etc/iptables.rules'
 
 使规则立即生效：
 
-```bash
+```shell
 iptables-restore < /etc/iptables.rules
 ```
 
 使规则开机启动：
 
-```bash
-bash -c 'echo "#!/bin/bash
+```shell
+sh -c 'echo "#!/bin/bash
 /sbin/iptables-restore < /etc/iptables.rules" > /etc/network/if-pre-up.d/iptables && chmod +x /etc/network/if-pre-up.d/iptables'
 ```
 
 # 6 其它常用操作
 
-## 查看系统的总体信息、硬盘及网络性能
+```shell
+# 测试硬盘及网络性能
+wget -qO- bench.sh | bash
 
-```bash
-neofetch && wget -qO- bench.sh | bash
-```
-
-## 查看与管理系统进程
-
-```bash
-htop
-```
-
-## 查看 VPS 使用的虚拟技术
-
-```bash
-virt-what
-```
-
-## 查看系统信息及版本
-
-```bash
-uname -a && lsb_release -a
-```
-
-## 查看硬盘分区及各分区使用量
-
-```bash
+# 查看硬盘分区及各分区使用量
 fdisk -l && df -h
-```
 
-## 查看已建立的连接
-
-```bash
-netstat -antp
-```
-
-## 查看所有组
-
-```bash
+# 查看所有组
 cat /etc/group
-```
 
-## 查看所有用户
-
-```bash
+# 查看所有用户
 cut -d: -f1 /etc/passwd
 ```

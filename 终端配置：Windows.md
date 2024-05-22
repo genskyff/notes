@@ -1,6 +1,4 @@
-
-
->   PC 环境：Windows 11 x64
+>    环境：Windows 11 x64
 
 # 1 终端环境
 
@@ -76,28 +74,16 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 [Scoop](https://scoop.sh/) 是 Windows 下的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 Scoop 来安装。
 
 ```powershell
-# 安装
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 irm get.scoop.sh | iex
 ```
 
 ## 实用工具
 
--   [Starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)：个性化终端。要使用默认以外的主题，需从可在 [预设主题](https://starship.rs/presets/#nerd-font-symbols) 下载配置文件，并重命名为 `starship.toml` 后放在 `~\.config\`；
--   [gsudo](https://gerardog.github.io/gsudo/docs/install)：Windows 版 `sudo`；
--   [posh-git](https://github.com/dahlbyk/posh-git?tab=readme-ov-file#installation)：在 PowerShell 中显示 Git 状态并自动补全 Git 命令；
--   [LSD](https://github.com/lsd-rs/lsd?tab=readme-ov-file#installation)：替代 `ls`；
--   [BAT](https://github.com/sharkdp/bat?tab=readme-ov-file#installation)：替代 `cat`；
--   [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)：替代 `grep`；
--   [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)：替代 `cd`；
--   [neovim](https://github.com/neovim/neovim/blob/master/INSTALL.md#scoop)：替代 `vim`；
--   [tokei](https://github.com/XAMPPRocky/tokei?tab=readme-ov-file#tokei-%E6%99%82%E8%A8%88)：统计代码行数；
--   [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#windows)：命令行模糊查找。
-
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install starship gsudo posh-git lsd bat ripgrep zoxide neovim tokei fzf
+scoop install bat fzf gsudo lsd posh-git ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
@@ -162,7 +148,6 @@ Set-Alias -Name lt -Value LsTree
 Set-Alias -Name lp -Value LsPure
 Set-Alias -Name ltp -Value LsTreePure
 Set-Alias -Name cat -Value bat
-Set-Alias -Name vim -Value nvim
 ```
 
 使配置生效：
