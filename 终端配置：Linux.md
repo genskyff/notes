@@ -89,6 +89,7 @@ echo "source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ${ZDOTDI
 
 ```shell
 echo 'alias vim=nvim
+alias cd=z
 alias cat=batcat
 alias ls=lsd
 alias ll="lsd -l"
@@ -96,7 +97,7 @@ alias la="lsd -a"
 alias lla="lsd -al"
 alias lt="lsd --tree --depth 1"
 alias lp="lsd --classic"
-alias ltp="lsd --classic --tree --depth 1" >> ~/.zshrc
+alias ltp="lsd --classic --tree --depth 1"' >> ~/.zshrc
 ```
 
 ### 使配置生效

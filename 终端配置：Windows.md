@@ -143,11 +143,12 @@ Function LsTreePure {
 
 Set-Alias -Name open -Value OpenCurrentFolder
 Set-Alias -Name sudo -Value gsudo
+Set-Alias -Name cat -Value bat
+Set-Alias -Name cd -Value z
 Set-Alias -Name ls -Value Lsd-Invoke
 Set-Alias -Name lt -Value LsTree
 Set-Alias -Name lp -Value LsPure
 Set-Alias -Name ltp -Value LsTreePure
-Set-Alias -Name cat -Value bat
 ```
 
 使配置生效：
