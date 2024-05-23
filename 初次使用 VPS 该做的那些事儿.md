@@ -161,7 +161,7 @@ Google BBR 拥塞控制算法具有 TCP 加速的作用，可以用来提升网�
 ## 查看当前 TCP 配置
 
 ```shell
-# 查看可用 TCP 算法
+# 查看可用算法
 sysctl net.ipv4.tcp_available_congestion_control
 
 # 查看当前使用算法
