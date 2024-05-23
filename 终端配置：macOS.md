@@ -32,7 +32,7 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 ![自带主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355817.png)
 
-导入主题配色：`iTerm2` -> `Settings` -> `Profiles` -> `Colors`，在 `Color Presets` 下拉菜单中导入 `schemes` 中的主题并选择。
+导入主题配色：`iTerm2` → `Settings` → `Profiles` → `Colors`，在 `Color Presets` 下拉菜单中导入 `schemes` 中的主题并选择。
 
 ![导入并选择主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355959.png)
 
