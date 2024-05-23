@@ -41,7 +41,7 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 ## 安装 [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh?tab=readme-ov-file#basic-installation)
 
 ```shell
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 ```
 
 ## 安装 [powerlevel10k](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#homebrew)

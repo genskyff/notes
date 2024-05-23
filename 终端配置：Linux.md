@@ -6,9 +6,7 @@
 
 ```shell
 sudo sh -c 'echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list'
-sudo sh -c 'echo "Package: *
-Pin: release a=unstable
-Pin-Priority: 100" > /etc/apt/preferences.d/sid'
+sudo sh -c 'echo "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid'
 ```
 
 ## 更新软件包
@@ -44,7 +42,7 @@ sudo chsh -s $(which zsh)
 ### 安装 [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh?tab=readme-ov-file#basic-installation)
 
 ```shell
-sudo sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
+sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 ```
 
 ### 配置 [powerlevel10k](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual)
@@ -55,16 +53,10 @@ sudo sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tool
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 ```
 
-然后编辑 `~/.zshrc`：
+配置主题：
 
 ```shell
-vim ~/.zshrc
-```
-
-修改 `ZSH_THEME` 值为：
-
-```shell
-ZSH_THEME="powerlevel10k/powerlevel10k"
+sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
 ```
 
 ### 配置 zoxide
@@ -89,7 +81,6 @@ echo "source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ${ZDOTDI
 
 ```shell
 echo 'alias vim=nvim
-alias cd=z
 alias cat=batcat
 alias ls=lsd
 alias ll="lsd -l"
