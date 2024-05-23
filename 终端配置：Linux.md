@@ -5,14 +5,14 @@
 ## 配置 Sid 源
 
 ```shell
-sudo sh -c 'echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list'
-sudo sh -c 'echo "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid'
+echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list
+echo "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid
 ```
 
 ## 更新软件包
 
 ```shell
-sudo sh -c "apt update && apt upgrade -y"
+apt update && apt upgrade -y
 ```
 
 ## 安装软件包
@@ -20,13 +20,13 @@ sudo sh -c "apt update && apt upgrade -y"
 安装以下工具：
 
 ```shell
-sudo apt install -y bat curl fzf git libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget zsh zsh-autosuggestions zsh-syntax-highlighting
+apt install -y bat curl fzf git libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget zsh zsh-autosuggestions zsh-syntax-highlighting
 ```
 
 以下需要从 Sid 源安装：
 
 ```shell
-sudo apt install -t sid -y build-essential neovim zoxide
+apt install -t sid -y build-essential neovim zoxide
 ```
 
 # 2 终端配置
@@ -36,13 +36,13 @@ sudo apt install -t sid -y build-essential neovim zoxide
 ### 修改默认 Shell
 
 ```shell
-sudo chsh -s $(which zsh)
+chsh -s $(which zsh)
 ```
 
 ### 安装 [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh?tab=readme-ov-file#basic-installation)
 
 ```shell
-sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && zsh
 ```
 
 ### 配置 [powerlevel10k](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual)
