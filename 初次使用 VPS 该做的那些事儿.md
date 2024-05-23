@@ -35,20 +35,20 @@ passwd
 若默认使用 root，则添加一个普通用户，并加入到 sudo 组：
 
 ```shell
-useradd -G sudo -d /home/<username> -s /bin/bash -m <username> 
+useradd -G sudo -d /home/<username> -s /bin/bash -m <username>
 passwd <username>
 ```
 
 若要把已存在用户添加到 sudo 组：
 
 ```shell
-sudo usermod -aG sudo <username>
+usermod -aG sudo <username>
 ```
 
 使 sudo 组用户免密码使用 sudo 命令，编辑 sudo 配置文件：
 
 ```shell
-sudo visudo
+visudo
 ```
 
 修改配置：
@@ -72,7 +72,7 @@ su - <username>
 切换为 root：
 
 ```shell
-su -
+sudo su -
 ```
 
 ## SSH 设置
@@ -80,7 +80,7 @@ su -
 编辑 SSH 配置文件：
 
 ```shell
-sudo vim /etc/ssh/sshd_config
+vim /etc/ssh/sshd_config
 ```
 
 ### 修改默认 SSH 端口
@@ -122,13 +122,13 @@ ssh-keygen -t ed25519
 在服务器上放置公钥：
 
 ```shell
-cat ~/.ssh/id_ed25519.pub > ~/.ssh/auth_key
+cat ~/.ssh/id_ed25519.pub > ~/.ssh/authorized_keys
 ```
 
-修改 `~/.ssh` 目录和 `~/.ssh/auth_key` 文件的权限：
+修改 `~/.ssh` 目录和 `~/.ssh/authorized_keys` 文件的权限：
 
 ```shell
-chmod 600 ~/.ssh/auth_key && chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh
 ```
 
 在配置文件中找到以下几行，把前面的注释 `#` 去掉（如果有），并修改为以下参数：
@@ -138,7 +138,7 @@ chmod 600 ~/.ssh/auth_key && chmod 700 ~/.ssh
 PubkeyAuthentication yes
 
 # 指定公钥文件
-AuthorizedKeysFile ~/.ssh/auth_key
+AuthorizedKeysFile ~/.ssh/authorized_keys
 
 # 禁用密码登录
 PasswordAuthentication no
@@ -154,25 +154,27 @@ PasswordAuthentication no
 systemctl restart ssh 
 ```
 
-# 4 开启 Google BBR
+# 4 TCP 优化
 
-BBR 具有 TCP 加速的作用，可以用来提升网络性能，一般 4.9 及以上的内核都自带了 BBR，只需开启即可。
+Google BBR 拥塞控制算法具有 TCP 加速的作用，可以用来提升网络性能，一般 4.9 及以上的内核都自带了 BBR，只需开启即可。
 
-## 修改 sysctl 配置
+## 查看当前 TCP 配置
 
 ```shell
-sudo sh -c 'echo "net.core.default_qdisc=fq
-net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && sysctl -p'
+# 查看可用 TCP 算法
+sysctl net.ipv4.tcp_available_congestion_control
+
+# 查看当前使用算法
+sysctl net.ipv4.tcp_congestion_control
 ```
 
-## 确认 BBR 已启用
+若当前已经启用 BBR，则不需要再进行下面的配置。
 
-以下三条命令执行完后，若结果中带有 `bbr` 字样就算成功启用：
+## 启用 BBR
 
 ```shell
-sysctl net.ipv4.tcp_available_congestion_control
-sysctl net.ipv4.tcp_congestion_control
-lsmod | grep bbr
+echo "net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && sysctl -p
 ```
 
 ## limits & ulimit 优化
@@ -188,7 +190,9 @@ echo "* soft nofile 51200
 
 ## iptables 配置
 
-查看 iptables 配置：
+>   从 Debian 10 起，nftables 是使用 iptables 时的默认后端，具体可参考 [iptables - Debian Wiki](https://wiki.debian.org/iptables)。
+
+### 查看 iptables 配置
 
 ```shell
 iptables -L
@@ -196,38 +200,39 @@ iptables -L
 
 ### 配置 iptables
 
-根据需求进行配置，这里仅作参考（以下全部复制粘贴执行）：
+通常 Debian 服务器会默认内置 UFW 规则，控制更为细化。但也可以自定义配置，仅做参考：
 
 ```shell
-sh -c 'echo "*filter
+echo "*filter
 
 # 允许所有出
 -A OUTPUT -j ACCEPT
 
-# 允许本地回环地址通信
+# 允许回环地址通信
 -A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
 
 # 允许已建立的连接访问
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# 允许被Ping
--A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
-
-# 允许SSH访问
--A INPUT -p tcp --dport 22 -j ACCEPT
-
-# 允许HTTP和HTTPS访问
+# 允许 HTTP 和 HTTPS
 -A INPUT -p tcp --dport 80 -j ACCEPT
 -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# 允许 SSH
+-A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+
+# 允许被 Ping
+-A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+
+# 记录拒绝的调用
+-A INPUT -m limit --limit 5/min -j LOG --log-prefix \"iptables denied: \" --log-level 7
 
 # 丢弃规则以外访问
 -A INPUT -j DROP
 -A FORWARD -j DROP
 
-# 记录iptables拒绝的调用
--A INPUT -m limit --limit 5/min -j LOG --log-prefix \"iptables denied: \" --log-level 7
-
-COMMIT" > /etc/iptables.rules'
+COMMIT" > /etc/iptables.rules
 ```
 
 使规则立即生效：
@@ -236,11 +241,11 @@ COMMIT" > /etc/iptables.rules'
 iptables-restore < /etc/iptables.rules
 ```
 
-使规则开机启动：
+使规则开机生效：
 
 ```shell
-sh -c 'echo "#!/bin/bash
-/sbin/iptables-restore < /etc/iptables.rules" > /etc/network/if-pre-up.d/iptables && chmod +x /etc/network/if-pre-up.d/iptables'
+echo '#!/bin/bash
+/sbin/iptables-restore < /etc/iptables.rules' > /etc/network/if-pre-up.d/iptables && chmod +x /etc/network/if-pre-up.d/iptables
 ```
 
 # 6 其它常用操作
