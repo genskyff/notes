@@ -55,21 +55,21 @@ echo "source $(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme" >>~/.
 
 ## zsh 增强
 
-### [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)
+### 配置 [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)
 
 ```shell
 brew install zoxide
 echo 'eval "$(zoxide init zsh)"' >> ~/.zshrc
 ```
 
-### [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions/blob/master/INSTALL.md#homebrew)
+### 配置 [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions/blob/master/INSTALL.md#homebrew)
 
 ```shell
 brew install zsh-autosuggestions
 echo "source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc
 ```
 
-### [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/INSTALL.md)
+### 配置 [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/INSTALL.md)
 
 ```shell
 brew install zsh-syntax-highlighting
