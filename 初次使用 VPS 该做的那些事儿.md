@@ -151,7 +151,7 @@ PasswordAuthentication no
 每次修改配置后，需重启 SSH 服务：
 
 ```shell
-systemctl restart ssh 
+service ssh restart
 ```
 
 # 4 TCP 优化
