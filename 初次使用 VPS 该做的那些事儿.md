@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 ## 安装软件包
 
 ```shell
-apt install -y bat build-essential curl fzf git iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat sudo tmux unzip vim virt-what wget zsh zsh-autosuggestions zsh-syntax-highlighting
+apt install -y bat build-essential curl fzf git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat sudo tmux unzip vim virt-what wget zsh zsh-autosuggestions zsh-syntax-highlighting
 ```
 
 # 3 登录设置
@@ -32,33 +32,17 @@ passwd
 
 ### 添加用户
 
-若默认使用 root，则添加一个普通用户，并加入到 sudo 组：
+若默认使用 root，则添加一个普通用户，并加入到 wheel 组：
 
 ```shell
-useradd -G sudo -d /home/<username> -s /bin/bash -m <username>
+useradd -mG wheel <username>
 passwd <username>
 ```
 
-若要把已存在用户添加到 sudo 组：
+若要把已存在用户添加到 wheel 组：
 
 ```shell
-usermod -aG sudo <username>
-```
-
-使 sudo 组用户免密码使用 sudo 命令，编辑 sudo 配置文件：
-
-```shell
-visudo
-```
-
-修改配置：
-
-```shell
-# 找到
-%sudo   ALL=(ALL:ALL) ALL
-
-# 替换为
-%sudo   ALL=(ALL:ALL) NOPASSWD:ALL
+usermod -aG wheel <username>
 ```
 
 ### 切换用户
