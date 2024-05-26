@@ -25,11 +25,11 @@ pacman -Syu --noconfirm
 
 ```shell
 # Debian
-apt install -y bat curl fzf git libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget zsh zsh-autosuggestions zsh-syntax-highlighting
+apt install -y bat curl fzf git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget zsh zsh-autosuggestions zsh-syntax-highlighting
 apt install -t sid -y build-essential neovim zoxide
 
 # Arch
-pacman -S --needed --noconfirm base-devel bat curl fastfetch fzf git libunwind lsd neovim net-tools ntp openbsd-netcat ripgrep socat tmux unzip wget zoxide zsh zsh-autosuggestions zsh-syntax-highlighting
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fzf git libunwind lsd neovim net-tools ntp openbsd-netcat ripgrep socat tmux unzip wget zoxide zsh zsh-autosuggestions zsh-syntax-highlighting
 ```
 
 # 2 终端配置
