@@ -35,14 +35,14 @@ pacman-key --populate archlinux
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl fish fzf git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget
-apt install -t sid -y neovim zoxide
+apt install -y bat build-essential curl fd-find fish git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget
+apt install -t sid -y fzf neovim zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fish fzf git libunwind lsd neovim net-tools ntp openbsd-netcat ripgrep socat starship tmux tokei unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat ripgrep socat starship tmux tokei unzip wget zoxide
 ```
 
 # 2 Shell 配置
@@ -54,6 +54,12 @@ chsh -s /usr/bin/fish && fish
 ```
 
 >   之后的命令都在 fish 下执行。
+
+## 配置 [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration)（仅 Arch）
+
+```shell
+echo "fzf --fish | source" >> ~/.config/fish/config.fish
+```
 
 ## 配置 [starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)（仅 Arch）
 
@@ -73,6 +79,7 @@ echo "zoxide init fish | source" >> ~/.config/fish/config.fish
 
 ```shell
 echo 'alias cat=batcat
+alias fd=fdfind
 alias nf=neofetch
 alias vi=nvim
 alias vim=nvim
@@ -104,6 +111,10 @@ alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
 ## 配置 function
 
 ```shell
+echo "function fish_edit
+    nvim ~/.config/fish/config.fish
+end" > ~/.config/fish/functions/fish_edit.fish
+
 echo "function fish_reload
     source ~/.config/fish/config.fish
 end" > ~/.config/fish/functions/fish_reload.fish

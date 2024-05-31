@@ -81,7 +81,7 @@ irm get.scoop.sh | iex
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat fzf gsudo lsd ripgrep starship tokei zoxide
+scoop install bat delta fzf gsudo lsd ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
