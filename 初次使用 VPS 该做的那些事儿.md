@@ -4,18 +4,18 @@
 
 一般来说，从 IDC 购买 VPS 后，需要通过 SSH 登录来进行操作，第一次通常以 root 登录，默认端口通常为 22 ，之后建议做以下几件事。
 
-# 2 更新及安装软件包
+# 2 软件包配置
 
-## 更新软件包
+## 更新包
 
 ```shell
 apt update && apt upgrade -y
 ```
 
-## 安装软件包
+## 安装包
 
 ```shell
-apt install -y bat build-essential curl fzf git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat sudo tmux unzip vim virt-what wget zsh zsh-autosuggestions zsh-syntax-highlighting
+apt install -y bat build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch neovim net-tools netcat-openbsd ntp ripgrep socat sudo tmux unzip virt-what wget
 ```
 
 # 3 登录设置
@@ -135,26 +135,30 @@ PasswordAuthentication no
 每次修改配置后，需重启 SSH 服务：
 
 ```shell
-service ssh restart
+systemctl restart sshd
 ```
 
-# 4 TCP 优化
+# 4 系统优化
 
-Google BBR 拥塞控制算法具有 TCP 加速的作用，可以用来提升网络性能，一般 4.9 及以上的内核都自带了 BBR，只需开启即可。
+## 开启 BBR
 
-## 查看当前 TCP 配置
+[Google BBR](https://github.com/google/bbr) 拥塞控制算法具有很好的 TCP 优化作用，可以用来提升网络性能，一般 4.9 及以上的内核都自带了 BBR，只需开启即可。
+
+### 查看可用算法
 
 ```shell
-# 查看可用算法
 sysctl net.ipv4.tcp_available_congestion_control
+```
 
-# 查看当前使用算法
+### 查看当前使用算法
+
+```shell
 sysctl net.ipv4.tcp_congestion_control
 ```
 
-若当前已经启用 BBR，则不需要再进行下面的配置。
+>   若当前已经使用 BBR 算法，则可忽略下一步骤。
 
-## 启用 BBR
+### 启用 BBR
 
 ```shell
 echo "net.core.default_qdisc=fq
@@ -234,16 +238,27 @@ echo '#!/bin/bash
 
 # 6 其它常用操作
 
+测试硬盘及网络性能：
+
 ```shell
-# 测试硬盘及网络性能
 wget -qO- bench.sh | bash
+```
 
-# 查看硬盘分区及各分区使用量
+查看硬盘分区及各分区使用量：
+
+```shell
 fdisk -l && df -h
+```
 
-# 查看所有组
+查看所有组：
+
+```shell
 cat /etc/group
+```
 
-# 查看所有用户
+查看所有用户：
+
+```shell
 cut -d: -f1 /etc/passwd
 ```
+
