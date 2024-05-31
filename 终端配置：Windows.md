@@ -1,13 +1,14 @@
->    环境：Windows 11 x64
+>    PC 环境：Windows 11 x64
 
-# 1 终端环境
+# 1 终端配置
 
 ## PowerShell
 
 Windows 10/11 默认安装了 PowerShell 5，需要通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 升级到 PowerShell 7。
 
+查看 PowerShell 版本：
+
 ```powershell
-# 查看 PowerShell 版本
 $PSVersionTable
 ```
 
@@ -15,13 +16,16 @@ $PSVersionTable
 
 PowerShell 5 与 7 是共存的，但安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
 
-5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`；7 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
+5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`。7 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
+
+查看配置文件路径：
 
 ```powershell
-# 查看配置文件路径
 $PROFILE | Select-Object *Host* | Format-List
+```
+查看模块路径：
 
-# 查看模块路径
+```powershell
 $env:PSModulePath -split (';')
 ```
 
@@ -31,14 +35,10 @@ $env:PSModulePath -split (';')
 
 [PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的智能提示和补全、历史命令搜索等功能。
 
-PowerShell 7 附带了 PSReadLine 2.2.6，也可以手动升级：
+查看版本：
 
 ```powershell
-# 查看版本
 Get-Module PSReadLine | Select-Object Name, Version
-
-# 手动升级
-Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease
 ```
 
 >   关于 PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
@@ -47,57 +47,51 @@ Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease
 
 Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要升级，可通过 [Microsoft Store](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701) 安装。
 
-在 Windows Terminal 设置的 `启动` 选项卡中，将默认配置文件从 Windwos PowerShell 切换为 PowerShell。
+在 Windows Terminal 设置的 `启动` 中，将默认配置文件从 Windwos PowerShell 切换为 PowerShell。
 
 ![设置 PowerShell 7 为默认配置](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082138565.png)
 
 # 2 字体配置
 
-## Nerd Fonts
+## 安装 Nerd Fonts 字体
 
-由于很多终端主题和工具都会使用一些特殊字符，如 Oh My Posh 和 posh-git，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此终端默认字体并不能很好的显示，推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
+由于很多终端主题和工具都会使用一些特殊字符，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认字体并不能很好的显示，推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
 
-安装完后需要在 Windows Terminal 中设置默认字体，在 `默认值` -> `外观` 选项卡中设置字体，这样对所有配置文件都生效。
+安装完后需要在 Windows Terminal 中设置默认字体，在 `默认值` → `外观` 中设置字体。
 
 ![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082203360.png)
 
-### VSCode 字体
+## 配置 VSCode 字体
 
-在 VSCode 中也能打开 PowerShell 终端，但是没有配置终端字体，因此需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
+在 VSCode 中也能打开 PowerShell 终端，但没有配置终端字体，需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
 
 ![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
 
-# 3 终端工具
+# 3 软件包配置
 
-## Scoop
-
-[Scoop](https://scoop.sh/) 是 Windows 下的一款十分强大的包管理器，可以用来下载和管理各种软件包，之后各种工具都会通过 Scoop 来安装。
+## 安装 [Scoop](https://scoop.sh/)
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 irm get.scoop.sh | iex
 ```
 
-## 实用工具
+## 安装包
 
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat fzf gsudo lsd posh-git ripgrep starship tokei zoxide
+scoop install bat fzf gsudo lsd ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
 
-为了使 PowerShell、PSReadLine、posh-git 等安装的模块或自定义的配置在每次启动时都生效，需要编辑 PowerShell 配置文件。
+为了使 PowerShell、PSReadLine 等安装的模块或自定义的配置在每次启动时都生效，需要编辑 PowerShell 配置文件。
 
 打开并编辑 PowerShell 配置文件：
 
 ```powershell
-# 记事本打开
-notepad $PROFILE
-
-# VSCode 打开
-code $PROFILE
+code $profile
 ```
 
 然后在其中添加：
@@ -108,7 +102,6 @@ Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
 Import-Module PSReadLine
 Import-Module gsudoModule
-Import-Module posh-git
 
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
@@ -116,7 +109,7 @@ Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 
-Function OpenCurrentFolder {
+Function OpenFolder {
 	param($Path = '.')
 	Invoke-Item $Path
 }
@@ -141,10 +134,9 @@ Function LsTreePure {
     LsTree @params
 }
 
-Set-Alias -Name open -Value OpenCurrentFolder
-Set-Alias -Name sudo -Value gsudo
+Set-Alias -Name open -Value OpenFolder
 Set-Alias -Name cat -Value bat
-Set-Alias -Name cd -Value z
+Set-Alias -Name sudo -Value gsudo
 Set-Alias -Name ls -Value Lsd-Invoke
 Set-Alias -Name lt -Value LsTree
 Set-Alias -Name lp -Value LsPure
@@ -154,5 +146,5 @@ Set-Alias -Name ltp -Value LsTreePure
 使配置生效：
 
 ```powershell
-. $PROFILE
+. $profile
 ```
