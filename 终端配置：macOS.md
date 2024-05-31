@@ -11,7 +11,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/in
 ## 安装包
 
 ```shell
-brew update && brew updateinstall bat curl fastfetch fish fzf git lsd neovim openssh ripgrep starship tmux tokei wget zoxide
+brew update && brew install bat curl fastfetch fd fish fzf git lsd neovim openssh ripgrep starship tmux tokei wget zoxide
 brew install --cask iterm2
 ```
 
