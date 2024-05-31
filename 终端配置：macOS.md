@@ -33,13 +33,15 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 # 3 Shell 配置
 
-## 修改默认 Shell
+## 配置 [fish](https://fishshell.com/)
 
 ```shell
-chsh -s $(which fish) && fish
+echo 'if [ -x "$(command -v fish)" ]; then
+    exec fish
+fi' >> ~/.zshrc
 ```
 
->   从这之后的命令都在 [fish](https://fishshell.com/) 下执行。
+>   之后的命令都在 fish 下执行。
 
 ## 配置 [starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)
 
