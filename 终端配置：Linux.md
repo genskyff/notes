@@ -35,14 +35,14 @@ pacman-key --populate archlinux
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp ripgrep socat tmux unzip wget
+apt install -y bat build-essential curl fd-find fish git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip wget
 apt install -t sid -y fzf neovim zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat ripgrep socat starship tmux tokei unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
 ```
 
 # 2 Shell 配置
