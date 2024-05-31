@@ -33,5 +33,70 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 # 3 Shell 配置
 
+## 修改默认 Shell
+
+```shell
+chsh -s $(which fish) && fish
+```
+
+>   从这之后的命令都在 [fish](https://fishshell.com/) 下执行。
+
+## 配置 [starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)
+
+```shell
+echo "starship init fish | source" >> ~/.config/fish/config.fish
+```
+
+## 配置 [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)
+
+```shell
+echo "zoxide init fish | source" >> ~/.config/fish/config.fish
+```
+
+## 配置 alias
+
+```shell
+echo 'alias cat=bat
+alias ff=fastfetch
+alias vi=nvim
+alias vim=nvim
+alias ls="lsd -N"
+alias ll="ls -l"
+alias la="ls -a"
+alias lla="ll -a"
+alias lt="ls --tree --depth 1"
+alias lp="ls --classic"
+alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
+```
+
+## 配置 function
+
+```shell
+echo "function fish_reload
+    source ~/.config/fish/config.fish
+end" > ~/.config/fish/functions/fish_reload.fish
+```
+
+## 使配置生效
+
+```shell
+fish_reload
+```
+
+# 3 编辑器配置
+
+## 修改默认编辑器
+
+```shell
+set -Ux EDITOR nvim
+```
+
+## 配置 [AstroNvim](https://docs.astronvim.com/)
+
+```shell
+rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && nvim
+```
+
 
 
