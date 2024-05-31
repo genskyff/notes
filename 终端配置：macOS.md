@@ -17,7 +17,7 @@ brew install --cask iterm2
 
 ## 配置 iTerm2 主题
 
-可以在 [这里](https://iterm2colorschemes.com/) 查看主题效果和下载，这里直接拉取其 [Github 仓库](https://github.com/mbadolato/iTerm2-Color-Schemes)：
+可以在 [这里](https://iterm2colorschemes.com/) 查看主题效果。
 
 ```shell
 git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
@@ -31,15 +31,21 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 ![导入并选择主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355959.png)
 
-# 3 Shell 配置
+# 2 Shell 配置
 
 ## 配置 [fish](https://fishshell.com/)
 
 ```shell
-echo '[[ -x "$(command -v fish)" ]] && exec fish' >> ~/.zshrc
+echo '[[ -x "$(command -v fish)" ]] && exec fish' >> ~/.zshrc && fish
 ```
 
 >   之后的命令都在 fish 下执行。
+
+## 配置 [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration)
+
+```shell
+echo "fzf --fish | source" >> ~/.config/fish/config.fish
+```
 
 ## 配置 [starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)
 
@@ -72,6 +78,10 @@ alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
 ## 配置 function
 
 ```shell
+echo "function fish_edit
+    nvim ~/.config/fish/config.fish
+end" > ~/.config/fish/functions/fish_edit.fish
+
 echo "function fish_reload
     source ~/.config/fish/config.fish
 end" > ~/.config/fish/functions/fish_reload.fish
@@ -85,18 +95,10 @@ fish_reload
 
 # 3 编辑器配置
 
-## 修改默认编辑器
-
-```shell
-set -Ux EDITOR nvim
-```
-
 ## 配置 [AstroNvim](https://docs.astronvim.com/)
 
 ```shell
 rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
 git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && nvim
 ```
-
-
 
