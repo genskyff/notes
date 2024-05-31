@@ -36,9 +36,7 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 ## 配置 [fish](https://fishshell.com/)
 
 ```shell
-echo 'if [ -x "$(command -v fish)" ]; then
-    exec fish
-fi' >> ~/.zshrc
+echo '[[ -x "$(command -v fish)" ]] && exec fish' >> ~/.zshrc
 ```
 
 >   之后的命令都在 fish 下执行。
