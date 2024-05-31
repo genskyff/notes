@@ -128,12 +128,6 @@ fish_reload
 
 # 3 编辑器配置
 
-## 修改默认编辑器
-
-```shell
-set -Ux EDITOR nvim
-```
-
 ## 配置 [AstroNvim](https://docs.astronvim.com/)
 
 ```shell
