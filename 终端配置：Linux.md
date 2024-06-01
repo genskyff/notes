@@ -42,7 +42,15 @@ apt install -t sid -y fzf neovim zoxide
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei ttf-maple unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
+```
+
+安装 yay：
+
+```shell
+useradd -mG wheel <username> && passwd <username> && su - <username>
+git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm
+yay -S --noconfirm ttf-maple
 ```
 
 # 2 Shell 配置
