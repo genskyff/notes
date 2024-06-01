@@ -4,7 +4,7 @@
 
 ## PowerShell
 
-Windows 10/11 默认安装了 PowerShell 5，需要通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 升级到 PowerShell 7。
+Windows 10/11 默认安装了 PowerShell 5，需要通过 [Microsoft Store](https://www.microsoft.com/store/productid/9MZ1SNWT0N5D) 升级到 PowerShell 7 以上版本。
 
 查看 PowerShell 版本：
 
@@ -12,11 +12,9 @@ Windows 10/11 默认安装了 PowerShell 5，需要通过 [Microsoft Store](http
 $PSVersionTable
 ```
 
-![查看 PowerShell 版本](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082043223.png)
-
 PowerShell 5 与 7 是共存的，但安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
 
-5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`。7 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
+5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`。7+ 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
 
 查看配置文件路径：
 
@@ -49,7 +47,7 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 在 Windows Terminal 设置的 `启动` 中，将默认配置文件从 Windwos PowerShell 切换为 PowerShell。
 
-![设置 PowerShell 7 为默认配置](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082138565.png)
+![设置 PowerShell 为默认配置](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011430220.png)
 
 # 2 字体配置
 
@@ -59,7 +57,7 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 下载安装完后需要在 Windows Terminal 的 `设置` → `默认值` → `外观` 中设置字体。
 
-![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011316194.png)
+![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011431708.png)
 
 ## 配置 VSCode 字体
 
@@ -148,3 +146,4 @@ Set-Alias -Name ltp -Value LsTreePure
 ```powershell
 . $profile
 ```
+
