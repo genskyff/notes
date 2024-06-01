@@ -31,15 +31,13 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 
 ![导入并选择主题](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304181355959.png)
 
-## 安装 Nerd Fonts 字体
+## 配置 Nerd Fonts 字体
 
-需要安装支持 [Nerd Fonts](https://www.nerdfonts.com/) 的字体，推荐使用 [Maple Font](https://github.com/subframe7536/maple-font?tab=readme-ov-file#install)。
+需要安装支持 [Nerd Fonts](https://www.nerdfonts.com/) 的字体，推荐使用 [Maple Font](https://github.com/subframe7536/Maple-font/releases)。
 
-```shell
-brew install --cask font-maple
-```
+安装完后在 iTerm2 中设置字体，在 `iTerm2` → `Settings` → `Profiles` → `Text` 中设置字体。
 
-安装完后需要在 Windows Terminal 中设置默认字体，在 `默认值` → `外观` 中设置字体。
+<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011401942.png" alt="设置终端字体" style="zoom: 50%;" />
 
 # 2 Shell 配置
 
