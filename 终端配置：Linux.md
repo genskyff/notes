@@ -50,7 +50,6 @@ pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf 
 ## 配置 [fish](https://fishshell.com/)
 
 ```shell
-echo "[[ -f ~/.bashrc ]] && . ~/.bashrc" >> ~/.bash_profile
 echo '[[ -x "$(command -v fish)" ]] && exec fish' >> ~/.bashrc && fish
 ```
 
