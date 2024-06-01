@@ -79,7 +79,7 @@ irm get.scoop.sh | iex
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat delta fzf gsudo lsd neovim ripgrep starship tokei zoxide
+scoop install bat delta fastfetch fzf git gsudo lsd neovim ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
@@ -134,6 +134,7 @@ Function LsTreePure {
 
 Set-Alias -Name open -Value OpenFolder
 Set-Alias -Name cat -Value bat
+Set-Alias -Name ff -Value fastfetch
 Set-Alias -Name sudo -Value gsudo
 Set-Alias -Name vim -Value nvim
 Set-Alias -Name ls -Value Lsd-Invoke
