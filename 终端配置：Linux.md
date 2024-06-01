@@ -130,6 +130,8 @@ fish_reload
 
 ## 配置 [AstroNvim](https://docs.astronvim.com/)
 
+要使用 AstroNvim，需要 [Neovim](https://neovim.io/) 0.9.5 以上版本：
+
 ```shell
 rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
 git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && nvim
