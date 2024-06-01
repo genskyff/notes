@@ -55,17 +55,17 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 ## 安装 Nerd Fonts 字体
 
-由于很多终端主题和工具都会使用一些特殊字符，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认字体并不能很好的显示，推荐使用 Meslo LGS NF 字体，在 [这里下载](https://github.com/romkatv/powerlevel10k-media/blob/master/MesloLGS%20NF%20Regular.ttf) 并安装。
+由于很多终端主题和工具都会使用一些特殊字符，这些特殊字符基本是为 [Nerd Fonts](https://www.nerdfonts.com/) 系列字体所适配的，因此默认字体并不能很好的显示，推荐使用 [Maple Font](https://github.com/subframe7536/maple-font?tab=readme-ov-file#install)。
 
 安装完后需要在 Windows Terminal 中设置默认字体，在 `默认值` → `外观` 中设置字体。
 
-![设置字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202310082203360.png)
+![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011316194.png)
 
 ## 配置 VSCode 字体
 
-在 VSCode 中也能打开 PowerShell 终端，但没有配置终端字体，需要设置 VSCode 的终端字体为 MesloLGS NF 才能正常显示。
+在 VSCode 中也能打开 PowerShell 终端，但没有配置终端字体，需要设置 VSCode 的终端字体也为 Maple Mono NF CN 才能正常显示。
 
-![设置终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202304301907363.png)
+![设置 VSCode 终端字体](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011321094.png)
 
 # 3 软件包配置
 
