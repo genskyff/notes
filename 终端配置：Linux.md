@@ -42,7 +42,7 @@ apt install -t sid -y fzf neovim zoxide
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei ttf-maple unzip wget zoxide
 ```
 
 # 2 Shell 配置
