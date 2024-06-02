@@ -55,24 +55,30 @@ git config --show-origin <key>
 ### 设置配置
 
 ```shell
-# 配置用户信息
+# 用户信息
 git config --global user.name <name>
 git config --global user.email <email>
 
-# 默认编辑器为 VSCode
-git config --global core.editor "code --wait"
+# 默认分支
+git config --global init.defaultBranch main
+
+# 凭证管理 - Windows
+git config --global credential.helper manager
+
+# 凭证管理 - macOS
+git config --global credential.helper osxkeychain
+
+# 凭证管理 - Linux
+git config --global credential.helper oauth
+
+# Pull 策略
+git config --global pull.rebase true
 
 # 显示非 ASCII 字符
 git config --global core.quotepath false
 
-# 默认密钥管理 - Windows
-git config --global credential.helper manager
-
-# 默认密钥管理 - macOS
-git config --global credential.helper osxkeychain
-
-# 配置 pull 策略为 rebase
-git config --global pull.rebase true
+# 默认编辑器
+git config --global core.editor "code --wait"
 
 # 取消配置
 git config --unset <key>

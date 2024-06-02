@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch neovim net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget zoxide
+apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch neovim net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget zoxide
 ```
 
 # 3 登录设置

@@ -71,7 +71,7 @@ Windows 11 上已经默认安装了 Windows Terminal，若没有安装或需要�
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-irm get.scoop.sh | iex
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ```
 
 ## 安装包
@@ -79,7 +79,7 @@ irm get.scoop.sh | iex
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat delta fastfetch fzf git gsudo lsd neovim ripgrep starship tokei zoxide
+scoop install bat delta fastfetch fzf git gsudo less lsd neovim ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
@@ -108,27 +108,27 @@ Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 
 Function OpenFolder {
-	param($Path = '.')
-	Invoke-Item $Path
+    param($Path = '.')
+    Invoke-Item $Path
 }
 
 Function Lsd-Invoke {
-	$params = @('-N') + $args
+    $params = @('-N') + $args
     lsd @params
 }
 
 Function LsTree {
-	$params = @('--tree', '--depth', '1') + $args
+    $params = @('--tree', '--depth', '1') + $args
     Lsd-Invoke @params
 }
 
 Function LsPure {
-	$params = @('--classic') + $args
+    $params = @('--classic') + $args
     Lsd-Invoke @params
 }
 
 Function LsTreePure {
-	$params = @('--classic') + $args
+    $params = @('--classic') + $args
     LsTree @params
 }
 
