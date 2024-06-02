@@ -4,6 +4,8 @@
 
 ## 配置 Sid 源（仅 Debian）
 
+在 Debian 上，有些包版本过老，需要从 Sid 源安装较新版本：
+
 ```shell
 echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list
 echo -e "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid
@@ -35,22 +37,32 @@ pacman-key --populate archlinux
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip wget
+apt install -y bat build-essential curl fd-find fish git htop less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip wget
 apt install -t sid -y fzf neovim zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta less libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
 ```
 
-安装 yay：
+有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
 
 ```shell
 useradd -mG wheel <username> && passwd <username> && su - <username>
-git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm
-yay -S --noconfirm ttf-maple
+```
+
+要从 AUR 安装包，需要安装 AUR Helper，如 [yay](https://github.com/Jguer/yay?tab=readme-ov-file#installation)、[paru](https://github.com/Morganamilo/paru?tab=readme-ov-file#installation)，这里安装 yay：
+
+```shell
+git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm && cd ..
+```
+
+然后从 AUR 安装包：
+
+```shell
+yay -S --needed --noconfirm git-credential-oauth ttf-maple 
 ```
 
 # 2 Shell 配置
@@ -124,7 +136,7 @@ echo "function fish_edit
 end" > ~/.config/fish/functions/fish_edit.fish
 
 echo "function fish_reload
-    source ~/.config/fish/config.fish
+    . ~/.config/fish/config.fish
 end" > ~/.config/fish/functions/fish_reload.fish
 ```
 
