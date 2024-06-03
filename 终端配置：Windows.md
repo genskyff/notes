@@ -107,27 +107,27 @@ Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 
-Function OpenFolder {
+function OpenFolder {
     param($Path = '.')
     Invoke-Item $Path
 }
 
-Function Lsd-Invoke {
+function Lsd-Invoke {
     $params = @('-N') + $args
     lsd @params
 }
 
-Function LsTree {
+function LsTree {
     $params = @('--tree', '--depth', '1') + $args
     Lsd-Invoke @params
 }
 
-Function LsPure {
+function LsPure {
     $params = @('--classic') + $args
     Lsd-Invoke @params
 }
 
-Function LsTreePure {
+function LsTreePure {
     $params = @('--classic') + $args
     LsTree @params
 }
