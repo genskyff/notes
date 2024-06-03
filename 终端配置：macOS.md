@@ -89,7 +89,7 @@ echo "function fish_edit
 end" > ~/.config/fish/functions/fish_edit.fish
 
 echo "function fish_reload
-    source ~/.config/fish/config.fish
+    . ~/.config/fish/config.fish
 end" > ~/.config/fish/functions/fish_reload.fish
 ```
 
