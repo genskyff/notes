@@ -79,7 +79,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat delta fastfetch fzf git gsudo less lsd neovim ripgrep starship tokei zoxide
+scoop install bat delta fastfetch fzf git gitui gsudo less lsd neovim ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
@@ -107,40 +107,12 @@ Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
 Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 
-function OpenFolder {
-    param($Path = '.')
+function Open-Folder {
+    param($Path = ".")
     Invoke-Item $Path
 }
 
-function Lsd-Invoke {
-    $params = @('-N') + $args
-    lsd @params
-}
-
-function LsTree {
-    $params = @('--tree', '--depth', '1') + $args
-    Lsd-Invoke @params
-}
-
-function LsPure {
-    $params = @('--classic') + $args
-    Lsd-Invoke @params
-}
-
-function LsTreePure {
-    $params = @('--classic') + $args
-    LsTree @params
-}
-
-Set-Alias -Name open -Value OpenFolder
-Set-Alias -Name cat -Value bat
-Set-Alias -Name ff -Value fastfetch
-Set-Alias -Name sudo -Value gsudo
-Set-Alias -Name vim -Value nvim
-Set-Alias -Name ls -Value Lsd-Invoke
-Set-Alias -Name lt -Value LsTree
-Set-Alias -Name lp -Value LsPure
-Set-Alias -Name ltp -Value LsTreePure
+Set-Alias -Name open -Value Open-Folder
 ```
 
 使配置生效：

@@ -44,7 +44,7 @@ apt install -t sid -y fzf neovim zoxide
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl fastfetch fd fish fzf git git-delta less libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tmux tokei unzip wget zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl dust fastfetch fd fish fzf git git-delta gitui less libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tokei unzip wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -91,41 +91,6 @@ echo "starship init fish | source" >> ~/.config/fish/config.fish
 
 ```shell
 echo "zoxide init fish | source" >> ~/.config/fish/config.fish
-```
-
-## 配置 alias
-
-### Debian
-
-```shell
-echo 'alias cat=batcat
-alias fd=fdfind
-alias nf=neofetch
-alias vi=nvim
-alias vim=nvim
-alias ls=lsd
-alias ll="ls -l"
-alias la="ls -a"
-alias lla="ll -a"
-alias lt="ls --tree --depth 1"
-alias lp="ls --classic"
-alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
-```
-
-### Arch
-
-```shell
-echo 'alias cat=bat
-alias ff=fastfetch
-alias vi=nvim
-alias vim=nvim
-alias ls="lsd -N"
-alias ll="ls -l"
-alias la="ls -a"
-alias lla="ll -a"
-alias lt="ls --tree --depth 1"
-alias lp="ls --classic"
-alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
 ```
 
 ## 配置 function
