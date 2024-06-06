@@ -11,7 +11,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/in
 ## 安装包
 
 ```shell
-brew update && brew install bat curl fastfetch fd fish fzf lsd neovim ripgrep starship tmux tokei wget zoxide
+brew update
+brew install bat curl dust fastfetch fd fish fzf gitui lsd neovim ripgrep starship tokei wget zellij zoxide
 brew install --cask iterm2
 ```
 
@@ -63,22 +64,6 @@ echo "starship init fish | source" >> ~/.config/fish/config.fish
 
 ```shell
 echo "zoxide init fish | source" >> ~/.config/fish/config.fish
-```
-
-## 配置 alias
-
-```shell
-echo 'alias cat=bat
-alias ff=fastfetch
-alias vi=nvim
-alias vim=nvim
-alias ls="lsd -N"
-alias ll="ls -l"
-alias la="ls -a"
-alias lla="ll -a"
-alias lt="ls --tree --depth 1"
-alias lp="ls --classic"
-alias ltp="lp --tree --depth 1"' >> ~/.config/fish/config.fish
 ```
 
 ## 配置 function
