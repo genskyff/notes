@@ -6,6 +6,13 @@
 
 # 2 软件包配置
 
+## 配置 Sid 源
+
+```shell
+echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list
+echo -e "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid
+```
+
 ## 更新包
 
 ```shell
@@ -15,7 +22,8 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch neovim net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget zoxide
+apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget
+apt install -t sid -y fzf neovim zoxide
 ```
 
 # 3 登录设置
