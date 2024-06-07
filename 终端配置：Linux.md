@@ -37,7 +37,7 @@ pacman-key --populate archlinux
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip wget
+apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget
 apt install -t sid -y fzf neovim zoxide
 ```
 
