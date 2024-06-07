@@ -43,7 +43,7 @@ passwd
 若默认使用 root，则添加一个普通用户，并加入到 wheel 组：
 
 ```shell
-useradd -mG wheel <username>
+useradd -mG wheel -s $SHELL <username>
 passwd <username>
 ```
 
