@@ -704,10 +704,14 @@ ssh-keygen -t ed25519 [-C <message>]
 
 `-C` 用于添加注释方便管理 SSH 密钥，并不会用于加密或验证。该命令在 `~/.ssh` 目录里生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，`id_ed25519` 是私钥，`id_ed25519.pub` 是公钥。
 
-在 Linux 中，还需要私钥的读权限才能生效：
+设置权限：
 
 ```shell
-sudo chmod 400 ~/.ssh/id_ed25519
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
+chmod 644 ~/.ssh/config
+chmod 644 ~/.ssh/authorized_keys
 ```
 
 ## 添加到 Github
