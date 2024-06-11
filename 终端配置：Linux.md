@@ -29,7 +29,7 @@ pacman -Syu --noconfirm
 
 ```shell
 pacman-key --init
-pacman-key --populate archlinux
+pacman-key --populate
 ```
 
 ## 安装包
