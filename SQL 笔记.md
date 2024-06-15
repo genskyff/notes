@@ -46,11 +46,26 @@ SELECT col, COUNT(*) AS aaa FROM table WHERE col2 > 10 GROUP BY col HAVING aaa >
 SELECT a1, a2 FROM table1 WHERE a1 IN (
     SELECT a1 FROM table2 WHERE a2 IN (
         SELECT a2 FROM table3 WHERE a3 = 10));
-SELECT col,
-       (SELECT SUM(col2)
-        FROM table2
-        WHERE table1.col1=table2.col1)
-FROM table1;
+SELECT col, (SELECT SUM(col2) FROM table2 WHERE table1.col1=table2.col1) FROM table1;
+
+SELECT col1, col2 FROM table1, table2 WHERE table1.col = table2.col;
+SELECT col1, col2 FROM table1 INNER JOIN table2 ON table1.col = table2.col;
+SELECT cust_name, orders.order_num,
+    SUM(quantity*item_price) AS total
+    FROM customers
+    INNER JOIN orders
+    ON customers.cust_id = orders.cust_id
+    INNER JOIN orderitems
+    ON orders.order_num = orderitems.order_num
+    GROUP BY cust_name, orders.order_num
+    ORDER BY cust_name, orders.order_num;
+SELECT col, col2 FROM table AS t1, table2 AS t2
+    WHERE t1.col = t2.col;
+SELECT t1.col, t2.col FROM table AS t1, table AS t2 WHERE t1.col1 = 'a' AND t2.col2 = 'b';
+SELECT t1.*, t2.col FROM table AS t1, table2 AS t2;
+
+SELECT c.cust_id, o.order_num FROM customers AS c LEFT OUTER JOIN orders AS o ON c.cust_id = o.cust_id;
+SELECT c.cust_id, o.order_num FROM orders AS o RIGHT OUTER JOIN customers as c on c.cust_id = o.cust_id;
 ```
 
 函数
