@@ -47,6 +47,7 @@ SELECT a1, a2 FROM table1 WHERE a1 IN (
     SELECT a1 FROM table2 WHERE a2 IN (
         SELECT a2 FROM table3 WHERE a3 = 10));
 SELECT col, (SELECT SUM(col2) FROM table2 WHERE table1.col1=table2.col1) FROM table1;
+SELECT col FROM table WHERE EXISTS(SELECT 1 FROM table2 WHERE a = 1);
 
 SELECT col1, col2 FROM table1, table2 WHERE table1.col = table2.col;
 SELECT col1, col2 FROM table1 INNER JOIN table2 ON table1.col = table2.col;
@@ -66,6 +67,39 @@ SELECT t1.*, t2.col FROM table AS t1, table2 AS t2;
 
 SELECT c.cust_id, o.order_num FROM customers AS c LEFT OUTER JOIN orders AS o ON c.cust_id = o.cust_id;
 SELECT c.cust_id, o.order_num FROM orders AS o RIGHT OUTER JOIN customers as c on c.cust_id = o.cust_id;
+
+SELECT col1 FROM table WHERE a = 'a'
+    UNION / UNION ALL / INTERSECT / EXCEPT
+    SELECT col1 FROM table WHERE b > 10;
+
+INSERT INTO table VALUES(1, 'aaa', 123, NULL);
+INSERT INTO table(id, v1, v2, v3) VALUES(1, 'aaa', 123 , null);
+INSERT INTO table(v1, v2) SELECT v1, v2 FROM table2;
+CREATE TABLE dup_table AS SELECT * FROM table;
+
+UPDATE table set col = 1;
+UPDATE table SET col1 = 'value1', col2 = 'value2' WHERE id = 1;
+UPDATE dup_cust, customers SET dup_cust.cust_name = customers.cust_name WHERE dup_cust.cust_id = customers.cust_id;
+UPDATE dup_cust JOIN customers ON dup_cust.cust_id = customers.cust_id SET dup_cust.cust_name = customers.cust_name;
+
+DELETE FROM table;
+TRUNCATE TABLE table;
+DELETE FROM table where id = 1;
+
+CREATE TABLE mytable
+(
+    id   SERIAL PRIMARY KEY,
+    name TEXT   NOT NULL,
+    age  INT    NOT NULL DEFAULT 0
+);
+
+ALTER TABLE table ADD COLUMN col CHAR(20);
+ALTER TABLE table DROP column col;
+DROP TABLE table;
+DROP VIEW view;
+
+CREATE VIEW aaa AS SELECT col1, col2 FROM table;
+CREATE VIEW custwithorders AS SELECT customers.* FROM customers JOIN orders ON customers.cust_id = orders.cust_id;
 ```
 
 函数
