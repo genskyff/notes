@@ -86,12 +86,13 @@ DELETE FROM table;
 TRUNCATE TABLE table;
 DELETE FROM table where id = 1;
 
-CREATE TABLE mytable
-(
-    id   SERIAL PRIMARY KEY,
-    name TEXT   NOT NULL,
-    age  INT    NOT NULL DEFAULT 0
+CREATE TABLE Orders
+( 
+    order_num INTEGER NOT NULL SERIAL PRIMARY KEY,
+    order_date DATETIME NOT NULL CHECK (DATE(order_date) > 2020),
+    cust_id CHAR(10) NOT NULL REFERENCES Customers(cust_id)
 );
+ALTER TABLE Orders ADD CONSTRAINT FOREIGN KEY (cust_id) REFERENCES Customers (cust_id); 
 
 ALTER TABLE table ADD COLUMN col CHAR(20);
 ALTER TABLE table DROP column col;
@@ -100,6 +101,47 @@ DROP VIEW view;
 
 CREATE VIEW aaa AS SELECT col1, col2 FROM table;
 CREATE VIEW custwithorders AS SELECT customers.* FROM customers JOIN orders ON customers.cust_id = orders.cust_id;
+
+START TRANSACTION;
+SAVEPOINT sp1;
+UPDATE table SET col = 'a' WHERE id = 1;
+SAVEPOINT sp2;
+UPDATE table SET col = 'b' WHERE id = 2;
+ROLLBACK TO sp2;
+COMMIT;
+
+CREATE INDEX name_zip ON customers(cust_name, cust_zip);
+
+------------------------
+
+ALTER TABLE tablename
+( 
+    ADD|DROP column datatype [NULL|NOT NULL] [CONSTRAINTS]
+);
+
+CREATE TABLE tablename
+( 
+    column datatype [NULL|NOT NULL] [CONSTRAINTS]
+);
+
+CREATE VIEW viewname AS
+SELECT columns, ...
+FROM tables, ...
+[WHERE ...]
+[GROUP BY ...]
+[HAVING ...];
+
+DELETE FROM tablename
+[WHERE ...];
+
+DROP INDEX|PROCEDURE|TABLE|VIEW indexname|procedurename|tablename|
+viewname;
+
+INSERT INTO tablename [(columns, ...)] VALUES(values, ...);
+
+INSERT INTO tablename [(columns, ...)]
+SELECT columns, ... FROM tablename, ...
+[WHERE ...];
 ```
 
 函数
