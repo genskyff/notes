@@ -29,7 +29,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 默认会在 *~/.rustup* 中安装工具链，在 *~/.cargo* 安装 Cargo 相关工具、二进制 Crate 和依赖包。
 
-*~/.rustup/settings.toml* 保存了工具链相关的配置。对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置，构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级从高到低为：
+*~/.rustup/settings.toml* 保存了工具链相关的配置。对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置，构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级**从高到低**为：
 
 -   通过命令行 `--config <key>=<value>` 传递的参数
 -   环境变量
@@ -120,19 +120,19 @@ rustc <file> -L <path>
 rustc <file> -l [static|dylib=]<name>
 
 # 编译时导入指定 Rust 库
-rustc <file> --extern name[=path]
+rustc <file> --extern <name>[=path]
 
 # 编译时指定 Rust 版本（默认为 2015）
 rustc <file> --edition <2015|2018|2021|2024>
 
 # 编译时输出中间文件
-rustc <file> --emit <asm|llvm-ir|obj|mir>
+rustc <file> --emit <asm|llvm-ir|obj>
 
 # 编译时配置额外编译信息
 rustc <file> --cfg <name>[="value"]
 
 # 编译时配置代码生成器选项
-rustc <file> -C <opt>=<value>
+rustc <file> -C <opt>[=value]
 
 # 编译时优化，等同于 -C opt-level=2
 rustc <file> -O
@@ -153,9 +153,6 @@ cargo -V
 
 # 创建项目（默认为 bin）
 cargo new <name> [--<bin|lib>]
-
-# 创建时指定版本控制系统（默认为 git）
-cargo new <name> --vcs <none|git>
 
 # 将目录初始化为 Cargo 项目
 cargo init
@@ -191,7 +188,7 @@ cargo run [-r]
 cargo run --example <name>
 
 # 编译并将额外参数传递给 rustc
-cargo rustc [opt] [-- args]
+cargo rustc [opt] [args]...
 
 # 清空 target 目录
 cargo clean
@@ -263,10 +260,10 @@ criterion = { version = "0.5", features = ["html_reports"] }
 cc = "1.0"
 ```
 
--   `[package]`：包的主要信息；
--   `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/)；
--   `[dev-dependencies]`：dev 的依赖；
--   `[build-dependencies]`：构建脚本的依赖。
+-   `[package]`：包的主要信息
+-   `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/)
+-   `[dev-dependencies]`：dev 的依赖
+-   `[build-dependencies]`：构建脚本的依赖
 
 >   更多关于 Cargo 配置的信息，可以参考 [Cargo Manifest Format](https://doc.rust-lang.org/cargo/reference/manifest.html)。
 
@@ -286,14 +283,14 @@ cc = "1.0"
 └── incremental
 ```
 
--   **.fingerprint**：包含构建状态的元数据；
--   **build**：构建脚本 *build.rs* 的输出结果；
--   **deps**：依赖和库的编译结果；
--   **examples**：示例代码 *examples* 的编译结果；
--   **hello.d**：二进制输出 *hello.exe* 的所有依赖声明；
--   **hello.exe**：二进制输出；
--   **hello.pdb**：包含调试信息；
--   **incremental**：包含增量编译的状态信息。
+-   **.fingerprint**：包含构建状态的元数据
+-   **build**：构建脚本 *build.rs* 的输出结果
+-   **deps**：依赖和库的编译结果
+-   **examples**：示例代码 *examples* 的编译结果
+-   **hello.d**：二进制输出 *hello.exe* 的所有依赖声明
+-   **hello.exe**：二进制输出
+-   **hello.pdb**：包含调试信息
+-   **incremental**：包含增量编译的状态信息
 
 ## 构建配置
 
@@ -303,10 +300,10 @@ cc = "1.0"
 
 `profile` 为发布配置，默认包含四种：
 
--   **dev**：`cargo build/run/check/rustc` 使用；
--   **release**：构建时使用 `-r` 和 `cargo install` 使用；
--   **test**：`cargo test` 使用，基于 dev，用于单元、集成和文档测试；
--   **bench**：`cargo bench` 使用，基于 release，用于基准测试。
+-   **dev**：`cargo build/run/check/rustc` 使用
+-   **release**：构建时使用 `-r` 和 `cargo install` 使用
+-   **test**：`cargo test` 使用，基于 dev，用于单元、集成和文档测试
+-   **bench**：`cargo bench` 使用，基于 release，用于基准测试
 
 >   *examples* 中的示例代码默认使用 `dev` 配置。
 
@@ -322,32 +319,32 @@ panic = "abort"
 
 常见配置选项：
 
--   **opt-level**：`-C opt-level` 标志，表示优化级别，级别越高编译时间越多；
-    -   `0`：dev 默认值；
+-   **opt-level**：`-C opt-level` 标志，表示优化级别，级别越高编译时间越多
+    -   `0`：dev 默认值
 
-    -   `3`：release 默认值；
+    -   `3`：release 默认值
 
-    -   `s`：优化二进制文件大小。
--   **debug**：`-C debuginfo` 标志，控制二进制文件中包含的调试信息；
-    -   `false`：无调试信息，release 默认值；
+    -   `s`：优化二进制文件大小
+-   **debug**：`-C debuginfo` 标志，控制二进制文件中包含的调试信息
+    -   `false`：无调试信息，release 默认值
 
-    -   `true`：所有调试信息，dev 默认值。
--   **strip**：` -C strip` 标志，控制链接器需要删除哪些信息；
-    -   `false`：默认值，保留所有信息；
-    -   `true`：删除调试和符号信息；
--   **lto**：`-C lto` 标志，控制链接时优化策略，会增加编译时间和内存消耗；
-    -   `false`：默认值，只对代码生成单元中的本地包进行优化，若 `codegen-units` 为 1 或 `opt-level` 为 0，则不进行优化；
-    -   `true`：最大程度优化，但最消耗资源；
--   **codegen-units**：`-C codegen-units` 标志，控制一个 Crate 会被拆分成多少个代码生成单元。多个单元可以并行处理，以减少编译时间，但生成后的代码性能可能较低。
+    -   `true`：所有调试信息，dev 默认值
+-   **strip**：` -C strip` 标志，控制链接器需要删除哪些信息
+    -   `false`：默认值，保留所有信息
+    -   `true`：删除调试和符号信息
+-   **lto**：`-C lto` 标志，控制链接时优化策略，会增加编译时间和内存消耗
+    -   `false`：默认值，只对代码生成单元中的本地包进行优化，若 `codegen-units` 为 1 或 `opt-level` 为 0，则不进行优化
+    -   `true`：最大程度优化，但最消耗资源
+-   **codegen-units**：`-C codegen-units` 标志，控制一个 Crate 会被拆分成多少个代码生成单元。多个单元可以并行处理，以减少编译时间，但生成后的代码性能可能较低
     -   增量构建，默认为 256
     -   非增量构建，默认为 16
 
--   **panic**：`-C panic` 标志，控制 panic 发生时的策略，单元、集成、文档和基准测试，以及构建脚本、过程宏只能使用 `unwind`。
-    -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源；
-    -   `abort`：panic 后直接中止程序，由操作系统回收资源。
+-   **panic**：`-C panic` 标志，控制 panic 发生时的策略，单元、集成、文档和基准测试，以及构建脚本、过程宏只能使用 `unwind`
+    -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源
+    -   `abort`：panic 后直接中止程序，由操作系统回收资源
 
->   -   针对编译优化，可参考 [min-sized-rust](https://github.com/johnthagen/min-sized-rust)；
->   -   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)。
+>   -   针对编译优化，可参考 [min-sized-rust](https://github.com/johnthagen/min-sized-rust)
+>   -   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)
 
 ### 自定义 profile
 
@@ -416,11 +413,11 @@ profile 的优先级从高到低为：
 
 可以指定源文件编译的 target：
 
--   **lib**：编译为可被链接的库；
--   **bin**：编译为可执行文件；
--   **example**：编译示例代码；
--   **test**：编译单元测试或集成测试；
--   **bench**：编译基准测试。
+-   **lib**：编译为可被链接的库
+-   **bin**：编译为可执行文件
+-   **example**：编译示例代码
+-   **test**：编译单元测试或集成测试
+-   **bench**：编译基准测试
 
 ```toml
 [lib]  # lib 只能有一个
@@ -618,11 +615,11 @@ cc = "1.0"
 
 编译模型以 Crate 为中心，每次编译一个 Crate，并生成一个二进制形式的可执行或库文件。
 
-默认情况下，使用 `cargo new` 时会创建一个包，同时也会创建一个二进制 Crate。若一个目录含有 *Cargo.toml*、*src/main.rs* 或 *src/lib.rs*，则该目录自动成为一个包。
+默认情况下，使用 `cargo new` 时会创建一个包，同时也会创建一个二进制 Crate。若一个目录含有 *Cargo.toml*，以及 *src/main.rs* 或 *src/lib.rs*，则该目录自动成为一个包。
 
 一个包必须至少有一个二进制或库 Crate，可以同时拥有，但库 Crate 最多有一个。其中 *src/main.rs* 或 *src/lib.rs* 就是与包同名的二进制或库 Crate 的根。Crate 根文件将由 Cargo 传递给 rustc 来构建。
 
-若包带有多个二进制 Crate，需置于 *src/bin* 中，其中每个文件都需要包含一个 `main` 函数，都为一个独立的二进制 Crate，都会被编译成与文件名相同的可执行文件。此时可以不再需要 *src/main.rs*，但若存在也会被当作二进制 Crate，并编译成与 Crate 名相同的可执行文件。
+若包带有多个二进制 Crate，需置于 *src/bin* 中，其中每个文件都需要包含一个 `main` 函数，都是一个独立的二进制 Crate，都会被编译成与文件名相同的可执行文件。此时可以不再需要 *src/main.rs*，但若存在也会被当作二进制 Crate，并编译成与包名相同的可执行文件。
 
 ```
 ./src
@@ -737,7 +734,7 @@ fn main() {
 
 [Crates.io](https://crates.io/) 上有很多第三方 Crate，使用它们需要先在 *Cargo.toml* 中添加依赖，然后用 `use` 引入到包的作用域中。
 
-标准库 `std` 对于自己的包来说也是外部 Crate，但已经提前导入，无需在 *Cargo.toml* 中显式导入，但也需要用 `use` 引入项，如 `HashMap`。
+标准库 `std` 对于自己的包来说也是外部 Crate，但已经预导入，无需在 *Cargo.toml* 中显式导入，但也需要用 `use` 引入项，如 `HashMap`。
 
 ```rust
 use std::collections::HashMap;
@@ -907,11 +904,11 @@ fn example<'Foo>(f: Foo) {
 
 有两种管理模块的方式：
 
--   新风格：创建与模块同名的文件；
--   旧风格：创建与模块同名的**文件夹**，并在其中创建 *mod.rs*。
+-   新风格：创建与模块同名的文件
+-   旧风格：创建与模块同名的**文件夹**，并在其中创建 *mod.rs*
 
->   -   推荐使用新风格的形式，因为嵌套更少，结构更加清晰一致；
->   -   可以在同一个项目中混用两种风格，但不推荐。
+>   -   推荐使用新风格的形式，因为嵌套更少，结构更加清晰一致
+>   -   可以在同一个项目中混用两种风格
 
 ### 新风格
 
@@ -1208,9 +1205,9 @@ use std::io::prelude::*;
 
 工作区是一系列包的集合，这些包被称为**工作区成员**，并被一起管理。
 
--   命令可以在所有工作区成员上运行，如 `cargo check --workspace`；
--   所有工作区成员共享工作区根目录下的 *Cargo.lock* 和 *target*；
--   共享包元数据。
+-   命令可以在所有工作区成员上运行，如 `cargo check --workspace`
+-   所有工作区成员共享工作区根目录下的 *Cargo.lock* 和 *target*
+-   共享包元数据
 
 ### 创建
 
