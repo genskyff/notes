@@ -75,17 +75,17 @@
 
 并不是所有类型都能在自动强转点被自动转换，有着以下限制：
 
--   `T` 到 `U`，若 `T` 是 `U` 的子类型（反射性）；
--   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`（传递性）；
--   `&mut T` 到 `&T`；
--   `*mut T` 到 `*const T`；
--   `&T` 到 `*const T`；
--   `&mut T` 到 `*mut T`；
--   `&T` 或 `&mut T` 到 `&U`，若 `T` 实现了 `Deref<Target = U>`；
--   `&mut T` 到 `&mut U`，若 `T` 实现了 `DerefMut<Target = U>`；
--   函数到函数指针；
--   非捕获闭包到函数指针；
--   `!` 到 `T`。
+-   `T` 到 `U`，若 `T` 是 `U` 的子类型（反射性）
+-   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`（传递性）
+-   `&mut T` 到 `&T`
+-   `*mut T` 到 `*const T`
+-   `&T` 到 `*const T`
+-   `&mut T` 到 `*mut T`
+-   `&T` 或 `&mut T` 到 `&U`，若 `T` 实现了 `Deref<Target = U>`
+-   `&mut T` 到 `&mut U`，若 `T` 实现了 `DerefMut<Target = U>`
+-   函数到函数指针
+-   非捕获闭包到函数指针
+-   `!` 到 `T`
 
 >   更多关于类型自动强转的信息，可参考 [类型自动强转](https://minstrel1977.gitee.io/rust-reference/type-coercions.html)。
 
@@ -146,14 +146,14 @@ unsafe {
 
 `std::convert` 提供了多种从一种类型转换到另一种类型的 trait：
 
--   `From` 和 `Into`：`T` 到 `U` 之间的转换；
--   `TryFrom` 和 `TryInto`：`T` 到 `U` 之间的转换，但可能转换失败；
--   `AsRef` 和 `AsMut`：`&T` / `&mut T` 到 `&U` / `&mut U` 之间转换。
+-   `From` 和 `Into`：`T` 到 `U` 之间的转换
+-   `TryFrom` 和 `TryInto`：`T` 到 `U` 之间的转换，但可能转换失败
+-   `AsRef` 和 `AsMut`：`&T` / `&mut T` 到 `&U` / `&mut U` 之间转换
 
 `std::borrow` 则提供了另一种针对引用转换的 trait：
 
--   `ToOwned`：`&T` 到 `U` 的转换；
--   `Borrow` 和 `BorrowMut`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`。
+-   `ToOwned`：`&T` 到 `U` 的转换
+-   `Borrow` 和 `BorrowMut`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`
 
 ### From 和 Into
 
@@ -190,8 +190,8 @@ impl<T> From<T> for T {
 ```
 
 -   这两种转换 trait 虽然都是用作转换，但是用途不同：
-    -   `From` 主要用在构造函数，用于从 `T` 构造 `U` 的实例；
-    -   `Into` 主要用在函数参数，让参数类型更灵活。
+    -   `From` 主要用在构造函数，用于从 `T` 构造 `U` 的实例
+    -   `Into` 主要用在函数参数，让参数类型更灵活
 
 ```rust
 struct Wrap {
@@ -374,8 +374,8 @@ pub trait AsMut<T: ?Sized> {
 
 `AsRef` 和 `AsMut` 都会自动解引用：
 
--   若实现了 `AsRef<T> for U`，则 `&U`、`&mut U`、`&&mut U` 都能调用 `as_ref`；
--   若实现了 `AsMut<T> for U`，则 `&mut U`、`&mut &mut U` 都能调用 `as_mut`。
+-   若实现了 `AsRef<T> for U`，则 `&U`、`&mut U`、`&&mut U` 都能调用 `as_ref`
+-   若实现了 `AsMut<T> for U`，则 `&mut U`、`&mut &mut U` 都能调用 `as_mut`
 
 ```rust
 struct Wrap {
@@ -570,15 +570,15 @@ assert_eq!(v_iter.next(), None);
 
 生成迭代器的方法有三种：
 
--   `into_iter`：获取元素序列的所有权并返回拥有所有权的迭代器；
--   `iter`：返回元素序列的不可变引用的迭代器；
--   `iter_mut`：返回元素序列的可变引用的迭代器。
+-   `into_iter`：获取元素序列的所有权并返回拥有所有权的迭代器
+-   `iter`：返回元素序列的不可变引用的迭代器
+-   `iter_mut`：返回元素序列的可变引用的迭代器
 
 `Iterator` 和 `IntoIterator` 的关系：
 
--   实现了 `Iterator ` 的就是迭代器，不需要转换即可使用迭代器方法；
--   实现了 `IntoIterator` 的可通过  `into_iter()` 方法转换为迭代器；
--   若类型 `T` 实现了 `Iterator `，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现。
+-   实现了 `Iterator ` 的就是迭代器，不需要转换即可使用迭代器方法
+-   实现了 `IntoIterator` 的可通过  `into_iter()` 方法转换为迭代器
+-   若类型 `T` 实现了 `Iterator `，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现
 
 ## 消耗适配器
 
@@ -697,10 +697,10 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 
 其中最广泛使用的四种集合：
 
--   `Vec`：顺序存储的动态数组；
--   `String`：顺序存储的 UTF-8 字符序列；
--   `HashMap`：无序存储的键值对集合，其中键是唯一的；
--   `HashSet`：无序存储的唯一值集合。
+-   `Vec`：顺序存储的动态数组
+-   `String`：顺序存储的 UTF-8 字符序列
+-   `HashMap`：无序存储的键值对集合，其中键是唯一的
+-   `HashSet`：无序存储的唯一值集合
 
 ## Vec
 
@@ -710,9 +710,9 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 
 有多种方法来创建 `Vec`：
 
--   `new` 创建空 `Vec`；
--   `from` 将其它类型转换成 `Vec`；
--   `vec!` 创建指定 `Vec`。
+-   `new` 创建空 `Vec`
+-   `from` 将其它类型转换成 `Vec`
+-   `vec!` 创建指定 `Vec`
 
 ```rust
 let v1: Vec<i32> = Vec::new();
@@ -789,10 +789,10 @@ Rust 只有一种原生字符串类型：`&str`，它是一些储存在别处的
 
 有多种方法来创建 `String`：
 
--   `new` 创建空 `String`；
--   `from` 或 `to_string` 将其它类型转换成 `String`；
--   `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`；
--   `from_utf8_lossy` / `from_utf16_lossy` 与不带 `lossy` 的方法类似，但包括无效字节序列。
+-   `new` 创建空 `String`
+-   `from` 或 `to_string` 将其它类型转换成 `String`
+-   `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`
+-   `from_utf8_lossy` / `from_utf16_lossy` 与不带 `lossy` 的方法类似，但包括无效字节序列
 
 ```rust
 let s1 = String::from("foo");
@@ -904,9 +904,9 @@ use std::collections::HashMap;
 
 有多种方法来创建 `HashMap`：
 
--   `new` 创建空 `HashMap`；
--   `from` 将其它类型转换成 `HashMap`；
--   通过迭代器创建 `HashMap`。
+-   `new` 创建空 `HashMap`
+-   `from` 将其它类型转换成 `HashMap`
+-   通过迭代器创建 `HashMap`
 
 ```rust
 let hm1: HashMap<&str, i32> = HashMap::new();
@@ -942,8 +942,8 @@ hm.iter().for_each(|(k, v)| println!("{k}: {v}"));
 
 由于每个键只能关联一个值，因此对 `HashMap` 的更新可能有不同的策略：
 
--   若键已存在，可以选择是否更新旧值；
--   若键不存在，可以选择是否插入条目。
+-   若键已存在，可以选择是否更新旧值
+-   若键不存在，可以选择是否插入条目
 
 要根据键的存在来决定是否插入条目，可使用 `entry`，其获取键作为参数，并返回一个 `Entry` 枚举，该枚举表示该键是否存在，其上有很多实用方法，如 `insert_or` 返回对值的可变引用，并在不存在时插入指定值。
 
@@ -999,9 +999,9 @@ use std::collections::HashSet;
 
 有多种方法来创建 `HashSet`：
 
--   `new` 创建空 `HashSet`；
--   `from` 将其它类型转换成 `HashSet`；
--   通过迭代器创建 `HashSet`。
+-   `new` 创建空 `HashSet`
+-   `from` 将其它类型转换成 `HashSet`
+-   通过迭代器创建 `HashSet`
 
 ```rust
 let hs1: HashSet<i32> = HashSet::new();
@@ -1061,7 +1061,7 @@ assert_eq!(HashSet::from([&0, &3]), sym_diff);
 
 ## 扩展集合
 
-迭代器产生一系列值，集合也可以视为一系列值，因此标准库中的集合都实现了 `Extend`，以用迭代器的内容来扩展集合。当使用已存在的键扩展集合时，值将会被更新；若集合本身允许相同键，则插入新值。
+迭代器产生一系列值，集合也可以视为一系列值，因此标准库中的集合都实现了 `Extend`，以用迭代器的内容来扩展集合。当使用已存在的键扩展集合时，值将会被更新。若集合本身允许相同键，则插入新值。
 
 ```rust
 let mut v = vec![1, 2, 3];
