@@ -44,8 +44,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 所有配置文件的键值会被合并，重复的以优先级高的为准，相同优先级以最后定义的为准。命令行直接传递的优先级最高，*config.toml* 优先级大于 *Cargo.toml*。对于 *config.toml*，嵌套越深的优先级越高。执行 Cargo 时，当前目录的子目录中的配置文件会被忽略。
 
->   -   配置文件使用 [TOML](https://toml.io/cn/v1.0.0) 格式；
->   -   环境变量的配置可参考 [Cargo Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html)。
+>   -   配置文件使用 [TOML](https://toml.io/cn/v1.0.0) 格式
+>   -   环境变量的配置可参考 [Cargo Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
 
 ## 构建工具
 
@@ -546,10 +546,10 @@ build = "my-build.rs"
 
 构建脚本的使用场景通常为：
 
--   构建 C 依赖库；
--   寻找指定的 C 依赖库；
--   根据描述文件生成 Rust 模块；
--   执行一些平台相关的配置。
+-   构建 C 依赖库
+-   寻找指定的 C 依赖库
+-   根据描述文件生成 Rust 模块
+-   执行一些平台相关的配置
 
 ### 构建流程
 
@@ -563,17 +563,17 @@ Cargo 在构建 Rust 项目之前会先将这个脚本编译为可执行文件�
 
 ### Cargo 识别指令
 
--   `cargo::rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行脚本；
--   `cargo::rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行脚本；
--   `cargo::rustc-link-search=[KIND=]PATH`：添加库搜索路径；
--   `cargo::rustc-link-lib=LIB`：添加要链接的库；
--   `cargo::rustc-link-arg=FLAG`：将标志传递给链接器；
--   `cargo::rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器；
--   `cargo::rustc-flags=FLAGS`：将标志传递给编译器；
--   `cargo::rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置；
--   `cargo::rustc-env=VAR=VALUE`：传递环境变量；
--   `cargo::warning=MESSAGE`：显示警告信息；
--   `cargo::KEY=VALUE`：元数据，由脚本使用 `links`。
+-   `cargo::rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行
+-   `cargo::rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行
+-   `cargo::rustc-link-search=[KIND=]PATH`：添加库搜索路径
+-   `cargo::rustc-link-lib=LIB`：添加要链接的库
+-   `cargo::rustc-link-arg=FLAG`：将标志传递给链接器
+-   `cargo::rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器
+-   `cargo::rustc-flags=FLAGS`：将标志传递给编译器
+-   `cargo::rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置
+-   `cargo::rustc-env=VAR=VALUE`：传递环境变量
+-   `cargo::warning=MESSAGE`：显示警告信息
+-   `cargo::KEY=VALUE`：元数据，由脚本使用 `links`
 
 >   更多关于 Cargo 识别指令的信息，可参考 [Cargo Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargorustc-link-argflag)。
 
@@ -603,13 +603,13 @@ cc = "1.0"
 
 **模块系统**是 Rust 中一系列与作用域相关的功能，其中包含：
 
--   **包**：Cargo 用来构建、测试和分享 Crate 的功能；
--   **Crate**：编译和链接的基本单元；
-    -   一个或多个二进制 Crate 或一个库 Crate；
-    -   Crate **根**描述如何构建该 Crate；
-    -   *Cargo.toml* 描述如何构建这些 Crate。
--   **模块**：使用 `use` 关键字控制作用域和路径的私有性；
--   **路径**：命名结构体、枚举、函数或模块等项的方式。
+-   **包**：Cargo 用来构建、测试和分享 Crate 的功能
+-   **Crate**：编译和链接的基本单元
+    -   一个或多个二进制 Crate 或一个库 Crate
+    -   Crate **根**描述如何构建该 Crate
+    -   *Cargo.toml* 描述如何构建这些 Crate
+-   **模块**：使用 `use` 关键字控制作用域和路径的私有性
+-   **路径**：命名结构体、枚举、函数或模块等项的方式
 
 ## 包和 Crate
 
@@ -974,9 +974,9 @@ pub fn baz() {}
 
 路径是一个或多个由命名空间限定符 `::` 分隔的路径段组成的序列，用来引用模块树中的项。
 
--   **绝对路径**从 Crate 根开始，以 Crate 名或 `crate` 开头；
--   **相对路径**从当前模块开始，以 `self`、`super` 或当前模块名开头；
--   **全局路径**从外部预导入包开始，以 `::` 开头，其后必须跟一个外部预导入 Crate 名。
+-   **绝对路径**从 Crate 根开始，以 Crate 名或 `crate` 开头
+-   **相对路径**从当前模块开始，以 `self`、`super` 或当前模块名开头
+-   **全局路径**从外部预导入包开始，以 `::` 开头，其后必须跟一个外部预导入 Crate 名
 
 ```rust
 mod std {
@@ -1011,10 +1011,10 @@ fn main() {
 
 私有性规则有如下：
 
--   所有项默认私有；
--   `pub` 关键字使项变为公有；
--   不允许使用定义于当前模块的子模块中的私有代码；
--   允许使用任何定义于父模块或当前模块中的私有代码。
+-   所有项默认私有
+-   `pub` 关键字使项变为公有
+-   不允许使用定义于当前模块的子模块中的私有代码
+-   允许使用任何定义于父模块或当前模块中的私有代码
 
 ### 结构体可见性
 
@@ -1075,12 +1075,12 @@ mod a {
 
 除了最常见的通过 `pub` 来控制可见性外，还可以指定作用域内的可见性：
 
--   `pub(self)`：默认值，仅在当前或子模块中可见；
+-   `pub(self)`：默认值，仅在当前或子模块中可见
 
--   `pub`：完全公开；
--   `pub(crate)`：仅 Crate 内可见；
--   `pub(super)`：上级模块中可见；
--   `pub(in path)`：指定的路径中可见。
+-   `pub`：完全公开
+-   `pub(crate)`：仅 Crate 内可见
+-   `pub(super)`：上级模块中可见
+-   `pub(in path)`：指定的路径中可见
 
 ```rust
 pub fn call() {
@@ -1356,8 +1356,8 @@ default-run = "hello"
 // 应用于整个 Crate 的内部属性
 #![crate_name = "mypkg"]
 
-// 应用于整个函数的内部属性
 fn foo() {
+  // 应用于整个函数的内部属性
   #![allow(unused_variables)]
 }
 
@@ -1444,10 +1444,10 @@ fn foo() {}
 
 属性要么是活跃的，要么是惰性的。在属性处理过程中，活跃属性将从其所在的对象上移除，而惰性属性依然保持不变。
 
--   `cfg` 和 `cfg_attr` 属性是活跃的；
--   `test` 属性在测试中是惰性的，否则是活跃的；
--   宏属性是活跃的；
--   所有其它属性都是惰性的。
+-   `cfg` 和 `cfg_attr` 属性是活跃的
+-   `test` 属性在测试中是惰性的，否则是活跃的
+-   宏属性是活跃的
+-   所有其它属性都是惰性的
 
 ## 内置属性
 
@@ -1455,7 +1455,7 @@ fn foo() {}
 
 ### 条件编译
 
--   `cfg`：条件编译。
+-   `cfg`：条件编译
 
 ```rust
 #[cfg(target_os = "macos")]
@@ -1474,7 +1474,7 @@ fn needs_not_foo() {}
 fn when_unwinding() {}
 ```
 
--   `cfg_attr`：条件包含属性。
+-   `cfg_attr`：条件包含属性
 
 ```rust
 #[cfg_attr(target_os = "linux", path = "linux.rs")]
@@ -1484,7 +1484,7 @@ mod os;
 fn fuzz() {}
 ```
 
-`cfg_attr` 能展开为另一个 `cfg_attr`。
+`cfg_attr` 能展开为另一个 `cfg_attr`
 
 ```rust
 // 两者等效
@@ -1494,87 +1494,87 @@ fn fuzz() {}
 
 ### 测试
 
--   `test`：标记为测试项；
--   `ignore`：忽略测试项；
--   `should_panic`：测试项应产生 panic。
+-   `test`：标记为测试项
+-   `ignore`：忽略测试项
+-   `should_panic`：测试项应产生 panic
 
 ### 派生
 
-`derive`：自动派生 trait 实现；
+`derive`：自动派生 trait 实现
 
-`automatically_derived`：自动添加到由 `derive` 属性为一些内置 trait 自动派生的实现中。
+`automatically_derived`：自动添加到由 `derive` 属性为一些内置 trait 自动派生的实现中
 
 ### 宏
 
--   `macro_export`：导出由 `macro_rules!` 创建的声明宏；
--   `macro_use`：扩展宏可见性，或从其它 Crate 导入宏；
--   `proc_macro`：定义类函数宏；
--   `proc_macro_attribute`：定义属性宏；
--   `proc_macro_derive`：定义派生宏。
+-   `macro_export`：导出由 `macro_rules!` 创建的声明宏
+-   `macro_use`：扩展宏可见性，或从其它 Crate 导入宏
+-   `proc_macro`：定义类函数宏
+-   `proc_macro_attribute`：定义属性宏
+-   `proc_macro_derive`：定义派生宏
 
 ### 诊断
 
--   `allow`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别；
--   `deprecated`：弃用标记；
--   `must_use`：为未使用的值生成 lint 提醒。
+-   `allow`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别
+-   `deprecated`：弃用标记
+-   `must_use`：为未使用的值生成 lint 提醒
 
 ### ABI、链接、符号和 FFI
 
--   `link`：指定与外部 extern 块链接的本地库；
--   `link_name`：指定外部 extern 块中的函数或静态项的符号名；
--   `no_link`：防止链接外部 Crate；
--   `repr`：控制类型的内存布局；
--   `crate_type`：指定 Crate 类型；
--   `crate_name`：指定 Crate 名；
--   `no_main`：禁止 main 符号；
--   `export_name`：指定函数或静态项导出的符号名；
--   `link_section`：指定函数或静态项在所在的段；
--   `no_mangle`：禁用对符号名编码；
--   `used`：强制编译器在输出对象文件中保留静态项。
+-   `link`：指定与外部 extern 块链接的本地库
+-   `link_name`：指定外部 extern 块中的函数或静态项的符号名
+-   `no_link`：防止链接外部 Crate
+-   `repr`：控制类型的内存布局
+-   `crate_type`：指定 Crate 类型
+-   `crate_name`：指定 Crate 名
+-   `no_main`：禁止 main 符号
+-   `export_name`：指定函数或静态项导出的符号名
+-   `link_section`：指定函数或静态项在所在的段
+-   `no_mangle`：禁用对符号名编码
+-   `used`：强制编译器在输出对象文件中保留静态项
 
 ### 代码生成
 
-`inline`：内联代码；
+`inline`：内联代码
 
-`cold`：表示函数不太可能被调用；
+`cold`：表示函数不太可能被调用
 
-`no_builtins`：禁用某些内置函数；
+`no_builtins`：禁用某些内置函数
 
-`target_feature`：配置特定目标的代码生成；
+`target_feature`：配置特定目标的代码生成
 
-`track_caller`：将调用位置传递给 `std::panic::Location::caller` 函数。
+`track_caller`：将调用位置传递给 `std::panic::Location::caller` 函数
 
 ### 文档
 
-`doc`：指定文档注释。
+`doc`：指定文档注释
 
 ### 预导入包
 
--   `no_std`：从预导入包中移除 std；
--   `no_implicit_prelude`：禁用模块内的预导入包。
+-   `no_std`：从预导入包中移除 std
+-   `no_implicit_prelude`：禁用模块内的预导入包
 
 ### 模块
 
--   `path`：指定模块的路径。
+-   `path`：指定模块的路径
 
 ### 极限值
 
--   `recursion_limit`：设置某些编译时操作的最大递归限制；
--   `type_length_limit`：设置在单态化过程中构造具体类型时所做的最大类型替换次数。
+-   `recursion_limit`：设置某些编译时操作的最大递归限制
+-   `type_length_limit`：设置在单态化过程中构造具体类型时所做的最大类型替换次数
 
 ### 运行时
 
--   `panic_handler`：设置处理 panic 的函数；
--   `global_allocator`：设置全局内存分配器；
--   `windows_subsystem`：指定要链接的 Windows 子系统。
+-   `panic_handler`：设置处理 panic 的函数
+-   `global_allocator`：设置全局内存分配器
+-   `windows_subsystem`：指定要链接的 Windows 子系统
 
 ### 特性
 
--   `feature`：用于启用非稳定的或实验性的编译器特性。
+-   `feature`：用于启用非稳定的或实验性的编译器特性
 
 ### 类型系统
 
--   `non_exhaustive`：表明类型将来会添加更多的字段或变体。
+-   `non_exhaustive`：表明类型将来会添加更多的字段或变体
 
 # 4 文档
 
@@ -1636,9 +1636,9 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 `Examples` 为示例代码标题，其它常用的有：
 
--   **Panics**：函数可能会 `panic!` 的场景；
--   **Errors**：若函数返回 `Result`，此部分描述可能会出现的错误以及什么情况会造成这些错误；
--   **Safety**：若函数使用了 `unsafe`，此部分描述确保 `unsafe` 块中代码能正常工作的必要条件。
+-   **Panics**：函数可能会 `panic!` 的场景
+-   **Errors**：若函数返回 `Result`，此部分描述可能会出现的错误以及什么情况会造成这些错误
+-   **Safety**：若函数使用了 `unsafe`，此部分描述确保 `unsafe` 块中代码能正常工作的必要条件
 
 ## 文档属性
 
@@ -1694,11 +1694,11 @@ cargo login <token>
 
 以下字段是必须的：
 
--   `name`：Crate 的名称，当要发布到 Cartes.io 上时，该名称必须是唯一的；
--   `version`：Crate 的版本；
--   `edition`： Rust 的版本；
--   `description`：对 Crate 的简单描述；
--   `license`：Crate 使用的许可证，可以是任意 [SPDX](https://spdx.org/licenses/) 中的标识符。
+-   `name`：Crate 的名称，当要发布到 Cartes.io 上时，该名称必须是唯一的
+-   `version`：Crate 的版本
+-   `edition`： Rust 的版本
+-   `description`：对 Crate 的简单描述
+-   `license`：Crate 使用的许可证，可以是任意 [SPDX](https://spdx.org/licenses/) 中的标识符
 
 一个准备好发布的 Crate 的 Cargo.toml 的最小元信息如下：
 
@@ -1717,7 +1717,7 @@ license = "MIT"
 license-file = "MY_LICENSE"
 ```
 
-还可以通过 `OR` 来指定多个 license：
+可以通过 `OR` 来指定多个 license：
 
 ```toml
 license = "MIT OR LGPL-2.0"
@@ -1773,7 +1773,7 @@ Cargo 支持从 Crates.io 下载并在本地安装和使用二进制 Crate，只
 # 安装 Crate
 cargo install <crate>
 
-# 使用 Cargo.lock 中的精确版本安装 Crate
+# 使用 Cargo.lock 中的版本安装 Crate
 cargo install <crate> --locked
 
 # 从本地 Crate 安装
@@ -1800,12 +1800,12 @@ cargo --list
 
 常用扩展：
 
--   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存；
--   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate；
--   `cargo-generate`：项目模板生成；
--   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖；
--   `cargo-watch`：代码更新后进行自动构建；
--   `cargo-deny`：检查第三方依赖的授权、来源和安全漏洞等。
+-   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
+-   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
+-   `cargo-generate`：项目模板生成
+-   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖
+-   `cargo-watch`：代码更新后进行自动构建
+-   `cargo-deny`：检查第三方依赖的授权、来源和安全漏洞等
 
 # 6 测试
 
@@ -1828,17 +1828,17 @@ fn test_add() {
 
 测试中以 `assert` 开头的宏为断言，常用断言有：
 
--   `assert!`：接受一个参数，断言是否为 `true`；
+-   `assert!`：接受一个参数，断言是否为 `true`
 
--   `assert_eq!`：接受两个参数，断言是否相等；
+-   `assert_eq!`：接受两个参数，断言是否相等
 
--   `assert_ne!`：接受两个参数，断言是否不等；
+-   `assert_ne!`：接受两个参数，断言是否不等
 
--   `debug_assert!`：与 `assert!` 相同，但仅在非优化构建中起作用；
+-   `debug_assert!`：与 `assert!` 相同，但仅在非优化构建中起作用
 
--   `debug_assert_eq!`：与 `assert_eq!` 相同，但仅在非优化构建中起作用；
+-   `debug_assert_eq!`：与 `assert_eq!` 相同，但仅在非优化构建中起作用
 
--   `debug_assert_ne!`：与 `assert_ne!` 相同，但仅在非优化构建中起作用；
+-   `debug_assert_ne!`：与 `assert_ne!` 相同，但仅在非优化构建中起作用
 
 接受两个参数的断言如 `assert_eq!` 和 `assert_ne!` 在底层分别使用了 `==` 和 `!=`。当断言失败时，程序会 panic，并且会使用调试格式打印其参数，因此比较的值必需实现了 `PartialEq` 和 `Debug`。
 
@@ -1976,10 +1976,10 @@ cargo test -- --include-ignored
 
 Rust 中，测试可以分为：
 
--   单元测试：小规模集中的测试一个模块或私有项；
--   集成测试：测试整个库，相当于作为库的使用者，因此只能测试公有项；
--   文档测试：测试文档注释中的代码示例；
--   基准测试：测试函数的性能。
+-   单元测试：小规模集中的测试一个模块或私有项
+-   集成测试：测试整个库，相当于作为库的使用者，因此只能测试公有项
+-   文档测试：测试文档注释中的代码示例
+-   基准测试：测试函数的性能
 
 ### 单元测试
 
