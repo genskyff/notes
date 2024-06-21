@@ -722,7 +722,7 @@ fn main() {
 pub fn foo() {}
 
 // main.rs
-use mypkg::foo；
+use mypkg::foo;
 
 fn main() {
     foo();
@@ -789,7 +789,7 @@ use alloc::rc::Rc;
 
 #### macro_use 预导入包
 
-`macro_use` 预导入包是外部 Crate 中的宏。外部 Crate 中声明的宏并不会被自动导入，需要在 `extern crate ` 上使用 `#[macro_use]` 来导入 Crate 中的使用了 `#[macro_export]` 的宏。
+`macro_use` 预导入包是外部 Crate 中的宏。外部 Crate 中的声明宏并不会被自动导入，需要在 `extern crate ` 上使用 `#[macro_use]` 来导入 Crate 中的使用了 `#[macro_export]` 的宏。
 
 ```rust
 // lib.rs
@@ -1404,9 +1404,9 @@ use my_proc::show_streams;
 fn invoke() {}
 ```
 
-### 派生宏辅助属性
+### 派生宏
 
-派生宏辅助属性由带有 `#[proc_macro_derive]`，属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
+派生宏由带有 `#[proc_macro_derive]`，属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
 
 ```rust
 // myproc/src/lib.rs
@@ -1912,7 +1912,7 @@ fn it_works() {
 
 默认情况下会为每个测试函数都生成二进制文件，并运行所有测试，且所有输出都不会显示。通过传递参数，可以控制测试的行为。
 
-直接在 `cargo test` 后接参数，可控制 Cargo 的测试策略，如测试指定项等；而在 Cargo 命令后接 `--` 再接参数则是控制测试二进制文件的测试策略，如指定测试线程数、显示输出等。
+直接在 `cargo test` 后接参数，可控制 Cargo 的测试策略，如测试指定项等。而在 Cargo 命令后接 `--` 再接参数则是控制测试二进制文件的测试策略，如指定测试线程数、显示输出等。
 
 ```shell
 # 查看 cargo test 的可选参数
