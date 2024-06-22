@@ -38,11 +38,11 @@ fn example() {
 }
 ```
 
->   更多关于常量参数的使用和限制，可参考 [Const generics](https://minstrel1977.gitee.io/rust-reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
+>   更多关于常量参数的使用和限制，可参考 [Const generics](https://doc.rust-lang.org/reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
 
 ## 泛型定义
 
-使用 `<'a, 'b, T, U, const N: i32, const M: u32, ..>` 语法来定义泛型参数，并可用于结构体、枚举、联合体、函数、实现、和 trait。其中的 `'a, 'b` 为泛型生命周期参数；`T, U, ..` 为泛型类型参数，可以看作是占位符，在编译阶段会被实际的类型所替代；`const N: i32, const M: u32` 为泛型常量参数。
+使用 `<'a, 'b, T, U, const N: i32, const M: u32, ..>` 语法来定义泛型参数，并可用于结构体、枚举、联合体、函数、实现和 trait。其中的 `'a, 'b` 为泛型生命周期参数；`T, U, ..` 为泛型类型参数，可以看作是占位符，在编译阶段会被实际的类型所替代；`const N: i32, const M: u32` 为泛型常量参数。
 
 ### 泛型结构体
 
@@ -248,7 +248,7 @@ struct Id<T> {
 
 在类型中添加 `PhantomData<T>` 字段将告诉编译器，该类型的行为就好像存储了 `T` 类型的值一样，即使实际上并非如此。
 
-对生命周期参数也是如此，如裸指针是无法使用生命周期的，也可以通过这种方式来解决：
+对生命周期参数也是如此，如裸指针是无法使用生命周期参数的，也可以通过这种方式来解决：
 
 ```rust
 struct Foo<'a, T> {
@@ -296,7 +296,7 @@ trait MyTrait {
 
 ```rust
 trait Circular {
-    const PI: f64;
+    const PI: f64 = std::f64::consts::PI;
     fn area(&self) -> f64;
 }
 
@@ -310,16 +310,14 @@ struct Ellipse {
 }
 
 impl Circular for Circle {
-    const PI: f64 = std::f64::consts::PI;
     fn area(&self) -> f64 {
-        Circle::PI * self.r * self.r
+        Self::PI * self.r * self.r
     }
 }
 
 impl Circular for Ellipse {
-    const PI: f64 = std::f64::consts::PI;
     fn area(&self) -> f64 {
-        Ellipse::PI * self.a * self.b
+        Self::PI * self.a * self.b
     }
 }
 
@@ -521,7 +519,7 @@ impl MyTrait for Foo {
 }
 ```
 
-实现 trait 时有一条被称为**孤儿规则**的限制：**trait 或为该 trait 实现的类型，两者至少有一个位于本地作用域**。如可为一个本地类型实现一个外部的 trait，或为一个外部类型实现一个本地 trait，但不能为一个外部类型实现一个外部 trait。这条规则确保本地代码不会被外部实现所破坏，否则两个外部包都可以分别对相同类型实现相同的 trait，那么这两个实现就会冲突。
+实现 trait 时有一条被称为**孤儿规则**的限制：**trait 本身和实现该 trait 的类型，两者至少有一个位于本地作用域**。如可为一个本地类型实现一个外部的 trait，或为一个外部类型实现一个本地 trait，但不能为一个外部类型实现一个外部 trait。这条规则确保本地代码不会被外部实现所破坏，否则两个外部包都可以分别对相同类型实现相同的 trait，那么这两个实现就会冲突。
 
 ## trait 作为参数和返回值
 
@@ -715,7 +713,7 @@ fn main() {
 
 -   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 的对象大小无法确定
 -   使用 trait 对象时，总是使用引用的方式：
-    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小：一个指针指向具体类型的实例，另一个指针指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
+    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小：一个指向具体类型的实例，另一个指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
     -   trait 对象的引用方式有多种： `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等
 
 ```rust
@@ -1356,7 +1354,7 @@ struct Point(i32, i32);
 
 `std::iter::Iterator`：定义迭代器
 
-`use std::iter::IntoIterator`：转换为迭代器
+`std::iter::IntoIterator`：转换为迭代器
 
 ```rust
 struct Counter {
@@ -1383,7 +1381,7 @@ impl IntoIterator for Gen {
     type IntoIter = Counter;
 
     fn into_iter(self) -> Self::IntoIter {
-        Counter { count: 0 }
+        Self::IntoIter { count: 0 }
     }
 }
 
@@ -1623,6 +1621,11 @@ struct Ref2<'a, T: 'a>(&'a T);
 
 -   `Ref ` 接收 `T` 的引用，`Ref` 本身和该引用都至少具有 `'a` 的生命周期
 -   `Ref2` 接收 `T` 的引用，`Ref2` 本身、该引用及其内部包含的引用都至少具有 `'a` 的生命周期
+
+`Ref` 和 `Ref2` 的区别在于：
+
+-   `Ref` 对 `T` 没有生命周期约束，可以使用 `Ref<'a, i32>` 或 `Ref<'a, String>`，因为 `i32` 和 `String` 都不包含引用
+-   `Ref2` 对 `T` 约束为必须满足生命周期 `'a`，因此 `T` 中若包含引用，也必须满足该约束
 
 ### 生命周期转换
 
@@ -2082,7 +2085,7 @@ fn main() {
 
 ### 子类型化
 
-子类型化是指一种类型可以替代另一种类型的概念。设 `T` 是 `U` 的子类型，这表示 `T` 至少包含 `U`。
+子类型化是指一种类型可以替代另一种类型的概念。设 `T` 是 `U` 的子类型，这表示 `T` 至少包含 `U`，即 $U \subseteq T$。
 
 泛型参数 `T: U` 的含义：
 
@@ -2103,15 +2106,15 @@ fn main() {
 ```rust
 // 'a 被替换成了 'static
 let sub: &(for<'a> fn(&'a str) -> &'a str) = &((|x| x) as fn(&_) -> &_);
-let super: &(fn(&'static str) -> &'static str) = sub;
+let sup: &(fn(&'static str) -> &'static str) = sub;
 
 // trait 对象也是类似的
 let sub: &(dyn for<'a> Fn(&'a str) -> &'a str) = &|x| x;
-let super: &(dyn Fn(&'static str) -> &'static str) = sub;
+let sup: &(dyn Fn(&'static str) -> &'static str) = sub;
 
 // 使用高阶生命周期来代替另一个
 let sub: &(for<'a, 'b> fn(&'a str, &'b str)) = &((|x, y| {}) as fn(&_, &_));
-let super: &for<'c> fn(&'c str, &'c str) = sub;
+let sup: &for<'c> fn(&'c str, &'c str) = sub;
 ```
 
 ### 型变
@@ -2203,13 +2206,13 @@ struct Foo<'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mix> {
 }
 ```
 
->   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Rust 参考手册](https://minstrel1977.gitee.io/rust-reference/subtyping.html)。
+>   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Subtyping and Variance](https://doc.rust-lang.org/reference/subtyping.html?highlight=subtyping#subtyping-and-variance)。
 
 ## 深入生命周期
 
 ### 生命周期本质
 
-生命周期本质上就是为了说明引用从哪来，到哪去。标注后编译器就有了足够的信息来检查并阻止像悬垂引用这类违反内存安全的行为。
+生命周期本质上就是为了说明**引用从哪来，到哪去**。标注后编译器就有了足够的信息来检查并阻止像悬垂引用这类违反内存安全的行为。
 
 **函数**：引用从 `s` 中来，到返回值中去，因此 `s` 必须至少和返回值的生命周期相同。
 
@@ -2308,7 +2311,7 @@ let b = temp().f();
 let b = temp() + temp();
 ```
 
->   更多关于临时生命周期扩展的信息，可参考 [临时生存期扩展](https://minstrel1977.gitee.io/rust-reference/destructors.html?highlight=temp#temporary-lifetime-extension)。
+>   更多关于临时生命周期扩展的信息，可参考 [Temporary lifetime extension](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)。
 
 ### 再借用
 
@@ -2333,7 +2336,7 @@ fn main() {
 
 再借用实际上是一种强制转换，是借用的一个特例。当把 `&'a T` 或 `&'a mut T` 作为函数参数，在实际调用时会将其转换为 `&'b T` 或 `&'b mut T`。虽然有两个借用，但其生命周期并不重叠，因此并不违反借用规则。
 
-再借用不仅仅发生在函数参数，闭包的参数、`let` 语句中都会出现。若不显式指定闭包参数类型或显式再借用，则会直接进行移动。
+再借用不仅仅发生在函数参数，闭包的参数和 `let` 语句中都会出现。若不显式指定闭包参数类型或显式再借用，则会直接进行移动。
 
 ```rust
 let mut a = 1;

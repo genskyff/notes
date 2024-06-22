@@ -5,7 +5,7 @@
 >   -   [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
 >   -   [Programming Rust](https://book.douban.com/subject/36547630/)
 >   -   [Rust 语言圣经](https://course.rs/about-book.html)
->   -   [Rust 参考手册](https://minstrel1977.gitee.io/rust-reference/introduction.html)
+>   -   [The Rust Reference](https://doc.rust-lang.org/reference/introduction.html)
 >   -   [The Rust Standard Library](https://doc.rust-lang.org/std/)
 >   -   [The Cargo Book](https://doc.rust-lang.org/cargo/)
 >   -   [The rustc book](https://doc.rust-lang.org/rustc/what-is-rustc.html)
@@ -894,7 +894,7 @@ fn example<'Foo>(f: Foo) {
 -   模块
 -   外部块
 
->   更多关于程序项的信息，可参考 [程序项定义](https://minstrel1977.gitee.io/rust-reference/items.html)。
+>   更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/reference/items.html)。
 
 ## 模块
 
@@ -1451,7 +1451,7 @@ fn foo() {}
 
 ## 内置属性
 
->   更多关于内置属性的信息，可参考 [内置属性索引](https://minstrel1977.gitee.io/rust-reference/attributes.html#%E5%86%85%E7%BD%AE%E5%B1%9E%E6%80%A7%E7%9A%84%E7%B4%A2%E5%BC%95%E8%A1%A8)。
+>   更多关于内置属性的信息，可参考 [Built-in attributes index](https://doc.rust-lang.org/reference/attributes.html#built-in-attributes-index)。
 
 ### 条件编译
 

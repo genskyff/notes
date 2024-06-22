@@ -87,7 +87,7 @@
 -   非捕获闭包到函数指针
 -   `!` 到 `T`
 
->   更多关于类型自动强转的信息，可参考 [类型自动强转](https://minstrel1977.gitee.io/rust-reference/type-coercions.html)。
+>   更多关于类型自动强转的信息，可参考 [Type coercions](https://doc.rust-lang.org/reference/type-coercions.html)。
 
 ## 显式类型转换
 

@@ -581,7 +581,7 @@ Rust 中的表达式有很多种，主要有：
 -   异步表达式
 -   ...
 
->   更多关于表达式的信息，可参考 [Rust 表达式](https://minstrel1977.gitee.io/rust-reference/expressions.html)。
+>   更多关于表达式的信息，可参考 [Expressions](https://doc.rust-lang.org/reference/expressions.html)。
 
 # 2 所有权
 
