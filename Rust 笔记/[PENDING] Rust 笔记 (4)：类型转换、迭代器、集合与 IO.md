@@ -75,14 +75,14 @@
 
 并不是所有类型都能在自动强转点被自动转换，有着以下限制：
 
--   `T` 到 `U`，若 `T` 是 `U` 的子类型（反射性）
--   `T` 到 `S`，若 `T` 能到 `U` 且 `U` 能到 `S`（传递性）
+-   `T` 到 `U`，当 `T` 是 `U` 的子类型（反射性）
+-   `T` 到 `S`，当 `T` 能到 `U` 且 `U` 能到 `S`（传递性）
 -   `&mut T` 到 `&T`
 -   `*mut T` 到 `*const T`
 -   `&T` 到 `*const T`
 -   `&mut T` 到 `*mut T`
--   `&T` 或 `&mut T` 到 `&U`，若 `T` 实现了 `Deref<Target = U>`
--   `&mut T` 到 `&mut U`，若 `T` 实现了 `DerefMut<Target = U>`
+-   `&T` 或 `&mut T` 到 `&U`，当 `T` 实现了 `Deref<Target = U>`
+-   `&mut T` 到 `&mut U`，当 `T` 实现了 `DerefMut<Target = U>`
 -   函数到函数指针
 -   非捕获闭包到函数指针
 -   `!` 到 `T`
@@ -541,7 +541,7 @@ pub trait Iterator {
 }
 ```
 
-要实现 `Iterator  ` 就必须实现 `next`。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
+要实现 `Iterator` 就必须实现 `next`。`next` 每次返回迭代器中的一个元素，并封装在 `Some` 中，当迭代器结束时返回 `None`。
 
 ```rust
 let v = vec![1, 2, 3];
@@ -576,9 +576,9 @@ assert_eq!(v_iter.next(), None);
 
 `Iterator` 和 `IntoIterator` 的关系：
 
--   实现了 `Iterator ` 的就是迭代器，不需要转换即可使用迭代器方法
+-   实现了 `Iterator` 的就是迭代器，不需要转换即可使用迭代器方法
 -   实现了 `IntoIterator` 的可通过  `into_iter()` 方法转换为迭代器
--   若类型 `T` 实现了 `Iterator `，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现
+-   若类型 `T` 实现了 `Iterator`，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现
 
 ## 消耗适配器
 
@@ -1179,3 +1179,4 @@ dbg!(area(&rect));
 
 ## 网络 IO
 
+****
