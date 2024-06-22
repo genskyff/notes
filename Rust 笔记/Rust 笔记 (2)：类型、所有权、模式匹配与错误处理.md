@@ -461,6 +461,15 @@ let s = c"foo"; // &'static CStr;
 assert_eq!(4, std::mem::size_of_val(s));
 ```
 
+原始字符串也可以和特定格式字符串相组合：
+
+```rust
+let s1 = cr"foo\t\nbar";
+let s2 = cr#"foo\t\nbar"#;
+let s3 = br"foo\t\nbar";
+let s4 = br#"foo\t\nbar"#;
+```
+
 ## 语句和表达式
 
 Rust 是一种基于表达式的语言，求值都通过表达式完成。表达式可内嵌到另一个表达式中，求值规则包括指定表达式产生的值和指定其各个子表达式的求值顺序。语句则主要用于包含表达式，以及显式安排表达式的求值顺序。表达式和语句的显著区别：表达式**计算并产生一个值**，语句执行操作但**不返回值**。
@@ -1846,21 +1855,25 @@ match x {
 
 ### @ 绑定
 
-`@` 运算符在 `match` 中用于绑定变量到模式。这可以在一个匹配分支中，同时访问整个值和部分值。
+`@` 运算符在模式匹配中用于绑定变量到模式。这可以在一个匹配分支中，同时访问整个值和部分值。
 
 ```rust
 let value = Some(1);
 
 match value {
-    v@ Some(t) => {
+    v @ Some(t) => {
         println!("value: {:?}", v);
         println!("inner value: {t}");
-    },
+    }
     None => println!("None"),
+}
+
+if let a @ b @ Some(_) = value {
+    println!("a: {a:?}, b: {b:?}");
 }
 ```
 
-这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
+这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`，`a`、`b` 两个也都相当于 `value`。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
 
 # 5 函数和闭包
 
