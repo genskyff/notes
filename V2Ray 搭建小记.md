@@ -45,7 +45,7 @@ dpkg-reconfigure tzdata
 # 安装和更新 V2Ray 和 dat 数据
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
 
-# 仅更新 dat 数据
+# 安装和更新 dat 数据
 bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh)
 
 # 删除 V2Ray
@@ -295,15 +295,15 @@ v2ray uuid
 
 ## 配置 TLS
 
-[acme.sh](https://github.com/Neilpang/acme.sh) 是一个自动化申请并更新 TLS 证书的脚本，使用的是 [Let's Encrypt](https://letsencrypt.org/) 的证书。
+[acme.sh](https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 的证书。
 
 ### 安装 acme.sh
 
 ```shell
-curl https://get.acme.sh | bash
+curl https://get.acme.sh | bash -s email=<email>
 ```
 
-确认脚本命令别名生效：
+使命令别名生效：
 
 ```shell
 source ~/.bashrc
@@ -311,28 +311,23 @@ source ~/.bashrc
 
 ### 证书生成
 
-**注意这条命令会临时占用 80 端口，如果开启了 Nginx / Apache / Caddy 等类似占用了 80 端口的进程，需要临时关闭。**
-
 ```shell
-~/.acme.sh/acme.sh --issue -d 域名 --standalone -k ec-256
+acme.sh --issue -d <domain> --standalone --httpport 8088
 ```
 
 ### 安装证书和密钥
 
-生成和更新完证书后需要安装证书和密钥：
-
 ```shell
- ~/.acme.sh/acme.sh --installcert -d 域名 --fullchain-file /usr/local/etc/v2ray/v2ray.cer --key-file /usr/local/etc/v2ray/v2ray.key --ecc
+acme.sh --install-cert -d <domain> \
+--cert-file                 <cert> \
+--key-file                   <key> \
+--fullchain-file       <fullchain> \
 ```
 
-### 证书更新
+### 查看已安装证书
 
-由于 Let's Encrypt 的证书有效期只有 3 个月，因此需要确保至少 90 天内更新一次证书，acme.sh 脚本会每 60 天自动更新证书，也可以手动更新。
-
-手动更新：
-
-```shell
-~/.acme.sh/acme.sh --renew -d 域名 --force --standalone --ecc
+```
+acme.sh --info -d <domain>
 ```
 
 ## 配置 Nginx

@@ -37,14 +37,14 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget
+apt install -y bat build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip virt-what
 apt install -t sid -y fzf neovim zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom curl dust fastfetch fd fish fzf git git-delta gitui less libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tokei unzip wget zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bottom curl dust fastfetch fd fish fzf git git-delta gitui libunwind lsd neovim net-tools ntp openbsd-netcat openssh ripgrep socat starship tokei unzip zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -62,7 +62,7 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm git-credential-oauth ttf-maple 
+yay -S --needed --noconfirm git-credential-oauth ttf-maple
 ```
 
 # 2 Shell 配置
