@@ -22,7 +22,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop iptables less libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat sudo tmux unzip virt-what wget
+apt install -y bat build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip virt-what
 apt install -t sid -y fzf neovim zoxide
 ```
 
@@ -249,7 +249,7 @@ echo '#!/bin/bash
 测试硬盘及网络性能：
 
 ```shell
-wget -qO- bench.sh | bash
+curl -Lso- bench.sh | bash
 ```
 
 查看硬盘分区及各分区使用量：

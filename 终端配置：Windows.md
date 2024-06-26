@@ -31,7 +31,7 @@ $env:PSModulePath -split (';')
 
 ### PSReadLine
 
-[PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的智能提示和补全、历史命令搜索等功能。
+[PSReadLine](https://github.com/PowerShell/PSReadLine) 是一个用于在 PowerShell 中改善命令行交互体验的模块，包括语法高亮、Bash / zsh 风格的智能提示和补全、历史命令搜索等功能，在 PowerShell 7+ 已经附带。
 
 查看版本：
 
@@ -79,7 +79,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install bat delta fastfetch fzf git gitui gsudo less lsd neovim ripgrep starship tokei zoxide
+scoop install bat delta fastfetch fzf git gitui gsudo lsd ripgrep starship tokei zoxide
 ```
 
 # 4 配置 PowerShell
@@ -89,7 +89,7 @@ scoop install bat delta fastfetch fzf git gitui gsudo less lsd neovim ripgrep st
 打开并编辑 PowerShell 配置文件：
 
 ```powershell
-code $profile
+code $PROFILE
 ```
 
 然后在其中添加：
@@ -118,6 +118,6 @@ Set-Alias -Name open -Value Open-Folder
 使配置生效：
 
 ```powershell
-. $profile
+. $PROFILE
 ```
 
