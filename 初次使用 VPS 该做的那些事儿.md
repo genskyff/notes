@@ -22,7 +22,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux unzip virt-what
+apt install -y bat bind9-dnsutils build-essential curl fd-find fish git htop iptables libunwind8 lsd neofetch net-tools netcat-openbsd ntp openssh-client openssh-server ripgrep socat tmux traceroute unzip virt-what
 apt install -t sid -y fzf neovim zoxide
 ```
 
