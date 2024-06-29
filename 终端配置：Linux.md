@@ -119,6 +119,6 @@ fish_reload
 
 ```shell
 rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && nvim
+git clone https://github.com/AstroNvim/template ~/.config/nvim && nvim
 ```
 
