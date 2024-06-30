@@ -12,7 +12,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/in
 
 ```shell
 brew update
-brew install bat curl dust fastfetch fd fish fzf gitui lsd neovim ripgrep starship tokei zellij zoxide
+brew install bat curl dust fastfetch fd fish fzf gitui lsd neovim ripgrep starship tokei wget zellij zoxide
 brew install --cask iterm2
 ```
 
@@ -21,7 +21,7 @@ brew install --cask iterm2
 可以在 [这里](https://iterm2colorschemes.com/) 查看主题效果。
 
 ```shell
-git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
+git clone https://github.com/mbadolato/iTerm2-Color-Schemes.git
 ```
 
 其中 `schemes` 为主题文件夹，包含了所有的主题方案，可以导入到 iTerm2 中。这里以 `Solarized Dark Higher Contrast` 主题为例。
@@ -43,7 +43,7 @@ git clone --depth=1 https://github.com/mbadolato/iTerm2-Color-Schemes.git
 ## 配置 [fish](https://fishshell.com/)
 
 ```shell
-echo '[[ -x "$(command -v fish)" ]] && exec fish' >> ~/.zshrc && fish
+chsh -s "$(command -v fish | sed 's/sbin/bin/')"
 ```
 
 >   之后的命令都在 fish 下执行。
@@ -69,13 +69,16 @@ echo "zoxide init fish | source" >> ~/.config/fish/config.fish
 ## 配置 function
 
 ```shell
-echo "function fish_edit
+echo 'function fish_edit --description "Edit fish configuration"
     nvim ~/.config/fish/config.fish
-end" > ~/.config/fish/functions/fish_edit.fish
+end' > ~/.config/fish/functions/fish_edit.fish
 
-echo "function fish_reload
+echo 'function fish_reload --description "Reload fish configuration"
     . ~/.config/fish/config.fish
-end" > ~/.config/fish/functions/fish_reload.fish
+    for file in ~/.config/fish/conf.d/*.fish
+        . $file
+    end
+end' > ~/.config/fish/functions/fish_reload.fish
 ```
 
 ## 使配置生效
@@ -88,8 +91,10 @@ fish_reload
 
 ## 配置 [AstroNvim](https://docs.astronvim.com/)
 
+要使用 AstroNvim，需要 [Neovim](https://neovim.io/) 0.9.5 以上版本：
+
 ```shell
 rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && nvim
+git clone https://github.com/AstroNvim/template ~/.config/nvim && nvim
 ```
 
