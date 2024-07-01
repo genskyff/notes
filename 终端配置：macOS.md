@@ -12,7 +12,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/in
 
 ```shell
 brew update
-brew install bat curl dust fastfetch fd fish fzf gitui lsd neovim ripgrep starship tokei wget zellij zoxide
+brew install bat bottom curl dust fastfetch fd fish fzf git-delta gitui lsd neovim ripgrep starship tokei wget zellij zoxide
 brew install --cask iterm2
 ```
 
