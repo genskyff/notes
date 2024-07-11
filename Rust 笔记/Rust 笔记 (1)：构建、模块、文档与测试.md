@@ -4,6 +4,8 @@
 >
 >   -   [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
 >   -   [Programming Rust](https://book.douban.com/subject/36547630/)
+>   -   [The Rustonomicon](https://nomicon.purewhite.io/)
+>   -   [Rust Atomics and Locks](https://rustcc.github.io/Rust_Atomics_and_Locks/)
 >   -   [Rust 语言圣经](https://course.rs/about-book.html)
 >   -   [The Rust Reference](https://doc.rust-lang.org/reference/introduction.html)
 >   -   [The Rust Standard Library](https://doc.rust-lang.org/std/)
