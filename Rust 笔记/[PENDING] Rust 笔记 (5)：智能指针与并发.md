@@ -1015,36 +1015,6 @@ fn main() {
 
 >   获取的锁若不绑定到一个变量上，则相当于是一个临时变量，在当前语句结束后就会立即解锁。
 
-### Arc
-
-`rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
-
-`Mutex` 提供了内部可变性，这与 `Rc` 配合 `cell` 中的类型，`Arc` 也会配合 `sync` 中的类型使用。
-
-```rust
-use std::sync::{Arc, Mutex};
-use std::thread;
-
-fn main() {
-    let a = Arc::new(Mutex::new(0));
-    let mut hs = vec![];
-
-    for _ in 0..10 {
-        let aa = Arc::clone(&a);
-        let h = thread::spawn(move || {
-            *aa.lock().unwrap() += 1;
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
-
-    println!("{}", *a.lock().unwrap());
-}
-```
-
 ### RwLock
 
 `Mutex` 每次使用都需要加锁，这在高并发读时有较大性能损耗。而 `RwLock` 作为并发安全的 `RefCell`，允许多个读操作同时进行，但同时只能有一个写操作，这十分适合高并发读的场景。
@@ -1083,6 +1053,40 @@ fn main() {
 与 `Mutex` 类似，同样对锁使用**中毒策略**，但只在写模式下发生的 panic 才会导致锁中毒。
 
 `read`、`try_read`、`write`、`try_write` 返回的 `Result` 指示锁的状态。读模式下，`Ok` 是一个 `RwLockReadGuard`，其中含有内部数据；写模式下，`Ok` 是一个具有**内部可变性**的 `RwLockWriteGuard`，其中含有内部数据，而 `Err` 是一个 `PoisonError`，表示锁已中毒。
+
+### 锁中毒
+
+
+
+### Arc
+
+`rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
+
+`Mutex` 提供了内部可变性，这与 `Rc` 配合 `cell` 中的类型，`Arc` 也会配合 `sync` 中的类型使用。
+
+```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    let a = Arc::new(Mutex::new(0));
+    let mut hs = vec![];
+
+    for _ in 0..10 {
+        let aa = Arc::clone(&a);
+        let h = thread::spawn(move || {
+            *aa.lock().unwrap() += 1;
+        });
+        hs.push(h);
+    }
+
+    for h in hs {
+        h.join().unwrap();
+    }
+
+    println!("{}", *a.lock().unwrap());
+}
+```
 
 ### Condvar
 
