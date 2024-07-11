@@ -561,6 +561,17 @@ fn main() {
 }
 ```
 
+`println!` 使用 `io::Stdout::lock()` 来确保输出没有被中断，称为**输出锁定**。这会等待直到任意并发表达式执行结束后再写入输出，否则输出可能会交错。
+
+由于线程可能运行直到程序执行结束，因此产生的线程要求捕获的值具有 `'static` 生命周期。
+
+```rust
+pub fn spawn<F, T>(self, f: F) -> io::Result<JoinHandle<T>>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+```
+
 对闭包使用 `move` 可以把值在多个线程间传递。
 
 ```rust
@@ -575,6 +586,57 @@ h.join().unwrap();
 ```
 
 若不使用 `move`，`println!` 以引用的方式使用值，因此自动推断为借用 `v`，但主线程可能使该值无效，因此报错。
+
+要从线程中返回一个值，可以通过闭包中返回一个值。该值可以通过 `join` 返回的 `Result` 中获取：
+
+```rust
+let n = thread::spawn(|| 10).join().unwrap();
+assert_eq!(10, n);
+```
+
+### 线程 Builder
+
+`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名字。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生新线程的情况下会直接 panic。
+
+```rust
+thread::Builder::new()
+    .name("foo".to_string())
+    .stack_size(1024 * 1024 * 8)
+    .spawn(|| println!("{}", thread::current().name().unwrap()))
+    .unwrap()
+    .join()
+    .unwrap();
+```
+
+### 作用域内线程
+
+若线程的生命周期不会比某个作用域更长，那么线程可以安全地借用生命周期更长的非 `'static` 数据，如局部变量等。
+
+`thread::scope` 可以产生此类**作用域内线程**。
+
+```rust
+let v = vec![1, 2];
+let r = thread::scope(|s| {
+    s.spawn(|| println!("{}", v[0]));
+    s.spawn(|| println!("{}", v[1]));
+    0
+});
+
+println!("{:?}", v);
+assert_eq!(0, r);
+```
+
+`thread::scope` 将提供一个 `Scope` 对象，即参数 `s`，可以产生线程并借用非 `'static` 数据，当 `scope` 的作用域结束，所有仍没有 join 的线程都会自动 join。这保证了在作用域产生的线程没有会比作用域更长的生命周期。
+
+若作用域中的线程进行了修改，则会报错，因为借用规则不允许同一个作用域中同时存在可变和不可变借用。
+
+```rust
+let mut v = vec![1, 2];
+thread::scope(|s| {
+    s.spawn(|| v.push(10));
+    s.spawn(|| println!("{}", v[1])); // 报错
+});
+```
 
 ### 线程屏障
 
@@ -632,6 +694,18 @@ pub unsafe auto trait Sync {}
 ### Send 和 Sync 实现
 
 通常并不需要手动实现 `Send` 和 `Sync`，因为任何由 `Send` 和 `Sync` 的类型组成的类型，自动就是 `Send` 和 `Sync` 的。
+
+取消其中任何一种的方式是**增加**没有实现该 trait 的字段：
+
+```rust
+use std::marker::PhantomData;
+
+// 该结构体是 Send
+struct Foo {
+    n: i32,
+    _not_sync: PhantomData<Cell<()>>, // Cell 没有实现 Sync
+}
+```
 
 裸指针和 `rc` 中的类型没有实现 `Send` 和 `Sync`，因此不是并发安全的。
 
@@ -1078,7 +1152,7 @@ fn main() {
 
 ## 原子类型
 
-基于信道的消息传递安全但有诸多限制，`Mutex` 简单但不支持并发读，`RwLock` 支持并发读但性能有限。而 CPU 本身提供原子操作指令，Rust 中的原子类型会利用这些指令，因此也是并发安全的，其性能优于消息传递和锁，并具有**内部可变性**。虽为无锁类型，但原子类型内部使用 CAS（Compare and Swap）循环——通过一条指令读取某个内存地址，判断其值是否等于某个前置值，若相等，将其修改为新的值。虽然还是有等待阻塞的可能，但总体性能优于锁。原子类型作为**并发原语**，为并发任务的同步奠定了基础，实际上很多并发类型在内部就是使用原子类型来构建的。
+基于信道的消息传递安全但有诸多限制，`Mutex` 简单但不支持并发读，`RwLock` 支持并发读但性能有限。而 CPU 本身提供原子操作指令，Rust 中的原子类型会利用这些指令，因此也是并发安全的，其性能优于消息传递和锁，并具有**内部可变性**。虽为无锁类型，但原子类型内部使用 CAS（Compare and Swap）循环——通过一条指令读取某个内存地址，判断其值是否等于某个前置值，若相等，将其修改为新的值。虽然还是有等待阻塞的可能，但总体性能优于锁。原子类型作为**并发原语**，为并发任务的同步奠定了基础，是 `Cell` 的并发版本，实际上很多并发类型在内部就是使用原子类型来构建的。
 
 原子类型包括：
 

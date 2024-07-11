@@ -1084,19 +1084,10 @@ assert_eq!(HashSet::from([1, 2, 3]), hs);
 
 ## 标准 IO
 
-输入输出
-
 若能要在调试程序时打印出 `Rect` 实例来查看其所有字段的值，正常方法使用 `println!` 宏是不行的。
 
 ```rust
 println!("{}", rect);   // 错误
-```
-
-编译器会输出以下信息：
-
-```
-help: the trait `std::fmt::Display` is not implemented for `Rect`
-note: in format strings you may be able to use `{:?}` (or `{:#?}` for pretty-print) instead
 ```
 
 `println!` 宏能处理很多类型的格式，不过，`{}` 默认告诉 `println!` 使用被称为 `Display` 的格式：意在提供给直接终端用户查看的输出。大部分基本类型都默认实现了 `Display`，不过对于结构体，`println!` 并没有提供一个 `Display` 实现。
@@ -1108,13 +1099,6 @@ println!("{:?}", rect);
 ```
 
 在 `{}` 中加入 `:?` 指示符告诉 `println!` 要使用叫做 `Debug` 的输出格式。`Debug` 是一个 trait，它允许以一种对开发者有帮助的方式打印结构体，以方便调试代码时能看到它的值。
-
-但这样做编译器依然会报错：
-
-```
-help: the trait `std::fmt::Debug` is not implemented for `Rect`
-note: add `#[derive(Debug)]` or manually implement `std::fmt::Debug`
-```
 
 Rust 确实包含了打印出调试信息的功能，不过必须为结构体显式选择这个功能，为此需要在结构体定义之前添加 `#[derive(Debug)]` 注解。
 
@@ -1162,15 +1146,6 @@ dbg!(&rect);
 dbg!(area(&rect));
 ```
 
-```
-[src\main.rs:9] 2 = 2
-[src\main.rs:12] &rect = Rect {
-   width: 2,
-   height: 3,
-}
-[src\main.rs:13] area(&rect) = 6
-```
-
 因为 `dbg!` 返回表达式值的所有权，所以 `width` 字段将获得相同的值。而 `dbg!` 不需要获得所有权，因此传递一个 `rect` 的引用。
 
 ## 文件 IO
@@ -1179,4 +1154,3 @@ dbg!(area(&rect));
 
 ## 网络 IO
 
-****

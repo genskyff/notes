@@ -1779,6 +1779,9 @@ cargo install <crate> --locked
 # 从本地 Crate 安装
 cargo install --path <path>
 
+# 从远程 git 仓库安装
+cargo install --git <url>
+
 # 查看已安装 Crate
 cargo install --list
 
