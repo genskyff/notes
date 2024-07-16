@@ -596,7 +596,7 @@ assert_eq!(10, n);
 
 ### 线程 Builder
 
-`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名字。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生新线程的情况下会直接 panic。
+`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名称。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生线程的情况下会直接 panic。
 
 ```rust
 thread::Builder::new()
@@ -651,11 +651,13 @@ fn main() {
     let b = Arc::new(Barrier::new(4));
 
     for i in 0..4 {
-        let t = Arc::clone(&b);
-        let h = thread::spawn(move || {
-            println!("{i}: start");
-            t.wait();
-            println!("{i}: end");
+        let h = thread::spawn({
+            let b = Arc::clone(&b);
+            move || {
+                println!("{i}: start");
+                b.wait();
+                println!("{i}: end");
+            }
         });
         hs.push(h);
     }
@@ -793,10 +795,12 @@ impl<T> Deref for SafeRc<T> {
 
 fn main() {
     let sr = SafeRc::new(Mutex::new(0));
-    let ssr = SafeRc::clone(&sr);
 
-    thread::spawn(move || {
-        *ssr.lock().unwrap() += 10;
+    thread::spawn({
+        let sr = SafeRc::clone(&sr);
+        move || {
+            *sr.lock().unwrap() += 10;
+        }
     })
     .join()
     .unwrap();
@@ -817,20 +821,20 @@ fn main() {
 
 信道在具体实现的时候，根据不同的使用场景，会选择不同的工具。Rust 提供了以下四种信道：
 
--   `oneshot`：最简单的信道，发送端就只发一次数据，而接收端也只读一次。这种一次性的、多个线程间的同步可以用该方式完成，实现的时候可以直接用 Atomic Swap 来完成
--   `rendezvous`：当只需要通过信道来控制线程间的同步，并不需要发送数据时使用。实际上是信道缓冲值为 0 的一种特殊情况
+-   `oneshot`：最简单的信道，发送端就只发一次数据，而接收端也只读一次。这种一次性的、多个线程间的同步可以用该方式完成，实现的时候可直接用 Atomic Swap 来完成。
+-   `rendezvous`：当只需要通过信道来控制线程间的同步，并不需要发送数据时使用。实际上是信道缓冲值为 0 的一种特殊情况。
 
 上述两情况下，用互斥锁和条件变量来实现就足够了。
 
--   `bounded`：使用有限队列，一旦队列被写满了，发送端也需要被挂起等待。当阻塞发生后，接收端一旦读取数据，信道内部就会使用条件变量来通知发送端，唤醒使其能够继续写入。因此实现中一般会用互斥锁、条件变量和 `VecDeque` 来实现
--   `unbounded`：队列没有上限，若写满了就自动扩容。和 `bounded` 相比，除了不阻塞，其它实现都很类似
+-   `bounded`：使用有限队列，一旦队列被写满了，发送端也需要被挂起等待。当阻塞发生后，接收端一旦读取数据，信道内部就会使用条件变量来通知发送端，唤醒使其能够继续写入。因此实现中一般会用互斥锁、条件变量和 `VecDeque` 来实现。
+-   `unbounded`：队列没有上限，若写满了就自动扩容。和 `bounded` 相比，除了不阻塞，其它实现都很类似。
 
 根据信道发送端和接收端的数量，信道又可以分为：
 
--   **SPSC**（Single-Producer Single-Consumer）：单生产者，单消费者。最简单，可以不依赖于 Mutex，只用 Atomic 就可以实现
--   **SPMC**（Single-Producer Multi-Consumer）：单生产者，多消费者。需要在消费者这侧读取时加锁
--   **MPSC**（Multi-Producer Single-Consumer）：多生产者，单消费者。需要在生产者这侧写入时加锁，使用最广泛的类型
--   **MPMC**（Multi-Producer Multi-Consumer）：多生产者，多消费者。需要在生产者写入或消费者读取时加锁
+-   **SPSC**（Single-Producer Single-Consumer）：单生产者，单消费者。最简单，可以不依赖于 Mutex，只用 Atomic 就可以实现。
+-   **SPMC**（Single-Producer Multi-Consumer）：单生产者，多消费者。需要在消费者这侧读取时加锁。
+-   **MPSC**（Multi-Producer Single-Consumer）：多生产者，单消费者。需要在生产者这侧写入时加锁，使用最广泛的类型。
+-   **MPMC**（Multi-Producer Multi-Consumer）：多生产者，多消费者。需要在生产者写入或消费者读取时加锁。
 
 ### MPSC 信道
 
@@ -998,22 +1002,23 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ```rust
 use std::sync::Mutex;
+use std::thread;
 
 fn main() {
     let m = Mutex::new(0);
-    {
-        let mut v = m.lock().unwrap();
-        *v = 1;
-    }
-    println!("{}", m.lock().unwrap());
+    thread::scope(|s| {
+        for _ in 0..10 {
+            s.spawn(|| {
+                let mut guard = m.lock().unwrap();
+                *guard += 1;
+            });
+        }
+    });
+    assert_eq!(10, m.into_inner().unwrap());
 }
 ```
 
-`Mutex` 对锁使用**中毒策略**。正常情况下锁会在作用域结束后自动释放，但若线程在释放前发生了 panic，锁就不会被释放也不能再被获取，该锁被视为**中毒的**。
-
-`lock` 和 `try_lock` 返回的 `Result` 指示锁的状态。`Ok` 是一个具有**内部可变性**的 `MutexGuard`，其中含有内部数据；而 `Err` 是一个 `PoisonError`，表示锁已中毒。
-
->   获取的锁若不绑定到一个变量上，则相当于是一个临时变量，在当前语句结束后就会立即解锁。
+线程完成后，可通过 `into_inner` 安全地移除保护，其获取 `Mutex` 的所有权，`unwrap` 获取内部值。
 
 ### RwLock
 
@@ -1022,41 +1027,63 @@ fn main() {
 `read`、`write` 用于阻塞地读写，`try_read` 和 `try_write` 用于非阻塞地读写。
 
 ```rust
-use std::sync::{Arc, Barrier, RwLock};
+use std::sync::RwLock;
 use std::thread;
 
 fn main() {
-    let r = Arc::new(RwLock::new(0));
-    let b = Arc::new(Barrier::new(5));
-    let mut hs = vec![];
-
-    for i in 0..5 {
-        let rr = Arc::clone(&r);
-        let bb = Arc::clone(&b);
-        let h = thread::spawn(move || {
-            let v = rr.read().unwrap();
-            bb.wait();
-            println!("thread {i}: {v}");
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
-
-    *r.write().unwrap() = 1;
-    println!("after write: {}", r.read().unwrap());
+    let rw = RwLock::new(0);
+    thread::scope(|s| {
+        for _ in 0..10 {
+            s.spawn(|| assert_eq!(0, *rw.read().unwrap()));
+        }
+    });
+    *rw.write().unwrap() = 1;
+    assert_eq!(1, rw.into_inner().unwrap());
 }
 ```
 
-与 `Mutex` 类似，同样对锁使用**中毒策略**，但只在写模式下发生的 panic 才会导致锁中毒。
-
-`read`、`try_read`、`write`、`try_write` 返回的 `Result` 指示锁的状态。读模式下，`Ok` 是一个 `RwLockReadGuard`，其中含有内部数据；写模式下，`Ok` 是一个具有**内部可变性**的 `RwLockWriteGuard`，其中含有内部数据，而 `Err` 是一个 `PoisonError`，表示锁已中毒。
-
 ### 锁中毒
 
+当在 `Mutex` 或 `RwLock` 上使用 `lock` 或 `read`、`write` 等方法获取锁时，会得到一个指示锁状态的 `Result`。当返回 `Ok` 时，其中包含 `MutexGuard` 或 `RwLockReadGuard`、`RwLockWriteGuard`，其中含有内部数据；当返回 `Err` 时，其中包含 `PoisonError`，表示**锁已中毒**。
 
+**中毒策略**是一种防止由锁保护的数据处于不一致状态的机制。正常情况下锁会在作用域结束后自动释放，但若线程在释放前发生了 panic，锁就不会被释放也不能再被获取，该锁被视为**中毒的**。
+
+### Guard 生命周期
+
+获取锁实际上就是获取一个 `Guard` 智能指针，当 `Guard` 还存在时，就处于锁定状态，作用域结束时，`Guard` 被自动丢弃，即解锁。因此可以手动 `drop` 掉 `Guard` 来提前解锁。获取的锁若不绑定到一个变量上，则相当于是一个临时变量，在当前语句结束后就会立即解锁。
+
+```rust
+list.lock().unwrap().push(1);
+```
+
+在判断锁状态时，通常涉及 `match`、`if let` 和 `while let` 语句，但这里有一个陷阱：
+
+```rust
+if let Some(item) = list.lock().unwrap().pop() {
+    do_something(item);
+}
+```
+
+对于这类语句，`Guard` 虽然没有绑定到某个变量上，但这个临时的 `Guard` 直到完整的 `if let` 语句结束后才能被丢弃，这表示在处理 `item` 时不必要地持有锁，延误了锁释放的时机。
+
+对于 `if` 语句，由于在进入块之前就已经丢弃了，因此不会出现上述情况：
+
+```rust
+if list.lock().unwrap().pop() == Some(1) {
+    do_something();
+}
+```
+
+通常 `if` 语句的条件总是一个布尔值，并不借用任何东西，因此没有必要将临时的生命周期延长到语句的结尾，而对于 `if let` 语句则不一定。
+
+对于 `if let` 的情况，可以通过将操作移动到单独的 `let` 语句来避免：
+
+```rust
+let item = list.lock().unwrap().pop();
+if let Some(item) = item {
+    do_something(item);
+}
+```
 
 ### Arc
 
@@ -1073,9 +1100,11 @@ fn main() {
     let mut hs = vec![];
 
     for _ in 0..10 {
-        let aa = Arc::clone(&a);
-        let h = thread::spawn(move || {
-            *aa.lock().unwrap() += 1;
+        let h = thread::spawn({
+            let a = Arc::clone(&a);
+            move || {
+                *a.lock().unwrap() += 1;
+            }
         });
         hs.push(h);
     }
