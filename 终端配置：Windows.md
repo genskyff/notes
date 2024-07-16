@@ -79,7 +79,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ```powershell
 scoop bucket add extras
 scoop update
-scoop install 7zip bat bun clangd delta fastfetch fzf git gitui gsudo lsd neovim nilesoft-shell pandoc ripgrep starship tokei xmake zoxide
+scoop install 7zip bat bun clangd delta dust fastfetch fzf git gsudo lazygit less lsd neovim nilesoft-shell pandoc ripgrep starship tokei yazi zoxide
 ```
 
 # 4 配置 PowerShell
@@ -178,9 +178,12 @@ function Git-Pull {
 }
 
 Set-Alias -Name open -Value Open-Folder -Force
+
 Set-Alias -Name cat -Value bat -Force
 Set-Alias -Name ff -Value fastfetch -Force
+Set-Alias -Name lg -Value lazygit -Force
 Set-Alias -Name sudo -Value gsudo -Force
+Set-Alias -Name yz -Value yazi -Force
 
 Set-Alias -Name vi -Value nvim -Force
 Set-Alias -Name vim -Value nvim -Force
