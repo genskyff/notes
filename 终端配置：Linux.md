@@ -37,14 +37,14 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
+apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables less libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
 apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta neovim zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bind bottom curl dust fastfetch fd fish fzf git git-delta gitui libunwind lsd neovim net-tools openbsd-netcat openssh ripgrep socat starship tokei traceroute unzip wget zellij zoxide
+pacman -S --needed --noconfirm ase-devel bat bind bottom curl dust fastfetch fd fish fzf git git-delta lazygit less libunwind lsd neovim net-tools openbsd-netcat openssh ripgrep socat starship tokei traceroute unzip wget yazi zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：

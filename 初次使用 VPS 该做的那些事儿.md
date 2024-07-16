@@ -22,7 +22,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
+apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables less libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
 apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta neovim zoxide
 ```
 
