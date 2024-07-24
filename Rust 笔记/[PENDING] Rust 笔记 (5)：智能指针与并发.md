@@ -1085,37 +1085,9 @@ if let Some(item) = item {
 }
 ```
 
-### Arc
+### 线程阻塞
 
-`rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
 
-`Mutex` 提供了内部可变性，这与 `Rc` 配合 `cell` 中的类型，`Arc` 也会配合 `sync` 中的类型使用。
-
-```rust
-use std::sync::{Arc, Mutex};
-use std::thread;
-
-fn main() {
-    let a = Arc::new(Mutex::new(0));
-    let mut hs = vec![];
-
-    for _ in 0..10 {
-        let h = thread::spawn({
-            let a = Arc::clone(&a);
-            move || {
-                *a.lock().unwrap() += 1;
-            }
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
-
-    println!("{}", *a.lock().unwrap());
-}
-```
 
 ### Condvar
 
@@ -1165,6 +1137,38 @@ fn main() {
 ```
 
 `wait` 会自动解锁传递的锁，并阻塞当前线程，此时任何 `notify` 都可唤醒该线程。由于 `wait` 易受虚假唤醒的影响，因此使用 `while` 来对每次返回都进行检查。当 `Mutex` 中毒时，`wait` 将返回 `Err`。
+
+### Arc
+
+`rc::Rc` 的操作不是原子的，因此没有实现并发安全。要在多个线程间共享所有权，可以使用**原子引用计数**类型 `sync::Arc`，和 `Rc` 有相同的 API，并同样具有弱引用版本 `sync::Weak`，但由于 `Arc` 为了保证并发安全因此有一定性能损失。
+
+`Mutex` 提供了内部可变性，这与 `Rc` 配合 `cell` 中的类型，`Arc` 也会配合 `sync` 中的类型使用。
+
+```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    let a = Arc::new(Mutex::new(0));
+    let mut hs = vec![];
+
+    for _ in 0..10 {
+        let h = thread::spawn({
+            let a = Arc::clone(&a);
+            move || {
+                *a.lock().unwrap() += 1;
+            }
+        });
+        hs.push(h);
+    }
+
+    for h in hs {
+        h.join().unwrap();
+    }
+
+    println!("{}", *a.lock().unwrap());
+}
+```
 
 ### OnceLock
 
