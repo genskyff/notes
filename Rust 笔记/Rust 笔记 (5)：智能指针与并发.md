@@ -539,7 +539,7 @@ fn main() {
 
 程序执行的任务通常有两类：
 
--   **IO 密集型**：有大量的 IO 操作，如文件处理、网络通信等
+-   **IO 密集型**：有大量的 IO 操作，如文件读写、网络请求等
 -   **CPU 密集型**：需要大量的计算，如图像处理、复杂运算等
 
 通常对 CPU 密集型任务使用多线程会有显著的性能提升，但也会导致以下问题：
@@ -613,7 +613,7 @@ assert_eq!(10, n);
 
 ### 线程 Builder
 
-`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名称。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生线程的情况下会直接 panic。
+`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名称等。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生线程的情况下会直接 panic。
 
 ```rust
 thread::Builder::new()
@@ -645,7 +645,7 @@ assert_eq!(0, r);
 
 `thread::scope` 将提供一个 `Scope` 对象，即参数 `s`，可以产生线程并借用非 `'static` 数据，当 `scope` 的作用域结束，所有仍没有 join 的线程都会自动 join。这保证了在作用域产生的线程没有会比作用域更长的生命周期。
 
-若作用域中的线程进行了修改，则会报错，因为借用规则不允许同一个作用域中同时存在可变和不可变借用。
+若作用域中的线程进行了修改，则会报错，因为借用规则不允许同一个作用域中同时存在不可变和可变借用。
 
 ```rust
 let mut v = vec![1, 2];
@@ -732,28 +732,21 @@ thread::scope(|s| {
 `sync::Barrier` 可以让多个线程都执行到某个点后，才继续往后执行。其接收一个参数 `N`，表示阻塞指定线程数，它会阻塞前 `N-1` 个调用 `wait` 的线程，然后在第 `N` 个线程调用 `wait` 时立即继续执行所有线程。
 
 ```rust
-use std::sync::{Arc, Barrier};
+use std::sync::Barrier;
 use std::thread;
 
 fn main() {
-    let mut hs = vec![];
-    let b = Arc::new(Barrier::new(4));
-
-    for i in 0..4 {
-        let h = thread::spawn({
-            let b = Arc::clone(&b);
-            move || {
+    let b = Barrier::new(4);
+    thread::scope(|s| {
+        for i in 0..4 {
+            let b = &b;
+            s.spawn(move || {
                 println!("{i}: start");
                 b.wait();
                 println!("{i}: end");
-            }
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
+            });
+        }
+    });
 }
 ```
 
@@ -804,14 +797,8 @@ struct Foo {
 impl<T: ?Sized> !Send for *const T {}
 impl<T: ?Sized> !Sync for *const T {}
 
-impl<T: ?Sized> !Send for *mut T {}
-impl<T: ?Sized> !Sync for *mut T {}
-
 impl<T: ?Sized> !Send for Rc<T> {}
 impl<T: ?Sized> !Sync for Rc<T> {}
-
-impl<T: ?Sized> !Send for Weak<T> {}
-impl<T: ?Sized> !Sync for Weak<T> {}
 ```
 
 `cell` 中的类型只实现了一种或都没有实现，因此也不是并发安全的。
@@ -822,8 +809,6 @@ impl<T: ?Sized> !Sync for Cell<T> {}
 
 unsafe impl<T: ?Sized + Send> Send for RefCell<T> {}
 impl<T: ?Sized> !Sync for RefCell<T> {}
-
-impl<T> !Sync for OnceCell<T> {}
 ```
 
 `sync` 中的类型都实现了 `Send` 和 `Sync`，因此是并发安全的。
@@ -837,9 +822,6 @@ unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
 
 unsafe impl<T: ?Sized + Send> Send for RwLock<T> {}
 unsafe impl<T: ?Sized + Send + Sync> Sync for RwLock<T> {}
-
-unsafe impl<T: Sync + Send> Sync for OnceLock<T> {}
-unsafe impl<T: Send> Send for OnceLock<T> {}
 ```
 
 实现了并发安全的类型自身可能含有没有实现并发安全的字段，如 `Mutex`、`RwLock` 都含有没有实现 `Sync` 的 `UnsafeCell` 字段，而 `Arc` 含有没有实现 `Send` 和 `Sync` 的 `NonNull` 字段。
@@ -908,7 +890,7 @@ fn main() {
 
 信道把锁封装在了队列读写的小块区域内，然后把读写完全分离，使得读写完全和锁无关，就像访问本地队列一样。对于大部分并发问题，都可以用信道或类似的思想来处理（如 Actor Model）。
 
-信道在具体实现的时候，根据不同的使用场景，会选择不同的工具。Rust 提供了以下四种信道：
+信道在具体实现的时候，根据不同的使用场景，会选择不同的工具：
 
 -   `oneshot`：最简单的信道，发送端就只发一次数据，而接收端也只读一次。这种一次性的、多个线程间的同步可以用该方式完成，实现的时候可直接用 Atomic Swap 来完成。
 -   `rendezvous`：当只需要通过信道来控制线程间的同步，并不需要发送数据时使用。实际上是信道缓冲值为 0 的一种特殊情况。
@@ -954,9 +936,9 @@ fn main() {
 
 接收端有两个常用的方法：`recv` 和 `try_recv`：
 
--   `recv` 会阻塞当前线程执行直到从信道中接收到一个消息。其返回一个 `Result`，`Ok` 包含接收到的值，`Err` 表示发送端被关闭
+-   `recv` 会阻塞当前线程执行直到从信道中接收到一个消息。其返回一个 `Result`，`Ok` 包含接收到的值，`Err` 表示发送端被关闭。
 
--   `try_recv` 不会阻塞。其立刻返回一个 `Result`，`Ok` 包含接收到的值，`Err` 代表没有任何消息。若线程在等待消息过程中还有其它代码需要执行时使用 `try_recv`，如通过循环调用 `try_recv`，在有可用消息时进行处理，否则继续其它任务
+-   `try_recv` 不会阻塞。其立刻返回一个 `Result`，`Ok` 包含接收到的值，`Err` 代表没有任何消息。若线程在等待消息过程中还有其它代码需要执行时使用 `try_recv`，如通过循环调用 `try_recv`，在有可用消息时进行处理，否则继续其它任务。
 
     ```rust
     let (tx, rx) = mpsc::channel();
@@ -1007,10 +989,12 @@ for v in rx {
 let (tx, rx) = mpsc::channel();
 
 for i in 0..5 {
-    let t = tx.clone();
-    thread::spawn(move || {
-        t.send(i).unwrap();
-        thread::sleep(Duration::from_millis(100));
+    thread::spawn({
+        let t = tx.clone();
+        move || {
+            t.send(i).unwrap();
+            thread::sleep(Duration::from_millis(100));
+        }
     });
 }
 
@@ -1023,8 +1007,8 @@ for v in rx {
 
 需要注意的是:
 
--   所有发送端都被 `drop` 掉后，信道才会被关闭，接收端才会收到错误，进而终止迭代
--   不能确定子线程的创建顺序，因此消息的发送顺序也不能确定。但对信道而言，其中的消息是有序的，符合先进先出原则
+-   所有发送端都被 `drop` 掉后，信道才会被关闭，接收端才会收到错误，从而终止迭代。
+-   不能确定子线程的创建顺序，因此消息的发送顺序也不能确定。但对信道而言，其中的消息是有序的，符合先进先出原则。
 
 ### 异步信道
 
@@ -1051,13 +1035,11 @@ println!("after recv: {}", rx.recv().unwrap());
 
 ```rust
 let (tx, rx) = mpsc::sync_channel(1);
-
 tx.send(1).unwrap();
 
 thread::spawn(move || {
     tx.send(2).unwrap();
 });
-
 thread::sleep(Duration::from_secs(1));
 
 for v in rx {
@@ -1077,7 +1059,7 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ### 互斥锁
 
-**互斥锁**表示在任意时刻，再某种条件下，只允许一个线程访问其中的数据。为了访问互斥器中的数据，线程需要先获取互斥器的**锁**。锁是一个作为互斥器一部分的数据结构，记录了谁有数据的访问权，互斥器通过锁避免数据竞争。
+**互斥锁**表示在任意时刻，在某种条件下，只允许一个线程访问互斥器中的数据。为了访问数据，线程需要先获取互斥器的**锁**。锁是一个作为互斥器一部分的数据结构，记录了谁有数据的访问权，互斥器通过锁避免数据竞争。
 
 使用互斥器需要注意：
 
@@ -1087,7 +1069,7 @@ Rust 标准库只提供了 MPSC 信道，若要使用多发送端、多接收端
 
 ### Mutex
 
-`Mutex` 是一种互斥锁，`lock` 和 `try_lock` 用于获取锁，前者阻塞后者非阻塞。
+`Mutex` 是一种互斥锁，`lock` 和 `try_lock` 用于获取锁，前者阻塞，后者非阻塞。
 
 ```rust
 use std::sync::Mutex;
@@ -1163,7 +1145,7 @@ if list.lock().unwrap().pop() == Some(1) {
 }
 ```
 
-通常 `if` 语句的条件总是一个布尔值，并不借用任何东西，因此没有必要将临时的生命周期延长到语句的结尾，而对于 `if let` 语句则不一定。
+通常 `if` 语句的条件总是一个布尔值，并不借用任何东西，因此没有必要将临时的生命周期延长到语句结尾，而对于 `if let` 语句则不一定。
 
 对于 `if let` 的情况，可以通过将操作移动到单独的 `let` 语句来避免：
 
@@ -1185,7 +1167,7 @@ if let Some(item) = item {
 
 如可以创建一个条件变量来等待队列非空的事件。事件发生时，任何线程都可以通知条件变量，无需知道哪些线程在等待。
 
-`sync::Condvar` 提供了这种条件变量。它的等待方法接收 `MutexGuard`，先解锁 `Mutex` 并进入睡眠，唤醒时重新锁定 `Mutex` 并返回新的 `MutexGuard`。`notify_one` 唤醒一个线程，`notify_all` 唤醒所有线程。
+`sync::Condvar` 提供了这种条件变量。`wait` 接收 `MutexGuard`，先解锁 `Mutex` 并进入睡眠，唤醒时重新锁定 `Mutex` 并返回新的 `MutexGuard`。`notify_one` 唤醒一个线程，`notify_all` 唤醒所有线程。
 
 互斥锁解决并发安全问题，但不能同步并发数据。条件变量作为**同步原语**，控制线程同步，阻塞线程直到满足条件，并通常仅与 `Mutex` 配合使用：`Mutex` 保证条件在读写时互斥，条件变量控制线程等待和唤醒。
 
@@ -1228,21 +1210,17 @@ use std::thread;
 
 fn main() {
     let a = Arc::new(Mutex::new(0));
-    let mut hs = vec![];
 
-    for _ in 0..10 {
-        let h = thread::spawn({
-            let a = Arc::clone(&a);
-            move || {
-                *a.lock().unwrap() += 1;
-            }
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
+    thread::scope(|s| {
+        for _ in 0..10 {
+            s.spawn({
+                let a = Arc::clone(&a);
+                move || {
+                    *a.lock().unwrap() += 1;
+                }
+            });
+        }
+    });
 
     println!("{}", *a.lock().unwrap());
 }
@@ -1292,7 +1270,7 @@ fn main() {
 
 ## 原子类型
 
-基于信道的消息传递安全但有诸多限制，`Mutex` 简单但不支持并发读，`RwLock` 支持并发读但性能有限。而 CPU 本身提供原子操作指令，Rust 中的原子类型会利用这些指令，因此也是并发安全的，其性能优于消息传递和锁，并具有**内部可变性**。虽为无锁类型，但原子类型内部使用 CAS（Compare and Swap）循环——通过一条指令读取某个内存地址，判断其值是否等于某个前置值，若相等，将其修改为新的值。虽然还是有等待阻塞的可能，但总体性能优于锁。原子类型作为**并发原语**，为并发任务的同步奠定了基础，是 `Cell` 的并发版本，实际上很多并发类型在内部就是使用原子类型来构建的。
+基于信道的消息传递安全但有诸多限制，`Mutex` 简单但不支持并发读，`RwLock` 支持并发读但性能有限。而 CPU 本身提供原子操作指令，Rust 中的原子类型会利用这些指令，因此也是并发安全的。其性能优于消息传递和锁，并具有**内部可变性**。虽为无锁类型，但原子类型内部使用 CAS（Compare and Swap）循环——通过一条指令读取某个内存地址，判断其值是否等于某个前置值，若相等，将其修改为新的值。虽然还是有等待阻塞的可能，但总体性能优于锁。原子类型作为**并发原语**，为并发任务的同步奠定了基础，是 `Cell` 的并发版本，实际上很多并发类型在内部就是使用原子类型来构建的。
 
 原子类型包括：
 
@@ -1310,7 +1288,7 @@ fn main() {
 -   编译器优化导致的重排序
 -   运行阶段因 CPU 的缓存机制导致的重排序
 
-因此操作原子类型的方法都接收一个 `Ordering` 枚举来限制操作内存的顺序，其包含五个变体：
+因此操作原子类型的方法都接收一个 `Ordering` 枚举来限制操作内存的顺序，包含五个变体：
 
 -   `Relaxed`：最宽松的规则，对编译器和 CPU 不做任何限制，可以乱序
 -   `Release`：设定内存屏障，保证其之前的操作一定在前面，但后面的操作也有可能在前面
@@ -1331,21 +1309,19 @@ use std::thread;
 
 fn main() {
     let a = Arc::new(AtomicI32::new(0));
-    let mut hs = vec![];
 
-    for _ in 0..8 {
-        let aa = Arc::clone(&a);
-        let h = thread::spawn(move || {
-            for _ in 0..100000 {
-                aa.fetch_add(1, Ordering::Relaxed);
-            }
-        });
-        hs.push(h);
-    }
-
-    for h in hs {
-        h.join().unwrap();
-    }
+    thread::scope(|s| {
+        for _ in 0..8 {
+            s.spawn({
+                let a = Arc::clone(&a);
+                move || {
+                    for _ in 0..100000 {
+                        a.fetch_add(1, Ordering::SeqCst);
+                    }
+                }
+            });
+        }
+    });
 
     println!("{a:?}");
 }
