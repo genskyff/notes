@@ -393,6 +393,23 @@ fn main() {
 }
 ```
 
+### LazyCell
+
+`LazyCell` 用于将数据的初始化推迟到第一次访问为止。
+
+```rust
+use std::cell::LazyCell;
+
+fn main() {
+    let lazy = LazyCell::new(|| {
+        println!("init");
+        10
+    });
+    assert_eq!(10, *lazy);
+    assert_eq!(10, *lazy);
+}
+```
+
 ## 循环引用
 
 Rust 虽然拥有极高的内存安全性，无法轻易引起内存泄漏，但也可以通过 `Rc` 和 `RefCell` 创造循环引用导致内存泄漏，因为引用计数永远也到不了 0，值也就永远不会被丢弃。
@@ -637,6 +654,78 @@ thread::scope(|s| {
     s.spawn(|| println!("{}", v[1])); // 报错
 });
 ```
+
+### 线程阻塞
+
+当数据由多个线程更改时，可能需要等待一些条件成立才继续执行。如一个由 `Mutex` 保护的 `VecDeque`，当队列不为空时才进行操作。
+
+`Mutex` 允许线程等待直到解锁，但不提供检查其它条件的功能。要判断队列中是否为空，则当前线程必须不断检查队列是否为空。
+
+```rust
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
+
+static mut COUNT: u32 = 0;
+
+fn main() {
+    let v = Mutex::new(VecDeque::new());
+
+    thread::scope(|s| {
+        // 消费线程
+        s.spawn(|| loop {
+            unsafe {
+                COUNT += 1;
+            }
+            let item = v.lock().unwrap().pop_back();
+            if let Some(item) = item {
+                println!("{item}");
+            }
+        });
+
+        // 生产线程
+        for i in 0..5 {
+            v.lock().unwrap().push_front(i);
+            thread::sleep(Duration::from_secs(1));
+        }
+        unsafe {
+            println!("COUNT: {COUNT}");
+        }
+    });
+}
+```
+
+可以看到 `COUNT` 的值最后会变得非常大，意味这种方式会导致线程一直处于活跃状态，并占用时钟周期，导致效率降低。
+
+当队列为空的时候，可以使用 `park` 让当前线程进行阻塞（睡眠），然后其它线程在将数据准备好后使用 `unpark` 唤醒线程。
+
+```rust
+thread::scope(|s| {
+    let h = s.spawn(|| loop {
+        unsafe {
+            COUNT += 1;
+        }
+        let item = v.lock().unwrap().pop_back();
+        if let Some(item) = item {
+            println!("{item}");
+        } else {
+            thread::park(); // 阻塞
+        }
+    });
+
+    for i in 0..5 {
+        v.lock().unwrap().push_front(i);
+        h.thread().unpark(); // 唤醒
+        thread::sleep(Duration::from_secs(1));
+    }
+    unsafe {
+        println!("COUNT: {COUNT}");
+    }
+});
+```
+
+可以看到最后 `COUNT` 的值很小，也就是说这种方式确实避免了不必要的调用。
 
 ### 线程屏障
 
@@ -1085,55 +1174,44 @@ if let Some(item) = item {
 }
 ```
 
-### 线程阻塞
-
-
-
 ### Condvar
 
-互斥锁用于解决并发安全问题，但不能用于控制并发数据的同步。条件变量作为**同步原语**，可以控制线程的同步，它会让阻塞当前线程，直到满足特定条件后再继续执行。
+通过 `park`、`unpark` 机制可以做到等待条件成立后再执行，但仅限于简单的情况下。如当有多个消费线程从相同的队列获取数据时，生产线程将不会知道有哪些消费线程实际上在等待以及应该被唤醒。生产线程必须知道消费线程正在等待的时间以及正在等待的条件。
 
-条件变量有两种状态：
+**条件变量**（Condvar）用于等待受 `Mutex` 保护的数据变化，主要有**等待**和**通知**两种操作。多个线程可以等待同一个条件变量，通知可以唤醒一个或所有等待线程。
 
--   等待：线程在队列中等待，直到满足某个条件
--   通知：当条件变量的条件满足时，当前线程通知其它等待的线程可以被唤醒。通知可以是单个通知，也可以是多个通知或广播
+- 等待：线程在队列中等待条件满足
+- 通知：条件满足时通知等待线程，可以是单个或多个通知
 
-在实践中，通常与 `Mutex` 配合使用：`Mutex` 用于保证条件在读写时互斥，条件变量用于控制线程的等待和唤醒。
+如可以创建一个条件变量来等待队列非空的事件。事件发生时，任何线程都可以通知条件变量，无需知道哪些线程在等待。
 
-使用条件变量的典型步骤为：
+`sync::Condvar` 提供了这种条件变量。它的等待方法接收 `MutexGuard`，先解锁 `Mutex` 并进入睡眠，唤醒时重新锁定 `Mutex` 并返回新的 `MutexGuard`。`notify_one` 唤醒一个线程，`notify_all` 唤醒所有线程。
 
-1.  创建一个 `Mutex<bool>` 和与其关联的 `Condvar`
-2.  当需要等待特定条件时，线程先从 `Mutex` 获取锁，然后在 `Condvar` 上调用 `wait` 释放锁，然后阻塞当前线程，等待其它线程发送通知
-3.  另一个线程完成操作后，从 `Mutex` 获取锁，修改锁的数据使其满足条件，然后在 `Condvar` 上的调用 `notify_one` 或 `notify_all` 来通知等待的线程
-4.  等待的线程接收到满足条件的通知后，继续执行
+互斥锁解决并发安全问题，但不能同步并发数据。条件变量作为**同步原语**，控制线程同步，阻塞线程直到满足条件，并通常仅与 `Mutex` 配合使用：`Mutex` 保证条件在读写时互斥，条件变量控制线程等待和唤醒。
 
 ```rust
-use std::sync::{Arc, Condvar, Mutex};
-use std::thread;
-use std::time::Duration;
+let c = Condvar::new();
+let v = Mutex::new(VecDeque::new());
 
-fn main() {
-    let pair = Arc::new((Mutex::new(false), Condvar::new()));
-    let pair2 = Arc::clone(&pair);
+thread::scope(|s| {
+    s.spawn(|| loop {
+        let mut v = v.lock().unwrap();
+        let mut len = v.len();
 
-    let h = thread::spawn(move || {
-        let (mtx, cvar) = &*pair2;
-        let mut flag = mtx.lock().unwrap();
-
-        while !*flag {
-            flag = cvar.wait(flag).unwrap(); // wait 会立即释放 flag
+        while len == 0 {
+            v = c.wait(v).unwrap();
+            len = v.len();
         }
 
-        println!("thread done");
+        println!("{}", v.pop_back().unwrap());
     });
 
-    let (mtx, cvar) = &*pair;
-    thread::sleep(Duration::from_secs(1));
-    *mtx.lock().unwrap() = true;
-    cvar.notify_one();
-
-    h.join().unwrap();
-}
+    for i in 0..5 {
+        v.lock().unwrap().push_front(i);
+        c.notify_one();
+        thread::sleep(Duration::from_secs(1));
+    }
+});
 ```
 
 `wait` 会自动解锁传递的锁，并阻塞当前线程，此时任何 `notify` 都可唤醒该线程。由于 `wait` 易受虚假唤醒的影响，因此使用 `while` 来对每次返回都进行检查。当 `Mutex` 中毒时，`wait` 将返回 `Err`。
@@ -1172,20 +1250,45 @@ fn main() {
 
 ### OnceLock
 
-`OnceLock` 就是并发安全的 `OnceCell`，同样只能写入一次，API 也是相同的，但可用于静态值。
+`OnceLock` 就是并发安全的 `OnceCell`。
 
 ```rust
 use std::sync::OnceLock;
+use std::thread;
 
 static ONCE: OnceLock<String> = OnceLock::new();
 
 fn main() {
-    std::thread::spawn(|| ONCE.get_or_init(|| "foo".to_string()))
+    thread::spawn(|| ONCE.get_or_init(|| "foo".to_string()))
         .join()
         .unwrap();
     println!("{}", ONCE.get().unwrap());
 }
 ```
+
+### LazyLock
+
+`LazyLock` 就是线程安全的 `LazyCell`。由于多个线程都调用初始化，因此若当前其它线程正在进行初始化，则任何解引用调用都将阻塞调用线程。
+
+```rust
+use std::sync::LazyLock;
+use std::thread;
+use std::time::Instant;
+
+static TIME: LazyLock<Instant> = LazyLock::new(|| Instant::now());
+
+fn main() {
+    thread::scope(|s| {
+        for _ in 0..5 {
+            s.spawn(|| {
+                println!("{:?}", *TIME);
+            });
+        }
+    });
+}
+```
+
+由于仅在第一次访问时初始化，因此所有线程得到的值都是一样的。
 
 ## 原子类型
 
