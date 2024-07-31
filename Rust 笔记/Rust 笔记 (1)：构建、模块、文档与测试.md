@@ -1806,6 +1806,7 @@ cargo --list
 常用扩展：
 
 -   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
+-   `cargo-edit`：检查和更新项目依赖
 -   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
 -   `cargo-generate`：项目模板生成
 -   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖
