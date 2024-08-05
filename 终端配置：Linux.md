@@ -65,6 +65,13 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 yay -S --needed --noconfirm git-credential-oauth ttf-maple
 ```
 
+若下载速度过慢，可能是源的问题。安装 reflector，然后自动选择最快的源：
+
+```shell
+yay -S --needed --noconfirm reflector
+reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+```
+
 # 2 Shell 配置
 
 ## 配置 [fish](https://fishshell.com/)
