@@ -101,11 +101,29 @@ Invoke-Expression (& { (zoxide init powershell | Out-String) })
 Import-Module PSReadLine -Force
 Import-Module gsudoModule -Force
 
+Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 Set-PSReadLineKeyHandler -key Enter -Function ValidateAndAcceptLine
-Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+
+Set-PSReadLineKeyHandler -Chord Ctrl+p -Function PreviousHistory
+Set-PSReadLineKeyHandler -Chord Ctrl+n -Function NextHistory
+
+Set-PSReadLineKeyHandler -Chord Ctrl+f -Function ForwardChar
+Set-PSReadLineKeyHandler -Chord Ctrl+b -Function BackwardChar
+Set-PSReadLineKeyHandler -Chord Alt+f -Function NextWord
+Set-PSReadLineKeyHandler -Chord Alt+b -Function BackwardWord
+Set-PSReadLineKeyHandler -Chord Ctrl+a -Function BeginningOfLine
+Set-PSReadLineKeyHandler -Chord Ctrl+e -Function EndOfLine
+
+Set-PSReadLineKeyHandler -Chord Ctrl+d -Function DeleteChar
+Set-PSReadLineKeyHandler -Chord Ctrl+h -Function BackwardDeleteChar
+Set-PSReadLineKeyHandler -Chord Alt+d -Function KillWord
+Set-PSReadLineKeyHandler -Chord Alt+w -Function BackwardKillWord
+Set-PSReadLineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
+Set-PSReadLineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
 
 function Open-Folder {
     param($Path = ".")
@@ -183,10 +201,6 @@ Set-Alias -Name cat -Value bat -Force
 Set-Alias -Name ff -Value fastfetch -Force
 Set-Alias -Name lg -Value lazygit -Force
 Set-Alias -Name sudo -Value gsudo -Force
-Set-Alias -Name yz -Value yazi -Force
-
-Set-Alias -Name vi -Value nvim -Force
-Set-Alias -Name vim -Value nvim -Force
 
 Set-Alias -Name ls -Value Lsd-Invoke -Force
 Set-Alias -Name ll -Value Ls-Long -Force
