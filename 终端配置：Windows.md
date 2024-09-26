@@ -195,6 +195,11 @@ function Git-Pull {
     git @params
 }
 
+function Git-Submodule-Update {
+    $params = @("submodule", "update") + $args
+    git @params
+}
+
 Set-Alias -Name open -Value Open-Folder -Force
 
 Set-Alias -Name cat -Value bat -Force
@@ -216,6 +221,7 @@ Set-Alias -Name gs -Value Git-Status -Force
 Set-Alias -Name gd -Value Git-Diff -Force
 Set-Alias -Name gl -Value Git-Log -Force
 Set-Alias -Name gp -Value Git-Pull -Force
+Set-Alias -Name gsu -Value Git-Submodule-Update -Force
 ```
 
 使配置生效：
