@@ -7,8 +7,8 @@
 在 Debian 上，有些包版本过老，需要从 Sid 源安装较新版本：
 
 ```shell
-echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list
-echo -e "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid
+echo -e "deb http://deb.debian.org/debian sid main\ndeb-src http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
+echo -e "Package: *\nPin: release a=sid\nPin-Priority: 50" > /etc/apt/preferences.d/sid
 ```
 
 ## 更新包
@@ -37,14 +37,14 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables less libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
-apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta neovim zoxide
+apt install -y bat bind9-dnsutils build-essential clang-format clangd curl fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server ripgrep socat sudo tmux traceroute unzip wget
+apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta lsd neovim xmake zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm ase-devel bat bind bottom curl dust fastfetch fd fish fzf git git-delta lazygit less libunwind lsd neovim net-tools openbsd-netcat openssh ripgrep socat starship tokei traceroute unzip wget yazi zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bind bottom clang curl dust fastfetch fd fish fzf git git-delta lazygit less libunwind lsd neovim net-tools openbsd-netcat openssh ripgrep socat starship sudo tokei traceroute unzip wget xmake zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -62,7 +62,7 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm git-credential-oauth ttf-maple
+yay -S --needed --noconfirm git-credential-oauth rustup ttf-maple
 ```
 
 若下载速度过慢，可能是源的问题。安装 reflector，然后自动选择最快的源：
