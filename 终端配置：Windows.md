@@ -78,8 +78,9 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 
 ```powershell
 scoop bucket add extras
+scoop bucket add java
 scoop update
-scoop install 7zip bat bun clangd delta dust fastfetch fzf git gsudo lazygit less lsd neovim nilesoft-shell pandoc ripgrep starship tokei yazi zoxide
+scoop install 7zip bat bun delta fastfetch git gsudo lazygit less liberica-full-lts-jdk llvm lsd lua nilesoft-shell pandoc python ripgrep starship tokei w64devkit wireshark xmake zoxide
 ```
 
 # 4 配置 PowerShell

@@ -12,8 +12,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/in
 
 ```shell
 brew update
-brew install bat bottom curl dust fastfetch fd fish fzf git-delta lazygit lsd neovim ripgrep starship tokei wget yazi zellij zoxide
-brew install --cask iterm2
+brew install bat bottom clang-format curl dust fastfetch fd fish fzf git-delta lazygit lsd neovim ripgrep starship tokei wget xmake zellij zoxide
 ```
 
 ## 配置 iTerm2 主题
