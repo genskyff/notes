@@ -162,6 +162,9 @@ cargo init
 # 查找依赖
 cargo search <name>
 
+# 查看依赖信息
+cargo info <name>
+
 # 添加依赖
 cargo add <name>
 
