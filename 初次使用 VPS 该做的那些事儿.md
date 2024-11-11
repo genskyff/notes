@@ -9,8 +9,8 @@
 ## 配置 Sid 源
 
 ```shell
-echo "deb http://deb.debian.org/debian sid main" >> /etc/apt/sources.list
-echo -e "Package: *\nPin: release a=unstable\nPin-Priority: 100" > /etc/apt/preferences.d/sid
+echo "deb http://deb.debian.org/debian sid main\ndeb-src http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
+echo -e "Package: *\nPin: release a=sid\nPin-Priority: 50" > /etc/apt/preferences.d/sid
 ```
 
 ## 更新包
@@ -22,8 +22,8 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential curl fd-find fish git iptables less libunwind8 lsd net-tools netcat-openbsd openssh-client openssh-server ripgrep socat tmux traceroute unzip wget
-apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta neovim zoxide
+apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server ripgrep socat sudo tmux traceroute unzip wget
+apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta lsd neovim xmake zoxide
 ```
 
 # 3 登录设置
