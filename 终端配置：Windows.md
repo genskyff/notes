@@ -80,7 +80,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop bucket add extras
 scoop bucket add java
 scoop update
-scoop install 7zip bat bun delta fastfetch git gsudo lazygit less liberica-full-lts-jdk llvm lsd lua nilesoft-shell pandoc python ripgrep starship tokei w64devkit wireshark xmake zoxide
+scoop install 7zip bat bun delta fastfetch git gsudo lazydocker lazygit less liberica-full-lts-jdk llvm lsd nilesoft-shell onefetch pandoc python ripgrep starship tokei w64devkit wireshark xmake zoxide
 ```
 
 # 4 配置 PowerShell
@@ -90,7 +90,7 @@ scoop install 7zip bat bun delta fastfetch git gsudo lazygit less liberica-full-
 打开并编辑 PowerShell 配置文件：
 
 ```powershell
-code $PROFILE
+code $profile
 ```
 
 然后在其中添加：
@@ -114,21 +114,26 @@ Set-PSReadLineKeyHandler -Chord Ctrl+n -Function NextHistory
 
 Set-PSReadLineKeyHandler -Chord Ctrl+f -Function ForwardChar
 Set-PSReadLineKeyHandler -Chord Ctrl+b -Function BackwardChar
-Set-PSReadLineKeyHandler -Chord Alt+f -Function NextWord
+Set-PSReadLineKeyHandler -Chord Alt+f -Function ForwardWord
 Set-PSReadLineKeyHandler -Chord Alt+b -Function BackwardWord
 Set-PSReadLineKeyHandler -Chord Ctrl+a -Function BeginningOfLine
 Set-PSReadLineKeyHandler -Chord Ctrl+e -Function EndOfLine
 
 Set-PSReadLineKeyHandler -Chord Ctrl+d -Function DeleteChar
 Set-PSReadLineKeyHandler -Chord Ctrl+h -Function BackwardDeleteChar
-Set-PSReadLineKeyHandler -Chord Alt+d -Function KillWord
-Set-PSReadLineKeyHandler -Chord Alt+w -Function BackwardKillWord
+Set-PSReadLineKeyHandler -Chord Alt+d -Function DeleteWord
+Set-PSReadLineKeyHandler -Chord Alt+w -Function BackwardDeleteWord
 Set-PSReadLineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
 Set-PSReadLineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
 
 function Open-Folder {
     param($Path = ".")
     Invoke-Item $Path
+}
+
+function BatPure {
+    $params = @("-p") + $args
+    bat @params
 }
 
 function Lsd-Invoke {
@@ -203,9 +208,11 @@ function Git-Submodule-Update {
 
 Set-Alias -Name open -Value Open-Folder -Force
 
-Set-Alias -Name cat -Value bat -Force
+Set-Alias -Name cat -Value BatPure -Force
 Set-Alias -Name ff -Value fastfetch -Force
+Set-Alias -Name of -Value onefetch -Force
 Set-Alias -Name lg -Value lazygit -Force
+Set-Alias -Name lad -Value lazydocker -Force
 Set-Alias -Name sudo -Value gsudo -Force
 
 Set-Alias -Name ls -Value Lsd-Invoke -Force
@@ -228,6 +235,6 @@ Set-Alias -Name gsu -Value Git-Submodule-Update -Force
 使配置生效：
 
 ```powershell
-. $PROFILE
+. $profile
 ```
 
