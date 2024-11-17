@@ -1772,7 +1772,7 @@ cargo yank --vers 1.0.1 --undo
 
 ## 安装二进制 Crate
 
-Cargo 支持从 Crates.io 下载并在本地安装和使用二进制 Crate，只有拥有二进制 Crate 的包能够被安装。
+Cargo 支持从 Crates.io 下载源码并在本地编译安装和使用二进制 Crate，只有拥有二进制 Crate 的包能够被安装。
 
 ```shell
 # 安装 Crate
@@ -1810,6 +1810,7 @@ cargo --list
 
 -   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
 -   `cargo-edit`：检查和更新项目依赖
+-   `cargo-binstall`：不编译直接安装二进制
 -   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
 -   `cargo-generate`：项目模板生成
 -   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖
