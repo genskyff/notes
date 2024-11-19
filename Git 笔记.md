@@ -178,6 +178,12 @@ git commit --amend [-m <message>]
 
 若自上次提交以来还未做任何修改则覆盖的只是提交信息。
 
+`--allow-empty` 和 `--allow-empty-message` 可以在不进行修改的情况下添加一个新的提交，后者可以没有提交信息，通常用于测试：
+
+```shell
+git commit --allow-empty -m "[skip ci]"
+```
+
 ## 文件状态
 
 `status` 查看当前目录文件状态：
