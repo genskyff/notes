@@ -1,3 +1,5 @@
+>   Common Lisp 实现：
+>
 >   -   [SBCL](https://www.sbcl.org/platform-table.html)
 
 # 10 函数式编程与 Lisp
