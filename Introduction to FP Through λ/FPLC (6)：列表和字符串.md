@@ -450,7 +450,7 @@ rec STRING_EQUAL S1 S2 =
 
 ```
 STRING_EQUAL "dog" "dog" ==
-STRING_EQUAL ('d'::"og") ('d'::"og") -> 
+STRING_EQUAL ('d'::"og") ('d'::"og") ->
 STRING_EQUAL "og" "og" ==
 STRING_EQUAL ('o'::"g") ('o'::"g") ->
 STRING_EQUAL "g" "g" ==
@@ -769,7 +769,7 @@ rec MAPCARS FUNC [] [] = []
 def SUM2 = MAPCARS λX.λY.(X+Y)
 ```
 
-这种映射函数的抽象方法最早源于 LISP，被称为 car 映射，因为函数被映射到列表的 cars 上。通过这种抽象，可将具有相似模式的函数统一用映射函数来表达，提高了代码的复用性和简洁性。
+这种映射函数的抽象方法最早源于 Lisp，被称为 car 映射，因为函数被映射到列表的 cars 上。通过这种抽象，可将具有相似模式的函数统一用映射函数来表达，提高了代码的复用性和简洁性。
 
 这一抽象过程展示了函数式编程中的一个重要思想：通过高阶函数（如 `MAPCAR`）来抽象共同的计算模式，再通过传入不同的函数来实现具体的功能。
 
@@ -814,4 +814,3 @@ rec <name> <bound variable> =
   ELSE <expression2 using “HEAD <bound variable>' and
     'TAIL <bound variable>'>
 ```
-
