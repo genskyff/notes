@@ -1,18 +1,20 @@
 # 9 SML 中的函数式编程
 
+>   SML 实现：
+>
 >   -   [Standard ML of New Jersey](https://www.smlnj.org/)
 
 ## 9.1 类型
 
 类型是 SML（Standard ML）的核心要素。其主要特点是每个对象和构造都必须有类型，且这些类型可以通过静态推导得出。
 
-基本类型表示： 
+基本类型表示：
 
 ```
 <value> : <type>
 ```
 
-函数值表示： 
+函数值表示：
 
 ```
 fn : <type>
@@ -56,7 +58,7 @@ val it = #"a" : char
 
 ## 9.2 列表
 
-列表的核心特征在于其同构性和有限性。所有元素必须是相同类型，且以空列表结尾。这与 LISP 和 λ演算的列表定义有所不同。
+列表的核心特征在于其同构性和有限性。所有元素必须是相同类型，且以空列表结尾。这与 Lisp 和 λ演算的列表定义有所不同。
 
 列表类型表示：
 
@@ -665,7 +667,7 @@ datatype bool = true | false
 结构化数据类型通过扩展语法定义：
 
 ```
-datatype <constructor> = <constructor1> of <type expression1> | 
+datatype <constructor> = <constructor1> of <type expression1> |
                          <constructor2> of <type expression2> |
                          ...
 ```
@@ -772,7 +774,7 @@ stdIn:20.10-20.13 Error: operator is not a function [circularity]
 
 ## 9.20 其它特性
 
-SML 的其他重要功能包括：
+SML 的其它重要功能包括：
 
 1.  抽象类型构造和模块化
 2.  异常处理机制
@@ -788,4 +790,3 @@ SML 的其他重要功能包括：
 -   SML 是一种非常适合函数式编程的通用编程语言
 -   前面章节的算法可以在 SML 中实现
 -   某些 λ 函数无法在 SML 中表示
-

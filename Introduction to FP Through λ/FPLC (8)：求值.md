@@ -276,7 +276,7 @@ def numbers = numblist zero
 初始展开：
 
 ```
-Cnumblist zero =>
+numblist zero =>
 cons zero (numblist (succ zero)) =>
 λs.(s zero (numblist (succ zero)))
 ```
@@ -330,7 +330,7 @@ nums.next().value;  // 2
 
 ## 8.8 惰性求值
 
-**惰性求值**（Lazy Evaluation）是一种通过推迟计算时机、避免重复计算的求值策略，并结合了正则序和应用序求值的优点。表达式仅在需要其值时才计算，且计算后的结果会被保留以供后续使用。现代编程语言如 JavaScript 中的生成器就是一种惰性求值。
+**惰性求值**（Lazy evaluation）是一种通过推迟计算时机、避免重复计算的求值策略，并结合了正则序和应用序求值的优点。表达式仅在需要其值时才计算，且计算后的结果会被保留以供后续使用。现代编程语言如 JavaScript 中的生成器就是一种惰性求值。
 
 λ 演算中通过**约束对**（Bound pair）的标记和更新系统实现惰性求值。
 
