@@ -81,15 +81,24 @@ let v = 2;
 println!("{v}");       // 输出 2
 ```
 
+被隐藏的变量实际上依然存在：
+
+```rust
+let x = 5;
+let ref_x = &x;
+let x = 1.0;
+assert_eq!(*ref_x, 5);
+```
+
 ## 静态项
 
-静态项使用 `static` 声明，必须显式标注类型和初始化。类似于常量，但在程序中表示一个精确的内存地址，通常保存在 `.data` 区块中。所有对静态项的引用都指向相同的内存地址，并具有 ` 'static` 生命周期，且不会在程序结束时调用析构函数 `drop`。
+静态项使用 `static` 声明，必须显式标注类型和初始化。类似于常量，但在程序中表示一个精确的内存地址，通常保存在二进制文件的 `.data` 区块中。所有对静态项的引用都指向相同的内存地址，并具有 ` 'static` 生命周期，且不会在程序结束时调用析构函数 `drop`。
 
 能够在编译期求值的常量表达式可作为静态项的初始化，并可引用其它静态项。
 
 所有访问静态项的操作都是安全的，但有一些限制：
 
--   静态项的数据类型必须有 `Sync`
+-   静态项的数据类型必须实现 `Sync`
 -   常量项不能引用静态项
 
 静态项可使用 `mut` 声明，但对其所有访问操作都是不安全的，需要在 `unsafe` 块中使用。
@@ -115,7 +124,7 @@ let x: u32 = 10;
 let y: f32 = 3.14;
 ```
 
-每一个值都属于某种数据类型，Rust 有两种数据类型子集：**标量**和**复合**。
+每一个值都属于某种数据类型，Rust 有两种数据类型：**标量**和**复合**。
 
 ### 标量类型
 
@@ -247,6 +256,11 @@ let mut n2 = 2;
 let rn2 = &mut n2;
 
 *rn2 = *rn1;
+
+let mut x = 5;
+let ref mut y = x;
+*y += 1;
+assert_eq!(x, 6);
 ```
 
 ### 裸指针类型
@@ -267,6 +281,20 @@ let pn2: *mut i32 = &mut n2;
 
 unsafe {
     *pn2 = *pn1;
+}
+```
+
+或者使用 `&raw` 来定义裸指针：
+
+```rust
+let x = 1;
+
+// 两者等价
+let px = &x as *const i32;
+let px2 = &raw const x;
+
+unsafe {
+    assert_eq!(*px, *px2);
 }
 ```
 
@@ -437,17 +465,17 @@ let s5: Box<str> = String::from("hehe").into_boxed_str();
 -   不是所有的 `&str` 都是 `&'static str`。一个字符串字面量如 `"hello"`，则默认具有 `'static` 生命周期
 -   若从 `String` 创建一个切片，该切片的生命周期则不是 `'static`
 
-大多数时候，可以不用显式标注 `&str` 或 `&'static str`，因为编译器会自动推断其生命周期。
+大多数时候，可以不用显式标注 `&str` 或 `&'static str`，因为编译器会自动推断生命周期。
 
 ### 原始字符串
 
 以 `r` 或 `r#` 的形式来表示原始字符串，不会对字符进行转义。
 
 ```rust
-let s1 = r"foo\t\nbar";
+let s = r"foo\t\nbar";
+let s1 = r#"foo\t\nbar"#;
 let s2 = r##"foo\t\nbar"##;
 let s3 = r###"foo\t\nbar"###;
-let s4 = r####"foo\t\nbar"####;
 ```
 
 当使用 `r#` 的形式时，需要确保前后 `#` 的数量是一致的。
@@ -461,7 +489,7 @@ let s = c"foo"; // &'static CStr;
 assert_eq!(4, std::mem::size_of_val(s));
 ```
 
-原始字符串也可以和特定格式字符串相组合：
+原始字符串也可以和特定格式字符串组合：
 
 ```rust
 let s1 = cr"foo\t\nbar";
@@ -534,7 +562,7 @@ x = if x < 3 {
 };
 ```
 
-`loop` 用于无限循环，`while` 用于条件循环，`for` 用于遍历，`break` 用于提前跳出循环，`continue` 用于提前结束本次循环。由于 `loop` 默认返回一个 `!`，因此**只有 `loop` 能够使用 `break + 值` 的形式来返回一个值**。
+`loop` 用于无限循环，`while` 用于条件循环，`for` 用于遍历，`break` 用于提前跳出循环，`continue` 用于提前结束本次循环。由于 `loop` 默认返回一个 `!`，因此**只有 `loop` 能够使用 `break + <value>` 的形式来返回一个值**。
 
 ```rust
 // loop
@@ -594,9 +622,9 @@ Rust 中的表达式有很多种，主要有：
 
 # 2 所有权
 
-所有权是 Rust 用来管理内存的机制。
-
 ## 所有权规则
+
+所有权是 Rust 用来管理内存的机制。
 
 - 每个值都有一个**所有者**
 - 值**有且仅有一个**所有者
@@ -624,7 +652,7 @@ let mut s = String::from("foo");
 s.push_str("bar");
 ```
 
-`&str` 在编译时就知道其内容，被直接硬编码进可执行文件的只读区块中，因此效率高，但不可变。
+`&str` 在编译时就知道其内容，被直接硬编码进二进制文件的只读区块中，因此效率高，但不可变。
 
 对于 `String` 类型，为了支持一个可变的文本片段，需要在堆上分配一块在编译时未知大小的内存来存放内容，这需要：
 
@@ -888,7 +916,7 @@ let z: &&i32 = &y;
 let mut x: i32 = 5;
 let y: &mut i32 = &mut x;
 let z: &&mut i32 = &y;
-*z = 10;  // 错误
+**z = 10;  // 错误
 *y = 10;
 ```
 
@@ -1431,7 +1459,7 @@ fn main() {
 let 语句是一个模式，其正式形式为：
 
 ```rust
-let PATTERN = EXPRESSION;
+let <PATTERN> = <EXPRESSION>;
 ```
 
 语句中变量名位于 `PATTERN` 位置，然后将 `EXPRESSION` 中的值解构后绑定到对应的变量。
@@ -1458,8 +1486,8 @@ for (i, v) in v.iter().enumerate() {
 
 ```rust
 match VALUE {
-    PATTERN1 => EXPRESSION1,
-    PATTERN2 => EXPRESSION2,
+    <PATTERN1> => <EXPRESSION1>,
+    <PATTERN2> => <EXPRESSION2>,
 }
 ```
 
@@ -1968,7 +1996,7 @@ fn ret_fn() -> fn(i32) -> i32 {
 
 ## 闭包
 
-闭包也叫做 Lambda 表达式，其定义了一个闭包类型，每个闭包都具有**唯一性**和**匿名性**。可以在一个地方创建闭包，然后在不同的上下文中执行闭包。
+闭包也叫 Lambda 表达式，其定义了一个闭包类型，每个闭包都具有**唯一性**和**匿名性**。可以在一个地方创建闭包，然后在不同的上下文中执行闭包。
 
 ### 闭包定义
 
@@ -2137,7 +2165,7 @@ fn main() {
 }
 ```
 
-作为 trait 返回时，若为动态 trait 对象，也需要放在如 `Box<dyn T>` 这类指针中。
+作为 trait 返回时，若为动态 trait 对象，则需要放在像 `Box<dyn T>` 这类指针中。
 
 ```rust
 fn ret_closure(flag: bool) -> Box<dyn Fn(i32) -> i32> {
