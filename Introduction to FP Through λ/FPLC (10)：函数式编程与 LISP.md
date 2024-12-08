@@ -1,6 +1,10 @@
 >   Common Lisp 实现：
 >
 >   -   [SBCL](https://www.sbcl.org/platform-table.html)
+>
+>   Scheme 实现：
+>
+>   -   [Racket](https://racket-lang.org/)
 
 # 10 函数式编程与 Lisp
 
