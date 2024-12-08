@@ -92,7 +92,7 @@ sum = 5050;
 
 在这两种情况下，除了最基本的底层语言外，通常语言还会在程序运行时提供一些服务。如语言支持自动管理内存，则需要一个 GC；如需要运行时反射，就需要动态跟踪执行过程中每个对象的类型；如需要运行时进行类型检查，如下标越界、整数溢出检查，就需要在每个这种操作前插入检查代码；如需要支持异常处理，则也是同理。
 
-这些服务都是在运行时进行的，所以被称为**运行时**（Runtime）。在编译型语言中，如 Go，实现运行时的代码会直接插入到生成的可执行文件中。在解释执行或在 VM 内运行的语言中，如 Python、JavaScript，运行时将驻留于 VM 中。
+这些服务都是在运行时进行的，所以被称为**运行时**（Runtime）。在编译型语言中，如 Go 运行时的代码会直接插入到生成的可执行文件中。在解释执行或在 VM 内运行的语言中，如 Python、JavaScript，运行时将驻留于 VM 中。
 
 ## 2.2 捷径和备选路线
 
@@ -110,7 +110,7 @@ Pascal 和 C 就是围绕这个限制而设计的。在早期内存很小，一�
 
 ### 2.2.3 转译器
 
-为语言编写一个完整后端的工作量是巨大的。若已经有通用的 IR，如 LLVM IR，那么可以将前端转换到该 IR 上，然后使用该 IR 的后端将代码转化成可执行代码。
+为语言编写一个完整后端的工作量是巨大的。若已经有通用的 IR，如 LLVM IR，那么可以用前端将代码转换到该 IR 上，然后使用该 IR 的后端将代码转化成可执行代码。
 
 IR 不一定非得是某种特定的中间代码，还可以是其它语言的源代码。前端处理完后，后端生成一份与自己语言级别差不多的其它语言的有效源代码，而不是将所有代码降低到原始目标语言的语义。
 
@@ -391,8 +391,6 @@ class Foo {
         print "hello, " + name;
     }
 }
-
-var alias = Foo;
 ```
 
 类的主体包含方法，看起来像没有 `fun` 的函数声明。类声明生效时， Lox 将创建一个类对象，并存储在与类名相同的变量中。
@@ -415,12 +413,12 @@ foo.b = "hello";
 
 若字段不存在，进行赋值时就会先创建。
 
-在方法内部访问对象上的字段或方法，使用 `self`：
+在方法内部访问对象上的字段或方法，使用 `this`：
 
 ```javascript
 class Foo {    
     hello() {
-        print "hello, " + self.name;
+        print "hello, " + this.name;
     }
 }
 ```
@@ -430,12 +428,12 @@ class Foo {
 ```javascript
 class User {
     init(name, age) {
-        self.name = name;
-        self.age = age;
+        this.name = name;
+        this.age = age;
     }
   
     hello() {
-        print "hello, " + self.name;
+        print "hello, " + this.name;
     }
 }
 
@@ -450,7 +448,7 @@ user.hello();
 ```javascript
 class VipUser < User {
     vip() {
-        print "VIP User"
+        print "VIP User";
     }
 }
 ```
@@ -461,7 +459,7 @@ class VipUser < User {
 class VipUser < User {
     init(name, age, lv) {
         super.init(name, age);
-        self.lv = lv;
+        this.lv = lv;
     }
 }
 ```

@@ -36,13 +36,13 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 -   通过命令行 `--config <key>=<value>` 传递的参数
 -   环境变量
 
--   *workspace/foo/baz/.cargo/config.toml*
+-   *<workspace>/foo/baz/.cargo/config.toml*
 
--   *workspace/foo/.cargo/config.toml*
+-   *<workspace>/foo/.cargo/config.toml*
 
--   *package/.cargo/config.toml*
+-   *<package>/.cargo/config.toml*
 -   *~/.cargo/config.toml*
--   *package/Cargo.toml*
+-   *<package>/Cargo.toml*
 
 所有配置文件的键值会被合并，重复的以优先级高的为准，相同优先级以最后定义的为准。命令行直接传递的优先级最高，*config.toml* 优先级大于 *Cargo.toml*。对于 *config.toml*，嵌套越深的优先级越高。执行 Cargo 时，当前目录的子目录中的配置文件会被忽略。
 
@@ -168,6 +168,9 @@ cargo info <name>
 # 添加依赖
 cargo add <name>
 
+# 添加 dev 依赖
+cargo add --dev <name>
+
 # 删除依赖
 cargo remove <name>
 
@@ -266,7 +269,7 @@ cc = "1.0"
 ```
 
 -   `[package]`：包的主要信息
--   `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/)
+-   `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)
 -   `[dev-dependencies]`：dev 的依赖
 -   `[build-dependencies]`：构建脚本的依赖
 
@@ -353,7 +356,7 @@ panic = "abort"
 
 ### 自定义 profile
 
-除了默认的四种 profile，还可以自定义。当定义 profile 时，必须指定 `inherits`，用于说明配置缺失项要基于哪个 profile。
+除了默认的四种 profile，还支持使用 `profile.<name>` 来自定义。当定义 profile 时，必须指定 `inherits`，用于说明配置缺失项要基于哪个 profile。
 
 ```toml
 [profile.my-profile]
@@ -383,7 +386,7 @@ strip = true
 
 ### 特定包 profile
 
-默认情况下，profile 会应用到所有包，但可以配置 `package.name` 来指定特定包构建时所使用的 profile。
+默认情况下，profile 会应用到所有包，但可以配置 `package.<name>` 来指定特定包构建时所使用的 profile。
 
 ```toml
 [workspace]
@@ -438,7 +441,7 @@ profile 的优先级从高到低为：
 
 在 *Cargo.toml* 中添加 `[features]` 并给依赖指定 `features`，就可给包添加条件编译和可选依赖的功能，通常用于库 Crate。
 
-设工作区中 `mypkg` 依赖于 `utils`，要在 `utils` 中配置 features，在其 *Cargo.toml* 中添加：
+如工作区中 `mypkg` 依赖于 `utils`，要在 `utils` 中配置 features，在其 *Cargo.toml* 中添加：
 
 ```toml
 # utils/Cargo.toml
@@ -525,7 +528,7 @@ foo = ["utils/foo"]
 
 ## 构建脚本
 
-有些包需要第三方非 Rust 代码，如编译或链接到 C 库，因此在进行 Rust 项目的构建之前，先要构建这些外部代码。
+有些包需要第三方非 Rust 代码，如编译或链接到 C 库，因此在进行 Rust 项目的构建之前，要先构建这些外部代码。
 
 可以将编译链接这些外部代码的脚本放在项目根目录的 `build.rs` 中：
 
@@ -608,17 +611,17 @@ cc = "1.0"
 
 **模块系统**是 Rust 中一系列与作用域相关的功能，其中包含：
 
--   **包**：Cargo 用来构建、测试和分享 Crate 的功能
+-   **包**（Package）：Cargo 用来构建、测试和分享 Crate 的单元
 -   **Crate**：编译和链接的基本单元
     -   一个或多个二进制 Crate 或一个库 Crate
-    -   Crate **根**描述如何构建该 Crate
+    -   Crate **根**（Root）描述如何构建该 Crate
     -   *Cargo.toml* 描述如何构建这些 Crate
--   **模块**：使用 `use` 关键字控制作用域和路径的私有性
--   **路径**：命名结构体、枚举、函数或模块等项的方式
+-   **模块**（Module）：使用 `use` 关键字控制作用域和路径的私有性
+-   **路径**（Path）：命名结构体、枚举、函数或模块等项的方式
 
 ## 包和 Crate
 
-编译模型以 Crate 为中心，每次编译一个 Crate，并生成一个二进制形式的可执行或库文件。
+编译模型以 Crate 为中心，每次编译一个 Crate，并生成一个二进制可执行或库文件。
 
 默认情况下，使用 `cargo new` 时会创建一个包，同时也会创建一个二进制 Crate。若一个目录含有 *Cargo.toml*，以及 *src/main.rs* 或 *src/lib.rs*，则该目录自动成为一个包。
 
@@ -739,7 +742,7 @@ fn main() {
 
 [Crates.io](https://crates.io/) 上有很多第三方 Crate，使用它们需要先在 *Cargo.toml* 中添加依赖，然后用 `use` 引入到包的作用域中。
 
-标准库 `std` 对于自己的包来说也是外部 Crate，但已经预导入，无需在 *Cargo.toml* 中显式导入，但也需要用 `use` 引入项，如 `HashMap`。
+标准库 `std` 对于自己的包来说也是外部 Crate，但默认被预导入，因此无需在 *Cargo.toml* 中显式导入，但也需要用 `use` 引入一些没有被预导入的项，如 `HashMap`。
 
 ```rust
 use std::collections::HashMap;
@@ -758,7 +761,7 @@ extern crate foo as _;
 
 `as` 用于将导入的 Crate 绑定到不同的名称上。`_` 用于匿名导入，当仅需该 Crate 被链接进来，但不会使用其中的项时使用。
 
-Crate 名称不能使用 `-`，但包名可以使用，在使用时会被自动转换为 `_`。
+Crate 名不能使用 `-`，但包名可以使用，在使用时会被自动转换为 `_`。
 
 ```rust
 // 导入 my-pkg 包
@@ -811,6 +814,7 @@ extern crate mypkg;
 
 fn main() {
     hello!();
+    mypkg::hello!();  // 否则就需要使用这种形式
 }
 ```
 
@@ -1085,7 +1089,7 @@ mod a {
 -   `pub`：完全公开
 -   `pub(crate)`：仅 Crate 内可见
 -   `pub(super)`：上级模块中可见
--   `pub(in path)`：指定的路径中可见
+-   `pub(in <path>)`：指定的路径中可见
 
 ```rust
 pub fn call() {
@@ -1391,7 +1395,7 @@ mod a {}
 
 ### 属性宏
 
-属性宏由带有 `#[proc_macro_attribute]`，以 `(TokenStream, TokenStream) -> TokenStream` 签名的公有函数所定义的可应用于项上的过程宏，能够生成新的代码或对现有代码进行修改。
+属性宏，也叫过程宏属性，由带有 `#[proc_macro_attribute]`，以 `(TokenStream, TokenStream) -> TokenStream` 签名的公有函数所定义的可应用于项上的过程宏，能够生成新的代码或对现有代码进行修改。
 
 ```rust
 // myproc/src/lib.rs
@@ -1411,7 +1415,7 @@ fn invoke() {}
 
 ### 派生宏
 
-派生宏由带有 `#[proc_macro_derive]`，属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
+派生宏，也叫过程宏派生，由带有 `#[proc_macro_derive]`，属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
 
 ```rust
 // myproc/src/lib.rs
@@ -1453,6 +1457,8 @@ fn foo() {}
 -   `test` 属性在测试中是惰性的，否则是活跃的
 -   宏属性是活跃的
 -   所有其它属性都是惰性的
+
+这样的区分主要是为了明确哪些属性会影响编译过程，哪些属性会保留到运行时。
 
 ## 内置属性
 
@@ -1603,7 +1609,7 @@ cargo doc --open
 
 rustdoc 默认会在当前目录下生成 *doc* 目录，把 Crate 根文件名作为文档名，且不会生成依赖的文档。而使用 cargo 生成的文档则会在 *target* 下生成，把项目名作为文档名，依赖的文档也会生成。
 
-Cargo 生成依赖的的文档有时候会导致构建时间过长，`--no-deps` 可以不生成依赖的文档，`--open` 可以在生成后自动在浏览器中打开。
+Cargo 则会生成依赖的的文档，可通过 `--no-deps` 来关闭，`--open` 可以在生成后自动在浏览器中打开。
 
 ```shell
 cargo doc --open --no-deps
@@ -1727,8 +1733,6 @@ license-file = "MY_LICENSE"
 ```toml
 license = "MIT OR LGPL-2.0"
 ```
-
->   `license` 和 `license-file` 字段只能存在一个。
 
 ## 发布 Crate
 
