@@ -660,7 +660,7 @@ datatype <constructor> = <constructor1> | <constructor2> | ... | <constructorN>
 这种形式定义了最简单的枚举类型，如布尔类型：
 
 ```
-(* 仅示例，SML 不支持这种形势 *)
+(* 仅示例，SML 不支持这种形式 *)
 datatype bool = true | false
 ```
 
