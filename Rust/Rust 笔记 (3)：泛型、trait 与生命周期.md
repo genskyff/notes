@@ -261,7 +261,7 @@ struct Foo<'a, T> {
 
 # 2 trait
 
-**特设多态**指相同行为有多个不同实现，**子类型多态**指子类型可被当成父类型使用。在 Rust 中，前者通过 trait 来支持、后者通过 trait 对象来支持。
+**特定多态**（Ad hoc polymorphism）指相同行为有多个不同实现，**子类型多态**（Subtype polymorphism）指子类型可被当成父类型使用。在 Rust 中，前者通过 trait 来支持、后者通过 trait 对象来支持。
 
 ## trait 定义
 
@@ -589,10 +589,10 @@ fn ret_t(flag: bool) -> impl MyTrait {
 trait MyTrait {}
 
 // impl Trait
-fn foo(a: &impl MyTrait, b: &impl MyTrait, c: &impl MyTrait) {}
+fn foo(a: &impl MyTrait, b: &impl MyTrait) {}
 
 // trait 约束
-fn foo<T: MyTrait>(a: &T, b: &T, c: &T) {}
+fn foo<T: MyTrait>(a: &T, b: &T) {}
 ```
 
 泛型参数 `T` 被约束为任何实现了 `MyTrait` 的类型，编译器会为每个不同的类型进行单态化。同时这种形式可以简化声明。
@@ -759,7 +759,7 @@ fn main() {
 
 `stu` 和 `tec` 变量分别是 `Student` 和 `Teacher` 类型，存储在栈上，`p1` 和 `p2` 是 `Person` 对象的引用，保存在栈上，该引用包含两个指针，`ptr` 指向具体类型的实例，`vptr` 指向 `vtable`。
 
-`vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在程序的 `.rodata` 段上保存 `vtable`。
+`vtable` 是一个在运行时用于查找 trait 方法实现的数据结构。当创建一个动态分发的 trait 对象时，编译器会在二进制文件的 `.rodata` 段上保存 `vtable`。
 
 `vptr` 是在运行时进行查找的，从而允许动态地调用实现了特定 trait 的方法，但也会损失一定的运行时性能。
 
@@ -908,6 +908,36 @@ counter.next();
 
 而通过关联类型，则无需标注类型，因为不能多次实现这个 trait，其实现必须提供一个类型来替代关联类型占位符。
 
+```rust
+impl Iterator for Counter {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
+// 错误，不能多次实现
+impl Iterator for Counter {
+    type Item = i32; // 哪怕关联类型不一致
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+```
+
+同时，含有泛型的 trait 不是对象安全的，但通过关联类型则可以避免：
+
+```rust
+trait Foo {
+    type Item;
+    fn foo(&self) -> Self::Item;
+}
+
+fn bar(v: Box<dyn Foo<Item = i32>>) {}
+```
+
 泛型和关联类型还可以结合使用，如 `max` 接受一个实现了 `IntoIterator` 的作为参数，返回其中的最大值。
 
 ```rust
@@ -916,14 +946,7 @@ where
     T: IntoIterator,
     T::Item: Ord,
 {
-    let mut iter = v.into_iter();
-    let mut max = iter.next().unwrap();
-    for item in iter {
-        if item > max {
-            max = item;
-        }
-    }
-    max
+    v.into_iter().max().unwrap()
 }
 
 fn main() {
@@ -938,7 +961,7 @@ fn main() {
 
 ### GATs
 
-GATs（Generic associated types，泛型关联类型）是一个较新的特性，允许在 trait 的关联类型上使用泛型。
+关联类型只能实现一次，这在想指定多种关联类型时就很麻烦。而 GATs（Generic associated types，泛型关联类型）特性允许在 trait 的关联类型上使用泛型。
 
 ```rust
 use std::fmt::Debug;
@@ -1028,7 +1051,7 @@ pub trait Add {
 
 不能这样做的原因有两点：
 
--   无法给函数级别的泛型参数设置默认值
+-   无法给函数级别的泛型参数设置默认值（函数级别无法设置 `where Rhs: Self`）
 -   即使能够设置，但没有提供类型的具体实现，无法在重载时获得信息
 
 要在实现 `Add` 时自定义 `Rhs` 类型而不使用默认类型，如实现一个能够将毫米与米相加，且 `Add` 的实现能正确处理转换，可以为 `Millis` 实现 `Add` 并以 `Meters` 作为 `Rhs`。
