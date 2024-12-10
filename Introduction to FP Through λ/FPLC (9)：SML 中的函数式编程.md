@@ -608,8 +608,10 @@ val iinsert = fn : int -> int list -> int list
 
 -   特定多态（Ad hoc polymorphism）：通过运算符重载实现
 -   参数化多态（Parameterized polymorphism）：通过类型抽象实现
--   显式参数化多态（Explicit parameterized polymorphism）：类型本身是对象
--   隐式多态（Implicit polymorphism）：类型变量用于类型表达式但类型不是对象
+    -   显式（Explicit）参数化：类型本身是对象,需要明确指定类型参数
+    -   隐式（Implicit）参数化：类型变量用于类型表达式,由编译器推导
+
+-   子类型多态（Subtype polymorphism）：通过继承关系实现的类型兼容性
 
 特定多态通过运算符重载实现，同一个操作符可以用于不同类型，如 `+` 就是特定多态，对不同类型有不同的实现。
 
@@ -642,12 +644,21 @@ SML 采用隐式参数化多态系统，通过**类型推导**（Type inference�
 val compose = fn : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 ```
 
+子类型多态通过继承或接口的形式，当类型 T 是类型 U 的子类型时，则 T 的对象可以在任何需要类型 U 的对象的上下文中使用。
+
+```rust
+trait Animal {}
+struct Dog;
+
+// Dog 成为了 Animal 的子类型,任何需要 Anima的地方都可以使用 Dog
+impl Animal for Dog {}
+```
+
 区别：
 
 -   特定多态需要为每种类型提供具体实现
--   参数化多态通过类型变量实现通用处理
--   显式多态需要指定类型参数
--   隐式多态由编译器自动推导类型，是最灵活的形式
+-   参数化多态通过类型变量实现通用处理，可以是显式指定类型参数或隐式类型推导
+-   子类型多态通过类型的兼容性关系实现，子类型可以在任何需要父类型的地方使用
 
 ## 9.17 新类型
 
