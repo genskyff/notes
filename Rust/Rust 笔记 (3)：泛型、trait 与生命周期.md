@@ -1573,7 +1573,7 @@ fn longest(x: &str, y: &str) -> &str {
 }
 ```
 
-大部分情况下生命周期是**隐式推断的**，对于无法推断的情况，需要显式标注生命周期参数。其描述了多个引用之间生命周期的关系，**而不影响其生命周期**，仅用于帮助借用检查器分析。
+大部分情况下生命周期是**隐式推断的**，对于无法推断的情况，需要显式标注生命周期参数。其描述了多个引用之间生命周期的关系，**而不影响生命周期**，仅用于帮助借用检查器分析。
 
 生命周期参数也是泛型参数，声明在 `<>` 中，以 `'` 开头且必须在类型参数和常量参数之前。在使用时，**每个生命周期参数都必须位于 `&` 之后**。
 
@@ -1755,7 +1755,7 @@ static NUM: i32 = 10;
 -   **实例的生命周期**：类型具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域
 -   **`'static` 生命周期的实例**：要让具有 `'static` 资格的类型的实例拥有 `'static` 生命周期，需要在一个静态上下文中创建它，如声明为全局静态变量
 
-对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn 'static + T>`是等价的。
+对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn T + 'static>`是等价的。
 
 ```rust
 struct Res<'a> {
@@ -1807,7 +1807,7 @@ fn main() {
 // 等同于
 struct Wrap<'a> {
     name: &'a str,
-    callback: Option<Box<dyn 'static + Fn(&str) -> Res>>,
+    callback: Option<Box<dyn Fn(&str) -> Res + 'static>>,
 }
 ```
 
@@ -1822,7 +1822,6 @@ w.set(|val| {
 
 // 有捕获值，local 不是 'static，那么闭包也不再是 'static，错误
 let local = String::from("local");
-
 w.set(|val| {
     println!("callback: {val}");
     println!("local: {local}");
@@ -1831,7 +1830,6 @@ w.set(|val| {
 
 // 将捕获值 move 进闭包中，依然是 'static 闭包，正确
 let local = String::from("local");
-
 w.set(move |val| {
     println!("callback: {val}");
     println!("local: {local}");
@@ -1844,7 +1842,7 @@ w.set(move |val| {
 ```rust
 struct Wrap<'a, 'b> {
     name: &'a str,
-    callback: Option<Box<dyn 'b + Fn(&str) -> Res>>,
+    callback: Option<Box<dyn Fn(&str) -> Res + 'b>>,
 }
 
 impl<'a, 'b> Wrap<'a, 'b> {
@@ -1855,7 +1853,7 @@ impl<'a, 'b> Wrap<'a, 'b> {
         }
     }
 
-    fn set(&mut self, f: impl 'b + Fn(&str) -> Res) {
+    fn set(&mut self, f: impl Fn(&str) -> Res + 'b) {
         self.callback = Some(Box::new(f));
     }
 }
@@ -2033,7 +2031,7 @@ impl<'a> Wrap<'a> {
 }
 ```
 
-在上个例子中，当 `rhs` 为 `&Self` 时，实际上就是 `Wrap<'a>`，因此其生命周期和 `&self` 是一致的，实际上方法签名相当于：
+在**上个**例子中，当 `rhs` 为 `&Self` 时，实际上就是 `Wrap<'a>`，因此其生命周期和 `&self` 是一致的，实际上方法签名相当于：
 
 ```rust
 fn ret_longest<'a>(&'a self, rhs: &'a Self) -> &'a str;
@@ -2191,13 +2189,13 @@ fn f2<'a>(s: &'a str) -> &'a str;
 
 设 `f1` 的参数 `&'static str` 为 `T1`，`f2` 的参数 `&'a str` 为 `T2`，显然 `T1` 是 `T2` 的子类型。
 
-而函数就相当于是类型 `T` 构造器 `F<T>`。能够使用 `f1<T1>` 的地方不一定能够使用 `f2<T2>`，因为 `f2` 能够处理的范围是比 `f1` 大的，因此任何使用 `f1` 的地方，都能够使用 `f2` 来处理，即 `f2` 是 `f1` 的子类型，因此函数在 `T` 上是一个逆变。
+而函数就相当于是类型 `T` 构造器 `F<T>`。能够使用 `f1<T1>` 的地方不一定能够使用 `f2<T2>`，因为 `f2` 能够处理的范围是比 `f1` 大的，因此任何使用 `f1` 的地方，都能够使用 `f2` 来处理，因此函数在 `T` 上是一个逆变。
 
 对返回值类型 `U`，一个返回 `&'a str` 函数也可以返回 `&'static str`，因此函数在 `U` 上是一个协变。
 
 ---
 
-结构体、枚举、联合体和元组类型的型变关系是通过其字段类型的型变关系来决定的，如结构体 `Foo` 有一个泛型参数 `T`，且在字段 `a` 中使用了 `T`，那么 `Foo` 对 `T` 的型变与 `a` 对 `T` 的型变完全相同。
+结构体、枚举、联合体和元组类型的型变关系是通过字段类型的型变关系来决定的，如结构体 `Foo` 有一个泛型参数 `T`，且在字段 `a` 中使用了 `T`，那么 `Foo` 对 `T` 的型变与 `a` 对 `T` 的型变完全相同。
 
 然而当 `T` 被多个字段使用时：
 
@@ -2259,10 +2257,10 @@ impl<'a> S<'a> {
 }
 ```
 
-**trait**：对 `T`，引用从 `s` 中来，到返回值中去；对 `T2`，引用从实现它的 `Self` 中来，到返回值中去。
+**trait**：对 `T1`，引用从 `s` 中来，到返回值中去；对 `T2`，引用从实现它的 `Self` 中来，到返回值中去。
 
 ```rust
-trait T<'a> {
+trait T1<'a> {
     fn foo(s: &'a str) -> &'a str;
 }
 
@@ -2280,7 +2278,7 @@ where
 fn foo<T>(v: T) where T: for<'a> Fn(&'a str)
 ```
 
-**GAT**：引用从实现它的 `Self` 中来，到 `Self::Item` 中去。
+**GATs**：引用从实现它的 `Self` 中来，到 `Self::Item` 中去。
 
 ```rust
 trait T {
@@ -2338,7 +2336,7 @@ let b = temp() + temp();
 
 ### 再借用
 
-对于 `&T` 是 `Copy` 的，对于 `&mut T` 则不是。若严格按照借用规则，下面这段代码就不会通过编译。
+`&T` 是 `Copy` 的，而 `&mut T` 则不是。若严格按照借用规则，下面这段代码就不会通过编译。
 
 ```rust
 // 理论不通过，实际通过
@@ -2462,7 +2460,7 @@ fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
 ```
 
 -   `get_fn1` 使用 HRTB，`f` 可以接收**任何**生命周期 `'a` 的引用，这使其更加灵活，处理不同长度引用的函数指针或闭包都可以传递给 `get_fn1`
--   `get_fn2` 在函数本身上声明了生命周期参数 `'a`。这意味着传递给 `get_fn2` 的函数必须能够接收**特定**生命周期 `'a` 的引用。这里的 `'a` 是由 `get_fn2` 的调用者确定的，因此所有涉及的引用都必须具有相同的生命周期
+-   `get_fn2` 在函数本身上声明了生命周期参数 `'a`。这意味着传递给 `get_fn2` 的函数必须能够接收**特定**生命周期 `'a` 的引用。这里的 `'a` 由 `get_fn2` 的调用上下文决定，因此所有涉及的引用都必须具有相同的生命周期
 
 对于包含生命周期的闭包对象，也需要使用 HRTB：
 ```rust
