@@ -250,7 +250,7 @@ end
 
 ### 控制器名称
 
-生成控制器时，**名称使用驼峰命名法**，并生成以**蛇形命名法的控制器文件**，且使用**复数**的形式：
+生成控制器时，**名称使用 PascalCase**，并生成以 **snake_case 命名的控制器文件**，且使用**复数**的形式：
 
 ```shell
 # 都会生成 static_pages_controller.rb
@@ -258,7 +258,7 @@ rails g controller StaticPages index
 rails g controller static-pages index
 ```
 
-控制器的**类名使用驼峰命名法**，因此上面两条命令都会生成 `StaticPagesController` 类：
+控制器的**类名使用 PascalCase**，因此上面两条命令都会生成 `StaticPagesController` 类：
 
 ```ruby
 class StaticPagesController < ApplicationController
@@ -267,16 +267,16 @@ class StaticPagesController < ApplicationController
 end
 ```
 
->   -   定义控制器、控制器类名：驼峰命名法（复数）
->   -   控制器文件：蛇形命名法（复数）
+>   -   定义控制器、控制器类名：PascalCase（复数）
+>   -   控制器文件：snake_case（复数）
 
 ### 路由名称
 
-路由名称使用控制器名称的**蛇形命名法**的形式，且**不加任何后缀**。
+路由名称使用控制器名称的 **snake_case** 的形式，且**不加任何后缀**。
 
 ### 模型名称
 
-生成模型时，**名称使用驼峰命名法**，并生成以**蛇形命名法的模型文件**，且使用**单数**的形式：
+生成模型时，**名称使用 PascalCase**，并生成以 **snake_case 命名的模型文件**，且使用**单数**的形式：
 
 ```shell
 # 都会生成 user_info.rb
@@ -284,15 +284,15 @@ rails g model UserInfo name:string email:string
 rails g model user-info name:string email:string
 ```
 
-模型的**类名使用驼峰命名法**，因此上面两条命令都会生成 `UserInfo` 类：
+模型的**类名使用 PascalCase**，因此上面两条命令都会生成 `UserInfo` 类：
 
 ```ruby
 class UserInfo < ApplicationRecord
 end
 ```
 
->   -   定义模型、模型类名：驼峰命名法（单数）
->   -   模型文件：蛇形命名法（单数）
+>   -   定义模型、模型类名：PascalCase（单数）
+>   -   模型文件：snake_case（单数）
 >   -   迁移文件：复数形式
 >       -   `<timestamps>_create_user_infos.rb` 文件
 >       -   `CreateInfoUsers` 类
