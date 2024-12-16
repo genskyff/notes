@@ -57,7 +57,7 @@ TAIL (CONS 1 (CONS 2 (CONS 3 NIL))) = CONS 2 (CONS 3 NIL)
 ```
 def list_type = three
 def islist = istype list_type
-def ISLIST l = MAKE_BOOL (islist L)
+def ISLIST L = MAKE_BOOL (islist L)
 def LIST_ERROR = MAKE_ERROR list_type
 ```
 
@@ -118,6 +118,11 @@ def isnil L =
   if islist L
   then iserror (HEAD L)
   else false
+
+def ISNIL L =
+  if islist L
+  then MAKE_BOOL (iserror (HEAD L))
+  else LIST_ERROR
 ```
 
 错误处理特性：
