@@ -1,4 +1,4 @@
->   Common Lisp 实现：
+>   Lisp 实现：
 >
 >   -   [SBCL](https://www.sbcl.org/platform-table.html)
 >
@@ -57,7 +57,7 @@ Lisp 中的基本逻辑值：
 -   合取：`and`
 -   析取：`or`
 
-Lisp 的逻辑运算具有多参数特性：`and` 和 `or` 可接受两个以上参数：
+Lisp 的逻辑运算具有多参数特性，`and` 和 `or` 可接受两个以上参数：
 
 ```lisp
 * (and t nil t)
@@ -188,7 +188,7 @@ Lisp 提供了简写形式：`'<argument>`，等同于 `quote` 的使用。
 
 空列表表示为 `nil` 或 `()`。在 Lisp 中，`nil` 同时代表 FALSE，而任何非 `nil` 值都代表 TRUE。
 
--   `null` 原语测试是否为空列表
+-   `null` 原语判断是否为空列表
 -   `listp` 原语判断是否为列表
 
 列表通过 `cons` 原语构造：
