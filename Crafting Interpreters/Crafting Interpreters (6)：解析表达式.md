@@ -71,7 +71,7 @@ NUMBER operator expression
 6 / (3 - 1)
 ```
 
-两次都使用最左推导，但最终得到的结果在四则运算下是错的。该语法具有歧义，可以将该表达式看作是 `(6 / 3) - 1` 或 `6 / (3 - 1)`。
+两次都使用最左推导，但最终得到的结果在四则运算下是错的。该语法具有歧义，因为可以将该表达式看作是 `(6 / 3) - 1` 或 `6 / (3 - 1)`。
 
 ![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/6.%E8%A7%A3%E6%9E%90%E8%A1%A8%E8%BE%BE%E5%BC%8F/syntax-trees.png)
 
@@ -79,7 +79,7 @@ NUMBER operator expression
 
 **结合性**决定在一系列相同操作符中先计算哪个操作符。若一个操作符是**左结合**的，左边的操作符在右边的操作符之前计算，如 `+` 是左结合的，而 `=` 是右结合的。
 
-若语法中没有定义优先级和结合性，则使用多个运算符就会造成歧义。修改表达式语法，将优先级定义进去，通过**分层**将不同优先级的表达式定义在不同的产生式中：
+若语法中没有定义优先级和结合性，则使用多个运算符就会造成歧义。修改表达式语法，通过**分层**将不同优先级的表达式定义在不同的产生式中：	
 
 ```
 expression
@@ -200,7 +200,7 @@ primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil"
 
 ## 6.2 递归下降分析
 
-有很多解析技术，如 LL、LR、LALR、解析器组合子、Pratt 解析等，但最适合手工编码是**递归下降分析算法**。
+有很多解析技术，如 LL、LR、LALR、解析器组合子、Pratt 解析等，但最适合手工编码是**递归下降**。
 
 递归下降实现简单，不需要使用像 Yacc、Bison 或 ANTLR 这种解析器生成器，可以手工编写，解析器速度快、健壮、可维护性好，且可支持复杂的错误处理。GCC、V8、LLVM、Roslyn 等大部分成熟的编译器都采用手工编码的递归下降分析算法。
 
@@ -230,7 +230,7 @@ primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil"
 
 ### 6.2.1 Parser 类
 
-创建一个 `parser.rb`，并创建一个 `Parser` 类，用于接受一个 Token 序列，并使用 `current` 记录当前 Token 位置：
+创建一个 `lib/parser/parser.rb`，并创建一个 `Parser` 类，用于接受一个 Token 序列，并使用 `current` 记录当前 Token 位置：
 
 ```ruby
 class Parser
