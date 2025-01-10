@@ -80,7 +80,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop bucket add extras
 scoop bucket add java
 scoop update
-scoop install 7zip bat bun delta fastfetch git gsudo lazydocker lazygit less liberica-full-lts-jdk llvm lsd nilesoft-shell onefetch pandoc python ripgrep starship tokei w64devkit wireshark xmake zoxide
+scoop install 7zip bat delta deno fastfetch git gsudo lazydocker lazygit less llvm lsd mingw-winlibs-ucrt nilesoft-shell onefetch pandoc ripgrep starship tokei wireshark xmake zoxide
 ```
 
 # 4 配置 PowerShell
@@ -126,12 +126,16 @@ Set-PSReadLineKeyHandler -Chord Alt+w -Function BackwardDeleteWord
 Set-PSReadLineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
 Set-PSReadLineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
 
+if (Get-Command less -ErrorAction SilentlyContinue) {
+    $env:LESS = "-iRF"
+}
+
 function Open-Folder {
     param($Path = ".")
     Invoke-Item $Path
 }
 
-function BatPure {
+function Bat-Pure {
     $params = @("-p") + $args
     bat @params
 }
@@ -201,14 +205,19 @@ function Git-Pull {
     git @params
 }
 
+function Git-Submodule-Status {
+    $params = @("submodule", "status") + $args
+    git @params
+}
+
 function Git-Submodule-Update {
     $params = @("submodule", "update") + $args
     git @params
 }
 
 Set-Alias -Name open -Value Open-Folder -Force
+Set-Alias -Name cat -Value Bat-Pure -Force
 
-Set-Alias -Name cat -Value BatPure -Force
 Set-Alias -Name ff -Value fastfetch -Force
 Set-Alias -Name of -Value onefetch -Force
 Set-Alias -Name lg -Value lazygit -Force
@@ -229,6 +238,7 @@ Set-Alias -Name gs -Value Git-Status -Force
 Set-Alias -Name gd -Value Git-Diff -Force
 Set-Alias -Name gl -Value Git-Log -Force
 Set-Alias -Name gp -Value Git-Pull -Force
+Set-Alias -Name gss -Value Git-Submodule-Status -Force
 Set-Alias -Name gsu -Value Git-Submodule-Update -Force
 ```
 
