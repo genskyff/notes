@@ -6,13 +6,6 @@
 
 # 2 软件包配置
 
-## 配置 Sid 源
-
-```shell
-echo "deb http://deb.debian.org/debian sid main\ndeb-src http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
-echo -e "Package: *\nPin: release a=sid\nPin-Priority: 50" > /etc/apt/preferences.d/sid
-```
-
 ## 更新包
 
 ```shell
@@ -22,8 +15,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server ripgrep socat sudo tmux traceroute unzip wget
-apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta lsd neovim xmake zoxide
+apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server procps ripgrep socat sudo traceroute vim unzip wget
 ```
 
 # 3 登录设置
@@ -40,17 +32,17 @@ passwd
 
 ### 添加用户
 
-若默认使用 root，则添加一个普通用户，并加入到 wheel 组：
+若默认使用 root，则添加一个普通用户，并加入到 sudo 组：
 
 ```shell
-useradd -mG wheel -s $SHELL <username>
+useradd -mG sudo -s $SHELL <username>
 passwd <username>
 ```
 
 若要把已存在用户添加到 wheel 组：
 
 ```shell
-usermod -aG wheel <username>
+usermod -aG sudo <username>
 ```
 
 ### 切换用户
@@ -240,7 +232,7 @@ iptables-restore < /etc/iptables.rules
 使规则开机生效：
 
 ```shell
-echo '#!/bin/bash
+echo '#!/usr/bin/env bash
 /sbin/iptables-restore < /etc/iptables.rules' > /etc/network/if-pre-up.d/iptables && chmod +x /etc/network/if-pre-up.d/iptables
 ```
 

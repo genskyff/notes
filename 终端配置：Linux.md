@@ -1,15 +1,6 @@
 >   Linux 环境：Debian 12 & Arch Linux
 
-# 1 软件包配置
-
-## 配置 Sid 源（仅 Debian）
-
-在 Debian 上，有些包版本过老，需要从 Sid 源安装较新版本：
-
-```shell
-echo -e "deb http://deb.debian.org/debian sid main\ndeb-src http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
-echo -e "Package: *\nPin: release a=sid\nPin-Priority: 50" > /etc/apt/preferences.d/sid
-```
+# 软件包配置
 
 ## 更新包
 
@@ -37,14 +28,13 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server ripgrep socat sudo tmux traceroute unzip wget
-apt install -t sid -y btm fastfetch fzf git-credential-oauth git-delta lsd neovim xmake zoxide
+apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server procps ripgrep socat sudo traceroute vim unzip wget
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bind bottom clang curl docker docker-compose dust fastfetch fd fish fzf git git-delta lazygit less libunwind lsd neovim net-tools onefetch openbsd-netcat openssh ripgrep rustup socat starship sudo tokei traceroute unzip wget xmake zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bind bottom clang curl docker docker-compose dust fastfetch fd fish fzf git git-delta helix lazygit less libunwind lsd neovim net-tools onefetch openbsd-netcat openssh ripgrep socat starship sudo tokei traceroute unzip wget xmake zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -62,7 +52,7 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm git-credential-oauth lazydocker-bin ttf-maple
+yay -S --needed --noconfirm git-credential-oauth lazydocker-bin
 ```
 
 若下载速度过慢，可能是源的问题。安装 reflector，然后自动选择最快的源：
@@ -70,65 +60,5 @@ yay -S --needed --noconfirm git-credential-oauth lazydocker-bin ttf-maple
 ```shell
 yay -S --needed --noconfirm reflector
 reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
-```
-
-# 2 Shell 配置
-
-## 配置 [fish](https://fishshell.com/)
-
-```shell
-chsh -s "$(command -v fish | sed 's/sbin/bin/')"
-```
-
->   之后的命令都在 fish 下执行。
-
-## 配置 [fzf](https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration)（仅 Arch）
-
-```shell
-echo "fzf --fish | source" >> ~/.config/fish/config.fish
-```
-
-## 配置 [starship](https://starship.rs/guide/#%F0%9F%9A%80-installation)（仅 Arch）
-
-```shell
-echo "starship init fish | source" >> ~/.config/fish/config.fish
-```
-
-## 配置 [zoxide](https://github.com/ajeetdsouza/zoxide?tab=readme-ov-file#installation)
-
-```shell
-echo "zoxide init fish | source" >> ~/.config/fish/config.fish
-```
-
-## 配置 function
-
-```shell
-echo 'function fish_edit --description "Edit fish configuration"
-    nvim ~/.config/fish/config.fish
-end' > ~/.config/fish/functions/fish_edit.fish
-
-echo 'function fish_reload --description "Reload fish configuration"
-    . ~/.config/fish/config.fish
-    for file in ~/.config/fish/conf.d/*.fish
-        . $file
-    end
-end' > ~/.config/fish/functions/fish_reload.fish
-```
-
-## 使配置生效
-
-```shell
-fish_reload
-```
-
-# 3 编辑器配置
-
-## 配置 [AstroNvim](https://docs.astronvim.com/)
-
-要使用 AstroNvim，需要 [Neovim](https://neovim.io/) 0.9.5 以上版本：
-
-```shell
-rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-git clone https://github.com/AstroNvim/template ~/.config/nvim && nvim
 ```
 
