@@ -39,7 +39,7 @@ useradd -mG sudo -s $SHELL <username>
 passwd <username>
 ```
 
-若要把已存在用户添加到 wheel 组：
+若要把已存在用户添加到 sudo 组：
 
 ```shell
 usermod -aG sudo <username>
