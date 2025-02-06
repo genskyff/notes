@@ -8,29 +8,33 @@
 
 ### Windows
 
-访问 [Git 官网](https://git-scm.com/) 进行下载安装。
+通过 [Scoop](https://scoop.sh/) 安装：
+
+```shell
+scoop update; scoop install git
+```
 
 ### Linux
 
 以 Debian 为例：
 
 ```shell
-apt update && apt -y install git
+apt update && apt install -y git
 ```
 
 ## 配置
 
-使用 `git config` 来读取和配置环境变量：
+通过 `git config` 读取和配置环境变量：
 
--   `--system`：对所有用户都适用的配置；
-    -   Windows：Git 安装目录下的 `etc/gitconfig` ；
-    -   Linux： `/etc/gitconfig`。
+-   `--system`：对所有用户都适用的配置
+    -   Windows：Git 安装目录下的 `etc/gitconfig` 
+    -   Linux： `/etc/gitconfig`
 
--   `--global`：仅对当前用户适用的配置；
-    -   Windows、Linux：`~/.gitconfig`。
+-   `--global`：仅对当前用户适用的配置
+    -   Windows、Linux：`~/.gitconfig`
 
--   `--local`：**默认选项**，仅对当前 Git 目录适用的配置。
-    -   Windows、Linux：工作区中的 `.git/config`。
+-   `--local`：**默认选项**，仅对当前 Git 仓库适用的配置
+    -   Windows、Linux：工作区中的 `.git/config`
 
 >   `--system` 优先级**最低**，`--local` 优先级**最高**，高优先级会覆盖低优先级中的相同配置。这些配置仅在本地生效，不会推送到远程仓库中去。
 
@@ -59,9 +63,6 @@ git config --show-origin <key>
 git config --global user.name <name>
 git config --global user.email <email>
 
-# 默认分支
-git config --global init.defaultBranch main
-
 # 凭证管理 - Windows
 git config --global credential.helper manager
 
@@ -69,7 +70,11 @@ git config --global credential.helper manager
 git config --global credential.helper osxkeychain
 
 # 凭证管理 - Linux
-git config --global credential.helper oauth
+git config --global credential.helper "cache --timeout 21600"
+git config --global --add credential.helper "oauth -device"
+
+# 默认分支
+git config --global init.defaultBranch main
 
 # Pull 策略
 git config --global pull.rebase true
@@ -139,7 +144,7 @@ git clone --depth 1 <repo>
 
 ## 新建
 
-进入工作目录，将其初始化为一个 Git 仓库：
+进入目录，将其初始化为一个 Git 仓库：
 
 ```shell
 git init
@@ -173,7 +178,7 @@ git commit -am <message>
 `--amend` 会覆盖上次提交：
 
 ```shell
-git commit --amend [-m <message>]
+git commit --amend [-m <message> | --no-edit]
 ```
 
 若自上次提交以来还未做任何修改则覆盖的只是提交信息。
@@ -210,8 +215,6 @@ git status -s
 ## 忽略文件
 
 有些文件无需纳入 Git 的管理，也不希望出现在未跟踪文件列表。可以创建一个名为 `.gitignore` 的文件，列出要忽略的文件的模式。
-
-**文件：.gitignore**
 
 ```
 # 忽略所有的 .a 文件
@@ -277,8 +280,10 @@ git diff <commit>  [-- <file>]
 比较当前提交和指定提交间的统计信息：
 
 ```shell
-git diff --shortstat <commit> [-- <file>]
+git diff --stat <commit> [-- <file>]
 ```
+
+简短统计信息使用 `--shortstat`。
 
 比较当前提交和指定提交间的文件差异：
 
@@ -339,7 +344,7 @@ git add <new>
 - 常见用法
   - 软重置（不影响工作区和暂存区）：`git reset --soft <commit>`
   - 硬重置（影响工作区和暂存区）：`git reset --hard <commit>`
-  - 混合重置（**默认选项**，影响暂存区，但不影响工作区）：`git reset --mixed <commit>`
+  - 混合重置（**默认选项**，影响暂存区，但不影响工作区）：`git reset <commit>`
 
 ### revert
 
@@ -357,7 +362,7 @@ git add <new>
 `log` 用来查看提交历史：
 
 ```shell
-git log <branch> --oneline --graph --abbrev-commit 
+git log <branch> --oneline --graph
 ```
 
 -   可选指定分支的历史；
@@ -440,13 +445,6 @@ git branch -v
 git branch -a
 ```
 
-`--merged` 或 `--no-merged` 查看所有当前分支已经合并或未合并的分支：
-
-```shell
-git branch --merged
-git branch --no-merged
-```
-
 ## 创建
 
 `branch` 创建分支：
@@ -483,7 +481,7 @@ git merge [--squash] <branch>
 
 ### 查看文件冲突时的信息
 
-当 `rerere.enabled` 为 `true` 时，合并时 git 会使用缓存的解决方法，但有时也需要查看冲突信息。
+当 `rerere.enabled` 为 `true` 时，合并时 Git 会使用缓存的解决方法，但有时也需要查看冲突信息。
 
 ```shell
 git checkout --conflict=merge <path>
@@ -497,8 +495,8 @@ git checkout --conflict=merge <path>
 git branch -m <new>
 ```
 
--   `-m` 用于重命名当前分支。若分支名已经存在，则会执行失败；
--   `-M` 用于强制重命名当前分支。若分支名已存在，则会丢弃已有的分支并重命名当前分支。
+-   `-m` 用于重命名当前分支。若分支名已经存在，则会执行失败
+-   `-M` 用于强制重命名当前分支。若分支名已存在，则会丢弃已有的分支并重命名当前分支
 
 `branch -d`  可以删除分支：
 
@@ -506,8 +504,8 @@ git branch -m <new>
 git branch -d <name>
 ```
 
--   `-d` 用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败；
--   `-D` 用于强制删除指定分支，即使该分支还未被合并到当前分支。
+-   `-d` 用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败
+-   `-D` 用于强制删除指定分支，即使该分支还未被合并到当前分支
 
 # 5 远程仓库
 
@@ -523,10 +521,10 @@ git remote -v
 
 >   Git 远程仓库默认名为 `origin`。
 
-`remote show` 还会列出远程仓库与跟踪分支的信息：
+`remote show` 会列出远程仓库与跟踪分支的信息：
 
 ```shell
-git remote show <remote>
+git remote show <alias>
 ```
 
 ## 添加
@@ -544,7 +542,7 @@ git remote add <alias> <repo>
 若远程分支修改了名字，也需要在本地修改对应的 URL。
 
 ```shell
-git remote set-url origin <url>
+git remote set-url <alias> <repo>
 ```
 
 ## 拉取
@@ -552,13 +550,13 @@ git remote set-url origin <url>
 `fetch` 从中远程仓库拉取所有本地还没有的数据，但**并不会自动合并**到当前分支，必须手动合并。
 
 ```shell
-git fetch [remote]
+git fetch [alias]
 ```
 
 `pull` 和 `fetch` 的不同在于，会**自动合并**对应的远程分支到当前分支。
 
 ```shell
-git pull [remote]
+git pull [alias]
 ```
 
 >   `pull` 实际上是 `fetch` 和 `merge` 的组合。
@@ -568,23 +566,23 @@ git pull [remote]
 `push` 将当前分支推送到远程对应的分支：
 
 ```shell
-git push [remote] [branch]
+git push [alias] [branch]
 ```
 
 如将本地的 `main` 分支推送到远程的 `main` 分支：
 
 ```shell
-git push -u origin main
+git push -u [alias] main
 ```
 
 首次推送时需要使用 `-u` 将本地和对应的远程分支相关联，之后就可以直接使用 `push` 推送。
 
->   若使用了 `--amend`、`rebase` 之类的操作，推送时可能会失败，这时可以使用 `-f` 选项来强制推送。但是注意，若在推送时有其他人在相同分支也进行了提交，则会**覆盖别人的提交**。除非提交的分支是只有自己在使用，否则谨慎使用该选项。
+>   若使用了 `--amend`、`rebase` 之类的操作，推送时可能会失败，这时可以使用 `-f` 选项来强制推送。但注意，若在推送时有其他人在相同分支也进行了提交，则会**覆盖别人的提交**。除非提交的分支只有自己在使用，否则谨慎使用该选项。
 
-若本地分支名和远程分支名不同，如本地分支为 `local-main`，远程分支为 `main`，则需要指定本地分支和远程分支。
+若本地分支名和远程分支名不同，如本地分支为 `dev`，远程分支为 `main`，则需要指定本地分支和远程分支。
 
 ```shell
-git push origin local-main:main
+git push [alias] dev:main
 ```
 
 只有具有远程仓库的写入权限，且该远程分支在上次拉取后没有新的提交，该命令才生效。在推送前若远程分支有新的提交，则必须先拉取再合并后才能推送。
@@ -594,13 +592,13 @@ git push origin local-main:main
 删除远程仓库：
 
 ```shell
-git remote rm <remote>
+git remote rm <alias>
 ```
 
 删除远程分支：
 
 ```shell
-git push <remote> -d <branch>
+git push <alias> -d <branch>
 ```
 
 重命名远程分支只能通过先删除远程分支，然后将本地分支改名后再重新推送。
@@ -647,7 +645,7 @@ git show v1.0-l
 
 ### 附注标签
 
-使用 `-a` 创建附注标签，`-m` 指定提交信息：
+使用 `-a` 创建附注标签，`-m` 指定标签信息：
 
 ```shell
 git tag -a v1.0 -m "version 1.0"
@@ -661,13 +659,7 @@ git show v1.0
 
 ### 后期打标签
 
-要对过去的版本打标签，需要先找到 `commit id`：
-
-```shell
-git log --oneline --abbrev-commit
-```
-
-然后打 tag 时加上 `commit id`：
+要对过去的版本打标签，需要附上 `commit id`：
 
 ```shell
 git tag v0.9-l <commit>
@@ -680,16 +672,22 @@ git tag v0.9-l <commit>
 默认情况下，`push` 命令并不会推送标签到远程仓库服务器上，在创建完标签后必须显式地推送标签。 
 
 ```shell
-git push <remote> <tag>
+git push <alias> <tag>
 ```
 
 `--tags` 一次性推送所有标签：
 
 ```shell
-git push <remote> --tags
+git push <alias> --tags
 ```
 
 >   `--tags` 不区分轻量标签和附注标签。
+
+从远程仓库更新标签：
+
+```shell
+git fetch --tags
+```
 
 ## 删除
 
@@ -702,12 +700,18 @@ git tag -d <tag>
 删除远程标签首先要先在本地删除，再从远程删除：
 
 ```shell
-git push <remote> -d <tag>
+git push <alias> -d <tag>
 ```
 
-# 7 子模块 Todo
+# 7 子模块
 
-# 8 关联 Github
+
+
+# 8 打包
+
+
+
+# 9 使用 Github
 
 ## 生成密钥
 
@@ -727,9 +731,9 @@ chmod 644 ~/.ssh/config
 chmod 644 ~/.ssh/authorized_keys
 ```
 
-## 添加到 Github
+## 关联 Github
 
-在 Github 中添加自己的公钥，即可把本地仓库 Push 到 Github 的远程仓库中去。
+在 [Github](https://github.com/settings/keys) 上添加自己的公钥，即可把本地仓库推送到 Github 的远程仓库中去。
 
 ![在 Github 中添加公钥](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305011708011.png)
 
@@ -754,13 +758,13 @@ Host mygit
 ssh -T mygit
 ```
 
-# 9 Git 工作流
+# 10 工作流
 
 个人项目通常直接使用 `add`、`commit`、`push` 这三步就足够了，但是在一个大项目中，通常需要遵循一些协作规范，以便多个开发人员可以协同工作，避免代码冲突和其它问题。
 
 一些大型项目通常会采用分支管理的策略，使得不同的开发人员可以在自己的分支上进行开发和测试，而不会影响主分支的稳定性。
 
-## 常用工作流
+## 开发流程
 
 Git 协作策略和操作步骤，具体的协作流程可能因项目而异，但对于绝大多数项目而言，下面的工作流通常都能够胜任。
 
@@ -781,7 +785,7 @@ Git 协作策略和操作步骤，具体的协作流程可能因项目而异，�
 复制项目的 URL，并克隆到本地，然后进入该目录：
 
 ```shell
-git clone https://github.com/<your_github_account>/demo-git.git
+git clone https://github.com/<your_github_username>/demo-git.git
 cd demo-git
 ```
 
@@ -854,7 +858,7 @@ Hello world!
 这两种都需要先将远程 `main` 分支的最新代码拉取到本地，但不合并到本地分支：
 
 ```shell
-git fetch origin
+git fetch origin main
 ```
 
 ---
@@ -865,7 +869,7 @@ git fetch origin
 git merge origin/main
 ```
 
-当使用 `merge` 时，若出现了代码冲突，则自动合并会失败，并提示需要手动解决冲突。
+当使用 `merge` 时，若出现了冲突，则合并会失败，需要手动解决冲突。
 
 具体步骤如下：
 
@@ -884,7 +888,7 @@ git merge origin/main
 git rebase origin/main
 ```
 
-当使用 `rebase` 时，若出现了代码冲突，Git 会停止变基操作，并需要手动解决冲突。
+当使用 `rebase` 时，若出现了冲突，则变基会失败，需要手动解决冲突。
 
 具体步骤如下：
 
@@ -896,6 +900,8 @@ git rebase origin/main
 ---
 
 这两种方式的不同在于，`merge` 是将两个分支的修改合并成一个新的提交，并且保留每个分支的提交历史，因此可以保留提交历史，但会导致提交记录变得混乱。而 `rebase` 是将当前分支的修改基于目标分支最新的修改之后，没有产生新的合并提交，因此可以使提交历史更加清晰，但会丢失一部分提交历史。
+
+>   若发生冲突，`merge` 和 `rebase` 都可以用 `--abort` 来中止。
 
 ### 推送代码
 
@@ -911,13 +917,14 @@ git push -u origin my-dev
 
 ### 发起合并请求
 
-代码被推送到远程分支后，发起一个合并请求，让此分支合并到主分支上。通常使用代码托管平台（如 GitHub、GitLab 等）提供的功能（如 Pull Request）来发起合并请求，并邀请其他开发人员进行审核和合并操作。
+代码被推送到远程分支后，发起一个合并请求，让此分支合并到主分支上。通常使用代码托管平台提供的功能（如 Pull Request）来发起合并请求，并邀请其他开发人员进行审核和合并操作。
 
 ### 清理工作
 
 当远程的 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的 `my-dev` 分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
 
 ```shell
+git switch main
 git branch -d my-dev
 git push origin -d my-dev
 git pull
@@ -942,19 +949,13 @@ git remote prune origin
 `stash` 会把工作区和暂存区的修改保存起来。执行完后，再运行 `git status`，会发现当前是一个干净的工作区，没有任何改动。
 
 ```shell
-git stash
+git stash [push [-m <message>]]
 ```
 
 使用 `-u` 将未跟踪的文件也一起保存：
 
 ```shell
 git stash -u
-```
-
-使用 `stash save`在保存时添加注释：
-
-```shell
-git stash save <message>
 ```
 
 ### 查看已保存进度
@@ -1009,18 +1010,18 @@ git cherry-pick <commit>[..<end_commit>]
 
 主要用于以下场景：
 
--   从其它分支挑选特定的修复或功能：若有一个已经修复了特定问题的提交，在不合并整个分支的情况下将该修复应用到其它分支；
--   避免不必要的合并：有时合并一个完整的分支会带来很多不相关的更改；
--   代码审查：在项目中将特定的提交快速应用到生产分支，而不需要等待其它更改通过审查。
+-   从其它分支挑选特定的修复或功能：若有一个已经修复了特定问题的提交，在不合并整个分支的情况下将该修复应用到其它分支
+-   避免不必要的合并：有时合并一个完整的分支会带来很多不相关的更改
+-   代码审查：在项目中将特定的提交快速应用到生产分支，而不需要等待其它更改通过审查
 
 ### 注意事项
 
--   解决冲突：和合并操作一样，`cherry-pick` 也可能导致冲突；
--   依赖关系：若一个提交依赖于其它提交，则单独挑选该提交可能会导致问题，需要将依赖的提交都挑选出来。
+-   解决冲突：和合并操作一样，`cherry-pick` 也可能导致冲突
+-   依赖关系：若一个提交依赖于其它提交，则单独挑选该提交可能会导致问题，需要将依赖的提交都挑选出来
 
 ## 标识前缀
 
-在常见的分支和 commit 消息中，通常使用一些常见的前缀来标识提交的类型。这些前缀并不强制，但可以帮助更好地组织和理解提交历史。
+在常见的分支和提交消息中，通常使用一些常见的前缀来标识提交的类型。这些前缀并不强制，但可以帮助更好地组织和理解提交历史。
 
 -   `style`：代码风格的更改
 -   `lint`：代码格式检查和修正
@@ -1031,8 +1032,8 @@ git cherry-pick <commit>[..<end_commit>]
 -   `test`：测试相关的更改
 -   `docs`：更新文档或注释
 -   `perf`：性能优化相关的更改
--   `config`：更新配置文件
--   `cleanup`：清理无用的代码或文件
+-   `config`：更新配置
+-   `cleanup`：清理无用的代码
 -   `init`：初始化相关的更改
 -   `security`：安全相关的更改
 -   `deps`：更新依赖
