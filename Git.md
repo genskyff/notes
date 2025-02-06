@@ -132,7 +132,7 @@ git config --unset <key>
 `clone` 用于克隆仓库默认分支，可指定分支和重命名：
 
 ```shell
-git clone [-b <branch>] <repo> [rename]
+git clone [-b <branch>] <repo> [name]
 ```
 
 `--depth` 用于指定克隆历史提交记录的数量：
@@ -705,7 +705,48 @@ git push <alias> -d <tag>
 
 # 7 子模块
 
+有时项目中需要用到另一个项目的东西，如第三方库，但不想直接复制粘贴，而是分别当作独立项目，这样跟踪上游就很容易。这时可以使用 Git 的子模块功能，可以将一个 Git 仓库作为另一个 Git 仓库的子目录，并保持提交独立。
 
+## 添加子模块
+
+添加要跟踪的 Git 仓库，并可重命名：
+
+```shell
+git submodule add <repo> [name]
+```
+
+添加后，此时 `git status` 状态会显示新增了一个与子模块同名的目录和一个隐藏的 `.gitmodules` 文件。
+
+`.gitmodules` 保存了项目 URL 与已经拉取的本地目录之间的映射，若有多个子模块，则有多条记录。
+
+```
+[submodule "mysub"]
+    path = mysub
+    url = https://github.com/<username>/mysub
+```
+
+Git 并不会跟踪子模块的具体变更，当子模块更新后，Git 会把子模块当作一个可以添加的变更。
+
+## 克隆含有子模块的仓库
+
+当克隆一个仓库时，若该仓库含有子模块，则默认不会把子模块也克隆，而是一个空目录。
+
+要检出子模块的数据，还需要进行初始化和更新：
+
+```shell
+git submodule init
+git submodule update
+
+# 等价
+git submodule update --init
+```
+
+通过 `--recurse-submodules` 在克隆和检出时时递归处理嵌套的子模块：
+
+```shell
+git clone --recurse-submodules <repo>
+git submodule update --init --recurse-submodules
+```
 
 # 8 打包
 
@@ -785,7 +826,7 @@ Git 协作策略和操作步骤，具体的协作流程可能因项目而异，�
 复制项目的 URL，并克隆到本地，然后进入该目录：
 
 ```shell
-git clone https://github.com/<your_github_username>/demo-git.git
+git clone https://github.com/<username>/demo-git.git
 cd demo-git
 ```
 
