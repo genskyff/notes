@@ -110,26 +110,36 @@ factor -> factor ("*" | "/" | "%") unary | unary
 但这会导致左递归，使匹配陷入死循环。
 
 消除左递归的方法是，若有一个左递归产生式，其中 $A$ 为**非终结符**，$\alpha$ 和 $\beta$ 是**终结符或非终结符**，且 $\alpha$ 不为空串：
+
 $$
 A \rightarrow A\alpha\mid\beta
 $$
+
 通过选择 $n\ (n \ge 0)$ 次 $A \rightarrow A\alpha$，最后再选择一次 $A \rightarrow \beta$，即可产生如下字符串：
+
 $$
 \beta\alpha^n\ (n \ge 0)
 $$
+
 设 $\alpha^n$ 为 $B$，其产生式为：
+
 $$
 B \rightarrow\alpha B \mid\alpha
 $$
+
 则 $A$ 可以转化为：
+
 $$
 A \rightarrow \beta B \mid \beta \\
 B \rightarrow \alpha B\mid\alpha
 $$
+
 将 $B$ 代入 $A$ 得：
+
 $$
 A \rightarrow \beta\alpha^*
 $$
+
 因此 `factor` 也可以转换，其中左递归的 `factor` 就是 $A$，`("*" | "/") unary` 就是 $\alpha$，`unary` 就是 $\beta$：
 
 ```
@@ -139,48 +149,63 @@ factor -> unary (("*" | "/" | "%") unary)*
 ```
 
 一般地，对于左递归产生式：
+
 $$
 A \rightarrow A\alpha_1 \mid A\alpha_2 \mid\cdots\mid A\alpha_n \mid \beta_1 \mid \beta_2 \mid\cdots\mid \beta_m
 $$
+
 消除左递归后的产生式为：
+
 $$
 A \rightarrow \beta_1B \mid \beta_2B \mid\cdots\mid \beta_mB \mid \beta_1 \mid \beta_2 \mid\cdots\mid \beta_m \\
 B \rightarrow \alpha_1B \mid \alpha_2B \mid\cdots\mid \alpha_nB \mid \alpha_1 \mid \alpha_2 \mid\cdots\mid \alpha_n
 $$
+
 将 $B$ 代入 $A$ 得：
+
 $$
 A \rightarrow \beta_1(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^* \\
 \mid \beta_2(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^* \\
 \mid\cdots \\
 \mid\beta_m(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^*
 $$
+
 对于**多重**左递归，如以下产生式：
+
 $$
 A \rightarrow AA\alpha\mid\beta
 $$
 
 可以把 $A$ 改写成：
+
 $$
 A \rightarrow A\alpha'\mid\beta \\
 \alpha' \rightarrow A\alpha \\
 $$
+
 然后根据上述一般左递归的消除方法，可以转换成：
+
 $$
 A \rightarrow \beta B \mid\beta \\
 B \rightarrow \alpha'B \mid\alpha' \\
 \alpha' \rightarrow A\alpha
 $$
+
 将 $\alpha'$ 代入 $B$ 得：
+
 $$
 A \rightarrow \beta B \mid\beta \\
 B \rightarrow A\alpha B \mid A\alpha
 $$
+
 此时出现了间接左递归，将 $A$ 代入 $B$ 来消除得：
+
 $$
 A \rightarrow \beta B \mid\beta \\
 B \rightarrow (\beta B \mid \beta)(\alpha B \mid \alpha)
 = \beta B\alpha B \mid \beta\alpha B \mid \beta B\alpha \mid \beta\alpha
 $$
+
 对于上述表达式文法，可以做如下转换：
 
 ```
