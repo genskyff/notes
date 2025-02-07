@@ -281,7 +281,7 @@ end
 
 ```ruby
 class Parser
-# comma -> condition ("," condition)* ","?
+  # comma -> condition ("," condition)* ","?
   def comma
     expr = [condition]
 
