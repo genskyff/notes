@@ -573,7 +573,7 @@ git rebase -i <range>
 `branch -m`  可以重命名当前分支：
 
 ```shell
-git branch -m <new>
+git branch -m <name>
 ```
 
 -   `-m` 用于重命名当前分支。若分支名已经存在，则会执行失败
@@ -582,7 +582,7 @@ git branch -m <new>
 `branch -d`  可以删除分支：
 
 ```shell
-git branch -d <name>
+git branch -d <branch>
 ```
 
 -   `-d` 用于删除已经合并到当前分支的指定分支。若指定的分支还未被合并到当前分支，则会执行失败
