@@ -987,7 +987,7 @@ git format-patch <range>
 
 导出时会为每个提交都创建一个前缀为编号，后缀为 `.patch` 的文件，越早的提交，编号越小，默认编号从 `1` 开始。
 
-生成补丁时可选的指定一个文件夹：
+生成补丁时可指定存放的目录：
 
 ```shell
 git format-patch origin -o <dir>
@@ -1000,7 +1000,7 @@ git format-patch origin -o <dir>
 `apply` 主要用于代码变更，不包含提交信息：
 
 ```shell
-git apple <patch>
+git apply <patch>
 ```
 
 `am` 会按顺序应用补丁，并保留提交信息：
