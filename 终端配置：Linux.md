@@ -13,7 +13,7 @@ apt update && apt upgrade -y
 ### Arch
 
 ```shell
-pacman -Syu --noconfirm
+pacman -Syyu --noconfirm
 ```
 
 若上面命令执行出错，则先执行下面两条命令：
@@ -28,13 +28,13 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server procps ripgrep socat sudo traceroute vim unzip wget
+apt install -y bat build-essential clang-format clangd curl docker-compose docker.io duf fd-find fish git iptables less libunwind8 mtr net-tools netcat-openbsd openssh-client openssh-server procps ripgrep sd socat sudo unzip vim wget
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bind bottom clang curl docker docker-compose dust fastfetch fd fish fzf git git-delta helix lazygit less libunwind lsd neovim net-tools onefetch openbsd-netcat openssh ripgrep socat starship sudo tokei traceroute unzip wget xmake zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bind bottom choose clang curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less libunwind lsd mtr neovim net-tools onefetch openbsd-netcat openssh ripgrep sd socat starship sudo tokei unzip wget xmake zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -52,7 +52,7 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm git-credential-oauth lazydocker-bin
+yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin mise-bin tlrc-bin usage-bin
 ```
 
 若下载速度过慢，可能是源的问题。安装 reflector，然后自动选择最快的源：

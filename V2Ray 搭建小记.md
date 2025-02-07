@@ -1,8 +1,6 @@
 # 1 前言
 
-Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极其优秀的代理工具，其具体文档请参考：
-
-- [V2Ray 官方手册](https://v2fly.org/)
+Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极其优秀的代理工具，其具体文档请参考 [V2Ray 官方手册](https://v2fly.org/)。
 
 >   本文以 Debian 为例，记录搭建 V2Ray 的过程。
 

@@ -1,4 +1,4 @@
->   主要参考：
+>   参考：
 >
 >   -   [《C Primer Plus》](https://book.douban.com/subject/26792521/)
 >   -   [《C 陷阱与缺陷》](https://book.douban.com/subject/2778632/)

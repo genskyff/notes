@@ -1,6 +1,6 @@
 >   本系列文章使用的 Rust Edition 为 `2021`。
 >
->   主要参考：
+>   参考：
 >
 >   -   [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
 >   -   [Programming Rust](https://book.douban.com/subject/36547630/)
