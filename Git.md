@@ -11,7 +11,7 @@
 通过 [Scoop](https://scoop.sh/) 安装：
 
 ```shell
-scoop update; scoop install git
+scoop install git
 ```
 
 ### Linux
@@ -19,7 +19,7 @@ scoop update; scoop install git
 以 Debian 为例：
 
 ```shell
-apt update && apt install -y git
+apt install -y git
 ```
 
 ## 配置
@@ -104,7 +104,7 @@ git config --unset <key>
 
 ## 版本库
 
-即 `.git` 目录，又称**仓库**，这个目录是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，任何时刻都可以追踪历史，或在将来某个时刻还原。Git 的版本库中存了很多东西，其中最重要的就是暂存区，还有 Git 自动创建的第一个分支 `main`，以及指向 `main` 的指针 `HEAD`。
+即 `.git` 目录，又称**仓库**，是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，任何时刻都可以追踪历史，或在将来某个时刻还原。Git 的版本库中存了很多东西，其中最重要的就是暂存区，还有 Git 自动创建的第一个分支 `main`，以及指向 `main` 的指针 `HEAD`。
 
 ## 文件状态
 
@@ -154,13 +154,13 @@ git init
 
 ## 提交
 
-`add` 会将未跟踪文件变为已跟踪，将已跟踪文件添加到暂存区。
+`add` 会将未跟踪文件变为已跟踪，并将已跟踪文件添加到暂存区。
 
 ```shell
 # 跟踪或添加文件
 git add <file>
 # 递归地跟踪或添加目录下的所有文件
-git add <path>
+git add <dir>
 ```
 
 `commit` 将暂存区中的文件提交到仓库，`-m` 用于指定提交信息：
@@ -214,7 +214,7 @@ git status -s
 
 ## 忽略文件
 
-有些文件无需纳入 Git 的管理，也不希望出现在未跟踪文件列表。可以创建一个名为 `.gitignore` 的文件，列出要忽略的文件的模式。
+有些文件无需纳入 Git 的管理，也不希望出现在未跟踪文件列表。可以创建一个 `.gitignore` 文件，列出要忽略的文件的模式。
 
 ```
 # 忽略所有的 .a 文件
@@ -258,6 +258,14 @@ git rm --cached <file>
 git log A..B
 ```
 
+### 三点
+
+`A...B` 语法可以指定被 A 或 B 包含但不同时包含的提交，即**对称差集**：
+
+```shell
+git log A...B
+```
+
 ### 多点
 
 当需要两个以上分支才能确定区间时，可以使用多点语法，其中 `^` 或 `--not` 表示不包含的该提交的分支：
@@ -275,14 +283,6 @@ git log B --not A
 # 两者等价
 git log A B ^C
 git log A B --not C
-```
-
-### 三点
-
-`A...B` 语法可以指定被 A 或 B 包含但不同时包含的提交，即**对称差集**：
-
-```shell
-git log A...B
 ```
 
 ## 比较差异
@@ -410,7 +410,7 @@ git log <branch> --oneline --graph
 -   `--abbrev-commit` 将 `commit id` 缩短显示
 -   `--reverse` 倒序显示提交历史
 
- `-p` 可以显示每次提交的差异， `-<number>` 可以指定显示条数：
+ `-p` 可以显示每次提交的差异， `-<n>` 可以指定显示条数：
 
 ```shell
 git log -p -2
@@ -494,7 +494,13 @@ git branch <name>
 
 这会在当前所在的提交对象上创建一个指向所创建分支的指针，但此时 `HEAD` 指向的还是当前分支。该命令仅仅创建一个新分支，并不会自动切换到新分支中去。
 
-`switch` 切换分支，`-c` 表示创建：
+`checkout -b` 可以创建并切换分支：
+
+```shell
+git checkout -b <name>
+```
+
+由于 `checkout` 承担了太多功能，对于分支操作一般使用 `switch`，`-c` 表示创建并切换：
 
 ```shell
 git switch -c <name>
@@ -562,7 +568,7 @@ git rebase <branch>
 git rebase -i <range>
 ```
 
-### 比较合并与变基
+### 合并 Vs. 变基
 
 `merge` 是将两个分支的修改合并成一个新的提交，并且保留每个分支的提交历史，因此可以保留提交历史，但会导致提交记录变得混乱。而 `rebase` 是将当前分支的修改基于目标分支最新的修改之后，没有产生新的合并提交，因此可以使提交历史更加清晰，但会丢失一部分提交历史。
 
@@ -605,7 +611,7 @@ git remote -v
 `remote show` 会列出远程仓库与跟踪分支的信息：
 
 ```shell
-git remote show <alias>
+git remote show <remote>
 ```
 
 ## 添加
@@ -613,7 +619,7 @@ git remote show <alias>
 添加新的远程仓库，同时指定一个别名，可以使用别名来代替远程仓库的路径。
 
 ```shell
-git remote add <alias> <repo>
+git remote add <remote> <repo>
 ```
 
 >   当使用 `clone` 克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
@@ -623,7 +629,7 @@ git remote add <alias> <repo>
 若远程分支修改了名字，也需要在本地修改对应的 URL。
 
 ```shell
-git remote set-url <alias> <repo>
+git remote set-url <remote> <repo>
 ```
 
 ## 拉取
@@ -631,13 +637,13 @@ git remote set-url <alias> <repo>
 `fetch` 从中远程仓库拉取所有本地还没有的数据，但**并不会自动合并**到当前分支，必须手动合并。
 
 ```shell
-git fetch [alias]
+git fetch [remote]
 ```
 
 `pull` 和 `fetch` 的不同在于，会**自动合并**对应的远程分支到当前分支。
 
 ```shell
-git pull [alias]
+git pull [remote]
 ```
 
 >   `pull` 实际上是 `fetch` 和 `merge` 的组合。
@@ -647,13 +653,13 @@ git pull [alias]
 `push` 将当前分支推送到远程对应的分支：
 
 ```shell
-git push [alias] [branch]
+git push [remote] [branch]
 ```
 
 如将本地的 `main` 分支推送到远程的 `main` 分支：
 
 ```shell
-git push -u [alias] main
+git push -u [remote] main
 ```
 
 首次推送时需要使用 `-u` 将本地和对应的远程分支相关联，之后就可以直接使用 `push` 推送。
@@ -663,7 +669,7 @@ git push -u [alias] main
 若本地分支名和远程分支名不同，如本地分支为 `dev`，远程分支为 `main`，则需要指定本地分支和远程分支。
 
 ```shell
-git push [alias] dev:main
+git push [remote] dev:main
 ```
 
 只有具有远程仓库的写入权限，且该远程分支在上次拉取后没有新的提交，该命令才生效。在推送前若远程分支有新的提交，则必须先拉取再合并后才能推送。
@@ -673,13 +679,13 @@ git push [alias] dev:main
 删除远程仓库：
 
 ```shell
-git remote rm <alias>
+git remote rm <remote>
 ```
 
 删除远程分支：
 
 ```shell
-git push <alias> -d <branch>
+git push <remote> -d <branch>
 ```
 
 重命名远程分支只能通过先删除远程分支，然后将本地分支改名后再重新推送。
@@ -753,13 +759,13 @@ git tag v0.9-l <commit>
 默认情况下，`push` 命令并不会推送标签到远程仓库服务器上，在创建完标签后必须显式地推送标签。 
 
 ```shell
-git push <alias> <tag>
+git push <remote> <tag>
 ```
 
 `--tags` 一次性推送所有标签：
 
 ```shell
-git push <alias> --tags
+git push <remote> --tags
 ```
 
 >   `--tags` 不区分轻量标签和附注标签。
@@ -781,7 +787,7 @@ git tag -d <tag>
 删除远程标签首先要先在本地删除，再从远程删除：
 
 ```shell
-git push <alias> -d <tag>
+git push <remote> -d <tag>
 ```
 
 # 7 子模块
@@ -842,7 +848,7 @@ git submodule update --init --recurse-submodules
 `stash` 会把工作区和暂存区的修改保存起来。执行完后，再运行 `git status`，会发现当前是一个干净的工作区，没有任何改动。
 
 ```shell
-git stash [push [-m <message>]]
+git stash [-m <message>]
 ```
 
 使用 `-u` 将未跟踪的文件也一起保存：
@@ -897,7 +903,7 @@ git stash clear
 git cherry-pick <range>
 ```
 
-指定的 `commit id` 对应的更改就会应用到当前分支，并作为一个新的提交，这个新的提交是专门为当前分支创建的，与原始分支中的提交是分开的。
+指定的提交对应的更改就会应用到当前分支，并作为一个新的提交，这个新的提交是专门为当前分支创建的，与原始分支中的提交是分开的。
 
 ### 适用场景
 
@@ -909,12 +915,12 @@ git cherry-pick <range>
 
 ### 注意事项
 
--   解决冲突：和合并操作一样，`cherry-pick` 也可能导致冲突
+-   解决冲突：与合并操作相同，`cherry-pick` 也可能导致冲突
 -   依赖关系：若一个提交依赖于其它提交，则单独挑选该提交可能会导致问题，需要将依赖的提交都挑选出来
 
 ## 打包
 
-大部分时候都是通过网络来进行 Git 数据传输，如推送和拉取。但当网络条件受限，或者没有远程服务器的权限，但又需要将提交传给别人或者从别人那里接收提交，此时就可以通过使用 Git 的打包功能。
+大部分时候都是通过网络来进行 Git 数据传输，如推送和拉取。但当网络条件受限，或者没有远程服务器的权限，但又需要将提交传给别人或者从别人那里接收提交（如电子邮件或 U 盘等），此时就可以通过使用 Git 的打包功能。
 
 打包本质上是将需要传输的数据打包成了一个二进制文件，之后就可以从该文件中获取 Git 数据。
 
@@ -929,7 +935,7 @@ git bundle create <bundle> [<branch> | --all]
 打包最近 n 个提交：
 
 ```shell
-git bundle create <bundle> -<number> HEAD
+git bundle create <bundle> -<n> HEAD
 ```
 
 打包指定区间的提交：
@@ -946,7 +952,7 @@ git bundle verify <bundle>
 
 ### 应用包
 
-创建了包后，该包可以当作一个以文件形式存在的 Git 仓库，可以对其进行部分 Git 操作。
+创建了包后，该包可以当作一个以文件形式存在的 Git 仓库，可以对其进行 Git 操作。
 
 ```shell
 git clone <bundle> [name]
@@ -976,7 +982,7 @@ git format-patch origin
 导出最近 n 个提交：
 
 ```shell
-git format-patch -<number>
+git format-patch -<n>
 ```
 
 导出指定区间的提交：
