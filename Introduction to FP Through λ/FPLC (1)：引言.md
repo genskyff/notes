@@ -1,4 +1,4 @@
->   主要参考：
+>   参考：
 >
 >   -   [An Introduction to Functional Programming Through Lambda Calculus](https://book.douban.com/subject/6887111/)
 

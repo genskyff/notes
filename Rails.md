@@ -1,3 +1,8 @@
+>   参考：
+>
+>   -   [Ruby on Rails ガイド](https://railsguides.jp/)
+>   -   [Ruby on Rails チュートリアル](https://railstutorial.jp/chapters/beginning)
+
 ## Rails 常用命令
 
 ```shell
