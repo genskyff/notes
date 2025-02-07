@@ -15,7 +15,7 @@ date -R
 若时间不正确，可以安装 `ntp` 服务来自动同步时间：
 
 ```shell
-apt -y install ntp
+apt install -y ntp
 ```
 
 也可以重新配置时区：
@@ -30,13 +30,13 @@ dpkg-reconfigure tzdata
 
 ```shell
 # 安装和更新 V2Ray 和 dat 数据
-bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
+curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh | bash
 
-# 安装和更新 dat 数据
-bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh)
+# 只安装和更新 dat 数据
+curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh | bash
 
-# 删除 V2Ray
-bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh) --remove
+# 删除 V2Ray 和 dat 数据
+curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh| bash -s -- --remove
 ```
 
 在首次安装完成之后，V2Ray 不会自动启动，需要手动启动并设置开机自启。
@@ -49,14 +49,12 @@ systemctl enable v2ray
 systemctl start v2ray
 
 # 控制 V2Ray
-service v2ray <start|stop|restart|status>
+systemctl <start|stop|restart|status> v2ray
 ```
 
 ## 配置文件
 
->   参考：[V2Ray 配置指南](https://guide.v2fly.org/)。
-
-Linux 上 V2Ray 的默认配置文件通常位于：
+通过上述方式安装时，默认配置文件通常位于：
 
 ```
 /usr/local/etc/v2ray/config.json
@@ -290,16 +288,10 @@ v2ray uuid
 curl https://get.acme.sh | bash -s email=<email>
 ```
 
-使命令别名生效：
-
-```shell
-source ~/.bashrc
-```
-
 ### 证书生成
 
 ```shell
-acme.sh --issue -d <domain> --standalone --httpport 8088
+acme.sh --issue --standalone -d <domain> --httpport <port>
 ```
 
 ### 安装证书和密钥
@@ -324,7 +316,7 @@ acme.sh --info -d <domain>
 ### 安装 Nginx
 
 ```shell
-apt -y install nginx
+apt install -y nginx
 ```
 
 Nginx 的配置文件位于 `/etc/nginx` 目录中，编辑：
@@ -387,10 +379,10 @@ server {
 修改完配置后需重新加载 Nginx 配置文件：
 
 ```shell
-service nginx force-reload
+systemctl reload nginx
 ```
 
 # 4 客户端
 
-V2Ray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [V2Ray 内核](https://github.com/v2fly/v2ray-core/releases) 使用，但是基于 V2Ray 内核开发的第三方 GUI 客户端有很多，可以查看 [常用客户端列表](https://www.v2fly.org/awesome/tools.html)。
+V2Ray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [V2Ray 内核](https://github.com/v2fly/v2ray-core/releases) 使用，但是基于 V2Ray 内核开发的第三方 GUI 客户端有很多，可查看 [常用客户端列表](https://www.v2fly.org/awesome/tools.html)。
 

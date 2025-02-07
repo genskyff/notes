@@ -126,7 +126,7 @@ alter table typecho_users convert to character set utf8mb4 collate utf8mb4_unico
 cd /home/wwwroot/域名
 wget https://github.com/typecho/typecho/releases/latest/download/typecho.zip
 unzip typecho.zip
-rm -rf typecho.zip
+rm -f typecho.zip
 ```
 
 接着访问域名，按照提示安装即可。
@@ -164,7 +164,7 @@ define('__TYPECHO_ADMIN_DIR__', '/admin/');
 在 Typecho 配置文件中追加：
 
 ```php
-define('__TYPECHO_SECURE__',true);
+define('__TYPECHO_SECURE__', true);
 ```
 
 接着编辑 Typecho 主题配置文件：
@@ -182,7 +182,7 @@ $this->commentUrl()
 将其替换为：
 
 ```php
-echo str_replace("http","https",$this->commentUrl())
+echo str_replace("http", "https", $this->commentUrl())
 ```
 
 # 4 其它配置
