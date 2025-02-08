@@ -1,12 +1,12 @@
 # 1 前言
 
-Project V 是包含一系列网络工具的平台，其内核 V2Ray 是一个极其优秀的代理工具，其具体文档请参考 [V2Ray 官方手册](https://v2fly.org/)。
+[Project X](https://xtls.github.io/) 是包含一系列网络工具的平台，前身是 [Project V](https://www.v2fly.org/)，包含更多功能和性能改进。
 
->   本文以 Debian 为例，记录搭建 V2Ray 的过程。
+>   本文以 Debian 为例，记录搭建 Xray 的过程。
 
 # 2 准备工作
 
-在安装之前，需要校准系统时间，因为 V2Ray 要求服务端与客户端的时间误差不能超过 90 秒，V2Ray 会自动转换时区，所以只需确保时间在误差允许范围内，可以通过以下命令来查看系统时间：
+在安装之前，需要校准系统时间，因为 Xray 要求服务端与客户端的时间误差不能超过 90 秒，Xray 会自动转换时区，所以只需确保时间在误差允许范围内，可以通过以下命令来查看系统时间：
 
 ```shell
 date -R
@@ -24,32 +24,25 @@ apt install -y ntp
 dpkg-reconfigure tzdata
 ```
 
-## 安装 V2ray
+## 安装 Xray
 
->   参考：[V2Ray 安装](https://www.v2fly.org/guide/install.html)。
+>   参考：[Xray-install](https://github.com/XTLS/Xray-install)。
 
 ```shell
-# 安装和更新 V2Ray 和 dat 数据
-curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh | bash
+# 安装和更新 Xray 和 dat 数据
+curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- install
 
 # 只安装和更新 dat 数据
-curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh | bash
+curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- install-geodata
 
-# 删除 V2Ray 和 dat 数据
-curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh| bash -s -- --remove
+# 删除 Xray 和 dat 数据
+curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- remove --purge
 ```
 
-在首次安装完成之后，V2Ray 不会自动启动，需要手动启动并设置开机自启。
+之后可通过 `systemctl` 来管理：
 
 ```shell
-# 设置开机自启
-systemctl enable v2ray
-
-# 启动 V2Ray
-systemctl start v2ray
-
-# 控制 V2Ray
-systemctl <start|stop|restart|status> v2ray
+systemctl <status|start|stop|restart> xray
 ```
 
 ## 配置文件
@@ -57,12 +50,12 @@ systemctl <start|stop|restart|status> v2ray
 通过上述方式安装时，默认配置文件通常位于：
 
 ```
-/usr/local/etc/v2ray/config.json
+/usr/local/etc/xray/config.json
 ```
 
 ### 配置文件格式
 
->   参考：[V2Ray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)。
+>   参考：[Xray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)。
 
 所有的配置文件都由如下格式的配置项组成：
 
@@ -77,16 +70,16 @@ systemctl <start|stop|restart|status> v2ray
 }
 ```
 
-无论是客户端还是服务端，配置文件都由这几部分组成，其中都至少需要包含 `inbounds` 和 `outbounds`。V2Ray 并没有在程序上区分客户端和服务端，仅由配置决定。
+无论是客户端还是服务端，配置文件都由这几部分组成，其中都至少需要包含 `inbounds` 和 `outbounds`。Xray 并没有在程序上区分客户端和服务端，仅由配置决定。
 
-每一个 V2Ray 服务都是一个节点，`inbound` 是关于如何与上一个节点连接的配置，`outbound` 是关于如何与下一个节点连接的配置。对于第一个节点，`inbound` 与浏览器连接；对于最后一个节点，`outbound`与目标网站连接。
+每一个 Xray 服务都是一个节点，`inbound` 是关于如何与上一个节点连接的配置，`outbound` 是关于如何与下一个节点连接的配置。对于第一个节点，`inbound` 与浏览器连接；对于最后一个节点，`outbound`与目标网站连接。
 
-`inbounds` 和 `outbounds` 是 `inbound` 和 `outbound` 的集合，意味着每一个 V2Ray 节点都可以有多个入口和出口。
+`inbounds` 和 `outbounds` 是 `inbound` 和 `outbound` 的集合，意味着每一个 Xray 节点都可以有多个入口和出口。
 
-在配置项中有一个 `id` 设置，是一个 UUID，客户端和服务端必须保持一致。可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用 V2Ray CLI 来生成：
+在配置项中有一个 `id` 设置，是一个 UUID，客户端和服务端必须保持一致。可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用 Xray CLI 来生成：
 
 ```shell
-v2ray uuid
+xray uuid
 ```
 
 # 3 配置方案
@@ -311,7 +304,7 @@ acme.sh --info -d <domain>
 
 ## 配置 Nginx
 
-通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 V2Ray 的事实，Nginx / Caddy 等工具都可以实现。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
+通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 Xray 的事实，Nginx / Caddy 等工具都可以实现。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
 
 ### 安装 Nginx
 
@@ -343,8 +336,8 @@ server {
     root /var/www/html;
     index.html index.nginx-debian.html;
 
-    ssl_certificate           /usr/local/etc/v2ray/v2ray.cer;
-    ssl_certificate_key       /usr/local/etc/v2ray/v2ray.key;
+    ssl_certificate           /usr/local/etc/xray/xray.cer;
+    ssl_certificate_key       /usr/local/etc/xray/xray.key;
     ssl_protocols             TLSv1.2 TLSv1.3;
     ssl_ciphers               HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
@@ -379,5 +372,5 @@ systemctl reload nginx
 
 # 4 客户端
 
-V2Ray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [V2Ray 内核](https://github.com/v2fly/v2ray-core/releases) 使用，但是基于 V2Ray 内核开发的第三方 GUI 客户端有很多，可查看 [常用客户端列表](https://www.v2fly.org/awesome/tools.html)。
+Xray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [Xray 内核](https://github.com/v2fly/xray-core/releases) 使用，但是基于 Xray 内核开发的第三方 GUI 客户端有很多，可查看 [常用客户端列表](https://www.v2fly.org/awesome/tools.html)。
 
