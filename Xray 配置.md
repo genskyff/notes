@@ -55,7 +55,7 @@ systemctl <status|start|stop|restart> xray
 
 ### 配置文件格式
 
->   参考：[Xray 配置文件格式](https://www.v2fly.org/v5/config/overview.html)。
+>   参考：[Xray 配置文件](https://xtls.github.io/config/)。
 
 所有的配置文件都由如下格式的配置项组成：
 
@@ -372,5 +372,5 @@ systemctl reload nginx
 
 # 4 客户端
 
-Xray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [Xray 内核](https://github.com/v2fly/xray-core/releases) 使用，但是基于 Xray 内核开发的第三方 GUI 客户端有很多，可查看 [常用客户端列表](https://www.v2fly.org/awesome/tools.html)。
+Xray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [Xray 内核](https://github.com/XTLS/Xray-core/releases) 使用，但是基于 Xray 内核开发的第三方 GUI 客户端有很多，可查看 [图形化客户端](https://xtls.github.io/document/install.html#%E5%9B%BE%E5%BD%A2%E5%8C%96%E5%AE%A2%E6%88%B7%E7%AB%AF)。
 
