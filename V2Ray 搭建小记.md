@@ -311,7 +311,7 @@ acme.sh --info -d <domain>
 
 ## 配置 Nginx
 
-通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 V2Ray 的事实，可以使用 Nginx / Apache / Caddy。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
+通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 V2Ray 的事实，Nginx / Caddy 等工具都可以实现。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
 
 ### 安装 Nginx
 
@@ -327,49 +327,44 @@ vim /etc/nginx/sites-available/default
 
 ### Nginx 配置
 
-```
+```nginx
 server {
     listen 80;
-    # listen [::]:80;
-    server_name 域名;
-    index index.html index.htm index.nginx-debian.html;
-    root /var/www/html;
-
-    if ($scheme = http) {
-        return 301 https://$server_name$request_uri;
-    }
+    listen [::]:80;
+    server_name example.com;
+    return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    # listen [::]:443 ssl;
-    server_name 域名;
-    index index.html index.htm index.nginx-debian.html;
-    root /var/www/html;
+    listen [::]:443 ssl;
+    server_name example.com;
 
-    ssl on;
-    ssl_prefer_server_ciphers   on;
-    ssl_certificate             /usr/local/etc/v2ray/v2ray.cer;
-    ssl_certificate_key         /usr/local/etc/v2ray/v2ray.key;
-    ssl_protocols               TLSv1.2 TLSv1.3;
-    ssl_session_timeout         1d;
-    ssl_session_cache           shared:MozSSL:10m;
-    ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256';
+    root /var/www/html;
+    index.html index.nginx-debian.html;
+
+    ssl_certificate           /usr/local/etc/v2ray/v2ray.cer;
+    ssl_certificate_key       /usr/local/etc/v2ray/v2ray.key;
+    ssl_protocols             TLSv1.2 TLSv1.3;
+    ssl_ciphers               HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache         shared:SSL:10m;
+    ssl_session_timeout       10m;
 
     location / {
-        try_files $uri $uri/ = 404;
+        try_files $uri $uri/ =404;
     }
 
     location /random/path {
         if ($http_upgrade != "websocket") {
-            return 404;
+            return 444;
         }
         proxy_redirect off;
-        proxy_pass http://127.0.0.1:20000;
+        proxy_pass http://localhost:20000;
         proxy_http_version 1.1;
+        proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
