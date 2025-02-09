@@ -12,13 +12,7 @@
 date -R
 ```
 
-若时间不正确，可以安装 `ntp` 服务来自动同步时间：
-
-```shell
-apt install -y ntp
-```
-
-也可以重新配置时区：
+也可重新配置时区：
 
 ```shell
 dpkg-reconfigure tzdata
@@ -57,26 +51,25 @@ systemctl <status|start|stop|restart> xray
 
 >   参考：[Xray 配置文件](https://xtls.github.io/config/)。
 
-所有的配置文件都由如下格式的配置项组成：
+常用配置项如下：
 
 ```json
 {
-    "log": {},
-    "dns": {},
-    "router": {},
-    "inbounds": [],
-    "outbounds": [],
-    "services": {}
+  "dns": {},
+  "inbounds": [],
+  "outbounds": [],
+  "routing": {},
+  "transport": {}
 }
 ```
 
-无论是客户端还是服务端，配置文件都由这几部分组成，其中都至少需要包含 `inbounds` 和 `outbounds`。Xray 并没有在程序上区分客户端和服务端，仅由配置决定。
+无论是客户端还是服务端，配置文件都都至少需要包含 `inbounds` 和 `outbounds`。Xray 并没有在程序上区分客户端和服务端，仅由配置决定。
 
-每一个 Xray 服务都是一个节点，`inbound` 是关于如何与上一个节点连接的配置，`outbound` 是关于如何与下一个节点连接的配置。对于第一个节点，`inbound` 与浏览器连接；对于最后一个节点，`outbound`与目标网站连接。
+每一个 Xray 服务都是一个节点，`inbound` 是关于如何与上一个节点连接的配置，`outbound` 是关于如何与下一个节点连接的配置。对于第一个节点，`inbound` 与客户端连接（如浏览器）；对于最后一个节点，`outbound`与目标网络连接。
 
 `inbounds` 和 `outbounds` 是 `inbound` 和 `outbound` 的集合，意味着每一个 Xray 节点都可以有多个入口和出口。
 
-在配置项中有一个 `id` 设置，是一个 UUID，客户端和服务端必须保持一致。可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用 Xray CLI 来生成：
+在配置项中有一个 `id` 设置，是一个 UUID，**客户端和服务端必须保持一致**。可以通过 [UUID Generator](https://www.uuidgenerator.net/) 或使用 Xray CLI 来生成：
 
 ```shell
 xray uuid
@@ -84,196 +77,15 @@ xray uuid
 
 # 3 配置方案
 
-## VMess + WebSocket + TLS + Web
+## 配置模板
 
-### 服务端
+官方的仓库包含了大量的配置模板：
 
-```json
-{
-    "log": {
-        "loglevel": "warning"
-    },
-    "inbounds": [
-        {
-            "listen": "127.0.0.1",
-            "port": 20000,
-            "protocol": "vmess",
-            "sniffing": {
-                "enabled": true,
-                "destOverride": [
-                    "http",
-                    "tls"
-                ]
-            },
-            "settings": {
-                "clients": [
-                    {
-                        "id": "bc0e0e71-6f66-4505-aaec-cb73d41305f0"
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "/random/path"
-                }
-            },
-            "tag": "vmess-in"
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {},
-            "tag": "direct"
-        },
-        {
-            "protocol": "blackhole",
-            "settings": {},
-            "tag": "blocked"
-        }
-    ],
-    "routing": {
-        "domainStrategy": "IPIfNonMatch",
-        "rules": [
-            {
-                "type": "field",
-                "protocol": [
-                    "bittorrent"
-                ],
-                "outboundTag": "blocked"
-            },
-            {
-                "type": "field",
-                "ip": [
-                    "geoip:private"
-                ],
-                "outboundTag": "blocked"
-            }
-        ]
-    }
-}
-```
-
-### 客户端
-
-```json
-{
-    "log": {
-        "loglevel": "warning"
-    },
-    "inbounds": [
-        {
-            "listen": "127.0.0.1",
-            "port": 1080,
-            "protocol": "socks",
-            "sniffing": {
-                "enabled": true,
-                "destOverride": [
-                    "http",
-                    "tls"
-                ]
-            },
-            "settings": {
-                "udp": true
-            },
-            "tag": "socks-in"
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "vmess",
-            "settings": {
-                "vnext": [
-                    {
-                        "address": "域名",
-                        "port": 443,
-                        "users": [
-                            {
-                                "id": "bc0e0e71-6f66-4505-aaec-cb73d41305f0",
-                                "security": "auto"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "/random/path"
-                },
-                "security": "tls"
-            },
-            "mux": {
-                "enabled": true,
-                "concurrency": 8
-            },
-            "tag": "vmess-out"
-        },
-        {
-            "protocol": "freedom",
-            "settings": {},
-            "tag": "direct"
-        },
-        {
-            "protocol": "blackhole",
-            "settings": {},
-            "tag": "blocked"
-        }
-    ],
-    "routing": {
-        "domainStrategy": "IPIfNonMatch",
-        "rules": [
-            {
-                "type": "field",
-                "domain": [
-                    "geosite:cn"
-                ],
-                "outboundTag": "direct"
-            },
-            {
-                "type": "field",
-                "ip": [
-                    "geoip:cn"
-                ],
-                "outboundTag": "direct"
-            },
-            {
-                "type": "field",
-                "ip": [
-                    "geoip:private"
-                ],
-                "outboundTag": "blocked"
-            },
-            {
-                "type": "field",
-                "domain": [
-                    "geosite:category-ads"
-                ],
-                "outboundTag": "blocked"
-            }
-        ]
-    },
-    "dns": {
-        "servers": [
-            "1.1.1.1",
-            {
-                "address": "114.114.114.114",
-                "port": 53,
-                "domains": [
-                    "geosite:cn"
-                ]
-            },
-            "8.8.8.8",
-            "localhost"
-        ]
-    }
-}
-```
+-   [XTLS/Xray-examples](https://github.com/XTLS/Xray-examples)
 
 ## 配置 TLS
 
-[acme.sh](https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 的证书。
+有些配置方案需要使用 TLS，这就需要证书。[acme.sh](https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 提供的证书。
 
 ### 安装 acme.sh
 
@@ -286,6 +98,8 @@ curl https://get.acme.sh | bash -s email=<email>
 ```shell
 acme.sh --issue --standalone -d <domain> --httpport <port>
 ```
+
+`--test` 可以验证是否能成功申请，避免反复申请导致受限。
 
 ### 安装证书和密钥
 
@@ -304,7 +118,7 @@ acme.sh --info -d <domain>
 
 ## 配置 Nginx
 
-通过 Web 实现反向代理可以有效的隐藏自己的 VPS 上有 Xray 的事实，Nginx / Caddy 等工具都可以实现。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
+有些配置方案会使用 Nginx / Caddy 这种 Web 服务器实现反向代理。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
 
 ### 安装 Nginx
 
@@ -334,7 +148,7 @@ server {
     server_name example.com;
 
     root /var/www/html;
-    index.html index.nginx-debian.html;
+    index index.html index.nginx-debian.html;
 
     ssl_certificate           /usr/local/etc/xray/xray.cer;
     ssl_certificate_key       /usr/local/etc/xray/xray.key;
