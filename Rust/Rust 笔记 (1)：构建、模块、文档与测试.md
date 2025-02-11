@@ -1812,14 +1812,15 @@ cargo --list
 
 常用扩展：
 
+-   `cargo-binstall`：不编译直接安装二进制
 -   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
 -   `cargo-edit`：检查和更新项目依赖
--   `cargo-binstall`：不编译直接安装二进制
 -   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
--   `cargo-generate`：项目模板生成
 -   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖
+-   `cargo-generate`：项目模板生成
 -   `cargo-watch`：代码更新后进行自动构建
 -   `cargo-deny`：检查第三方依赖的授权、来源和安全漏洞等
+-   `cargo-zigbuild`：使用 Zig 更方便的进行交叉编译
 
 # 6 测试
 
