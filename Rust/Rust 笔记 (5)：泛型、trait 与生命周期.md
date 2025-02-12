@@ -1723,6 +1723,23 @@ impl<'a> User {
 
 `get_name` 方法的生命周期 `'a` 是与整个 `User` 实例的生命周期相关联的，而 `get_name2` 方法的生命周期 `'b` 只与特定方法调用的上下文相关联。
 
+## 闭包的生命周期
+
+`cloner` 返回一个闭包，该闭包会获取一个字符串引用。虽然从返回值来看，没什么问题，但是这里必须加上 `'_` 生命周期，因为可能在该闭包调用之前，该引用就被 `drop` 了。
+
+```rust
+fn cloner(s: &str) -> impl Fn() -> String + '_ {
+    move || s.to_string()
+}
+
+fn main() {
+    let s = String::from("hello");
+    let c = cloner(&s);
+    drop(s); // 导致引用失效
+    println!("{}", c());
+}
+```
+
 ## 特殊生命周期
 
 ### 静态生命周期
