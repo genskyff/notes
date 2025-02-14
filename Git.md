@@ -346,6 +346,12 @@ git rm <file>
 git rm --cached <file>
 ```
 
+`clean` 从工作区将未跟踪文件删除，需要使用 `-f` 
+
+```shell
+git clean -f <path>
+```
+
 ## 移动文件
 
 `mv` 移动或重命名文件：
