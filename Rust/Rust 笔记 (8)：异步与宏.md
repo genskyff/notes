@@ -1,3 +1,5 @@
+# 1 异步
+
 根据计算机处理的任务类型，主要分为：
 
 -   计算密集型（Compute bound）：主要占用大量计算芯片的运行时间，如视频编解码、代码编译等
@@ -28,4 +30,8 @@ pub trait Future {
 Rust 会把使用 `async`、`await` 的代码编译成等同于使用 `Future` 的代码，这类似于 `for` 是 `Iterator` 的语法糖。
 
 Rust 本身只提供对异步的抽象，要运行这些异步任务，还需要异步运行时。这部分由第三方库负责，目前最广泛使用的异步运行时的是 [Tokio](https://github.com/tokio-rs/tokio)，
+
+
+
+# 2 宏
 
