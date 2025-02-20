@@ -72,7 +72,7 @@ fn async_count(label: &str, count: u32) -> impl Future<Output = ()> + '_ {
 
 ```rust
 fn main() {
-    async_count("h1", 5).await; // 实际会报错
+    async_count("A", 5).await; // 实际会报错
 }
 ```
 
@@ -97,17 +97,62 @@ fn run<F: Future>(future: F) -> F::Output {
 }
 ```
 
+>   不同异步运行时不能混用。
+
 然后就可以在 `main` 中执行：
 
 ```rust
 fn main() {
     run(async {
-        let a = async_count("A", 5);
-        let b = async_count("B", 5);
-        tokio::join!(a, b);
+        async_count("A", 5).await
     });
 }
 ```
+
+每个使用 `await` 的地方，就表示此处的控制权交给异步运行时，会在未来的某个时间点回到同步代码中来。为此需要记录异步代码块中涉及的状态，即保存上下文，这样就可以在恢复后继续运行，这类似于线程间切换时操作系统也需要保存上下文。
+
+Rust 会自动创建用于管理异步代码的状态机数据结构，这些数据结构同样会被检查所有权、借用规则和生命周期规则，并最终由异步运行时来执行状态机。这也是为什么 `main` 不能被标记为 `async`，作为程序入口点，若也返回一个 `Future`，则该 `Future` 的生成的状态机就没有执行器来执行了。
+
+tokio 提供了一个 `#[tokio::main]` 来使 `main` 可被标记为 `async`，但实际上会被重写为正常的同步函数。
+
+```rust
+#[tokio::main]
+async fn main() {
+    async_count("A", 5).await;
+}
+```
+
+## 并发与异步
+
+### select 与 Either
+
+`futures` crate 中提供了 `select`，其接收两个 `Future` 作为参数，将其封装成一个新 `Future` 并返回。
+
+```rust
+use futures::future::{select, Either};
+use std::pin::pin;
+
+let a = async_count("A", 10);
+let b = async_count("B", 5);
+
+match select(pin!(a), pin!(b)).await {
+    Either::Left(_) => println!("A is done"),
+    Either::Right(_) => println!("B is done"),
+}
+```
+
+由于传递的这两个 `Future` 都可能完成，因此封装后的 `Future` 的返回值是一个 `Either`，表示先完成的那个。
+
+```rust
+pub enum Either<A, B> {
+    Left(A),
+    Right(B),
+}
+```
+
+当一个结束后，另一个也会立即结束，即使任务还没完成。
+
+### join
 
 
 
