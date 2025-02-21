@@ -38,7 +38,7 @@ fn example() {
 }
 ```
 
->   更多关于常量参数的使用和限制，可参考 [Const generics](https://doc.rust-lang.org/reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
+>   更多关于常量参数的使用和限制，可参考 [Const generics](https://doc.rust-lang.org/nightly/reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
 
 ## 泛型定义
 
@@ -807,7 +807,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
     trait Foo {
         fn foo();
     }
-    
+
     // 错误，trait 含有关联函数
     fn bar(v: Box<dyn Foo>) {}
     ```
@@ -2244,7 +2244,7 @@ struct Foo<'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mix> {
 }
 ```
 
->   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Subtyping and Variance](https://doc.rust-lang.org/reference/subtyping.html?highlight=subtyping#subtyping-and-variance)。
+>   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Subtyping and Variance](https://doc.rust-lang.org/nightly/reference/subtyping.html?highlight=subtyping#subtyping-and-variance)。
 
 ## 深入生命周期
 
@@ -2349,7 +2349,7 @@ let b = temp().f();
 let b = temp() + temp();
 ```
 
->   更多关于临时生命周期扩展的信息，可参考 [Temporary lifetime extension](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)。
+>   更多关于临时生命周期扩展的信息，可参考 [Temporary lifetime extension](https://doc.rust-lang.org/nightly/reference/destructors.html#temporary-lifetime-extension)。
 
 ### 再借用
 
@@ -2483,4 +2483,3 @@ fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
 ```rust
 let clo: &dyn for<'a> Fn(&'a str) -> &'a str = &|s: &str| s;
 ```
-

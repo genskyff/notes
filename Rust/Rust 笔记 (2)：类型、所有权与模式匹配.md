@@ -203,7 +203,7 @@ let n: u8 = b'A';   // n = 65
 
 #### 元组类型
 
-元组是一个包含多个**相同或不同类型值**的列表，且长度固定，类型表示为 `(T, U, ..)`。可通过模式匹配来**解构**其中的值，或使用 `.index` 来直接访问其中的值。 
+元组是一个包含多个**相同或不同类型值**的列表，且长度固定，类型表示为 `(T, U, ..)`。可通过模式匹配来**解构**其中的值，或使用 `.index` 来直接访问其中的值。
 
 ```rust
 let tup: (i32, f64, u8) = (100, 2.1, 20);
@@ -618,7 +618,7 @@ Rust 中的表达式有很多种，主要有：
 -   异步表达式
 -   ...
 
->   更多关于表达式的信息，可参考 [Expressions](https://doc.rust-lang.org/reference/expressions.html)。
+>   更多关于表达式的信息，可参考 [Expressions](https://doc.rust-lang.org/nightly/reference/expressions.html)。
 
 # 2 所有权
 
@@ -1194,7 +1194,7 @@ enum Message {
 
 ```rust
 struct QuitMessage;
-struct MoveMessage { x: u32, y: u32 }  
+struct MoveMessage { x: u32, y: u32 }
 struct WriteMessage(String);
 struct ColorMessage(u8, u8, u8);
 ```
@@ -1438,7 +1438,7 @@ fn main() {
         tag: MyEnumDiscriminant::A,
         payload: MyEnumFields { a: MyAFields(1) },
     };
-    
+
     assert_eq!(size_of::<MyEnum>(), size_of::<MyEnumRepr>());
     assert_eq!(size_of_val(&e), size_of_val(&s));
 }
@@ -1901,4 +1901,3 @@ if let a @ b @ Some(_) = value {
 ```
 
 这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`，`a`、`b` 两个也都相当于 `value`。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
-
