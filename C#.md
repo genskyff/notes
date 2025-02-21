@@ -64,7 +64,7 @@ Mono 是第三方的 .NET Framework 实现，可以跨平台，实现上比官�
 
 ### .NET 5 和 6
 
-.NET Core 主版本号到 5 后，重命名为 .NET（但 ASP.NET Core 和 Entity Framework Core 保留 Core 这个单词，以避免混淆），即 .NET 可以泛指整个涉及 .NET 技术体系，也可以指新技术 .NET 5+ 的版本。 
+.NET Core 主版本号到 5 后，重命名为 .NET（但 ASP.NET Core 和 Entity Framework Core 保留 Core 这个单词，以避免混淆），即 .NET 可以泛指整个涉及 .NET 技术体系，也可以指新技术 .NET 5+ 的版本。
 
 在 .NET 6 中，.NET 平台将只有一个，因为 .NET 6 统一了所有平台，含有一个基类库和两个运行时，一个运行时用于优化服务器和桌面，如基于 .NET Core 运行时的网站和 Windows 桌面应用，另一个用于优化基于 Xamarin 运行时的移动应用。此外，还包含一个跨平台 UI 框架 .NET MAUI。
 
@@ -272,7 +272,7 @@ WriteLine($"\nencode:\n{encode}");
 输出：
 
 >   bin:
->   67 1C 6C C3 4B 07 19 05 
+>   67 1C 6C C3 4B 07 19 05
 >   encode:
 >   Zxxsw0sHGQU=
 
@@ -918,7 +918,7 @@ namespace NewLibraryB
 
 若使用的类在另一个程序集，那么需要在使用类前，需要引用包含这个类的程序集，在 `MyProgram.csproj` 中添加：
 
-```
+```xml
 <ItemGroup>
   <ProjectReference Include="../MyLibrary/MyLibrary.csproj" />
 </ItemGroup>
@@ -1759,8 +1759,8 @@ class Person
     {
         Greet();         // 正确，因为在定义类的内部
     }
-    
-    
+
+
 
     public static void SayHello_Greet()
     {
@@ -1809,7 +1809,7 @@ class Student
     {
         OnHandsOn(description);
     }
-    
+
     protected void OnHandsOn(string description)
     {
         if (studentEventHandler != null)
@@ -1911,7 +1911,7 @@ class Person
     {
         OnGreet();
     }
-    
+
     protected static void OnGreet()
     {
         Greet(null, EventArgs.Empty);
