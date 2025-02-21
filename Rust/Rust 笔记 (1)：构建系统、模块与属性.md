@@ -7,7 +7,7 @@
 >   -   [The Rustonomicon](https://nomicon.purewhite.io/)
 >   -   [Rust Atomics and Locks](https://rustcc.github.io/Rust_Atomics_and_Locks/)
 >   -   [Rust 语言圣经](https://course.rs/about-book.html)
->   -   [The Rust Reference](https://doc.rust-lang.org/reference/introduction.html)
+>   -   [The Rust Reference](https://doc.rust-lang.org/nightly/reference/)
 >   -   [The Rust Standard Library](https://doc.rust-lang.org/std/)
 >   -   [The Cargo Book](https://doc.rust-lang.org/cargo/)
 >   -   [The rustc book](https://doc.rust-lang.org/rustc/what-is-rustc.html)
@@ -110,6 +110,9 @@ rustc <file> -o <name>
 
 # 编译为指定类型文件（默认为 bin）
 rustc <file> --crate-type <bin|lib|rlib|dylib|cdylib|staticlib|proc-macro>
+
+# 编译为指定 crate 名（默认为文件名）
+rustc <file> --crate-name <name>
 
 # 编译时将指定目录添加到库搜索路径
 rustc <file> -L <path>
@@ -609,7 +612,7 @@ links = "foo"  # 链接到一个 libfoo 的本地库
 
 ```toml
 [build-dependencies]
-cc = "1.0"
+cc = "1.2"
 ```
 
 构建脚本无法使用 `[dependencies]` 或 `[dev-dependencies]` 中的依赖，因为构建脚本和编译过程是相互独立的，Cargo 项目也无法使用 `[build-dependencies]` 中的依赖。
@@ -694,10 +697,11 @@ rustc hello.rs
 
 ```shell
 rustc --crate-name mylib
-      --edition=2021 src/main.rs
+      --edition=2024 src/main.rs
       --out-dir target/debug/deps
       -C incremental=target/debug/incremental
       -L dependency=target/debug/deps
+      --extern rand=target/debug/deps/librand-497101ebdefc7cae.rmeta
 ```
 
 ### 源文件
@@ -910,7 +914,7 @@ fn example<'Foo>(f: Foo) {
 -   模块
 -   外部块
 
->   更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/reference/items.html)。
+>   更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/nightly/reference/items.html)。
 
 ## 模块
 
@@ -1469,7 +1473,7 @@ fn foo() {}
 
 ## 内置属性
 
->   更多关于内置属性的信息，可参考 [Built-in attributes index](https://doc.rust-lang.org/reference/attributes.html#built-in-attributes-index)。
+>   更多关于内置属性的信息，可参考 [Built-in attributes index](https://doc.rust-lang.org/nightly/reference/attributes.html#built-in-attributes-index)。
 
 ### 条件编译
 
