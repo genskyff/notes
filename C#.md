@@ -1,11 +1,11 @@
->   参考：
+> 参考：
 >
->   -   [《C# 入门经典》](https://book.douban.com/subject/35863218/)
->   -   [C# 语言入门详解](https://www.bilibili.com/video/BV13b411b7Ht)
+> - [《C# 入门经典》](https://book.douban.com/subject/35863218/)
+> - [C# 语言入门详解](https://www.bilibili.com/video/BV13b411b7Ht)
 
 # 1 概述
 
->   由于 C# 有很多部分和 C 类似，因此在相同的部分不做过多赘述，本文重点介绍不同的地方。
+> 由于 C# 有很多部分和 C 类似，因此在相同的部分不做过多赘述，本文重点介绍不同的地方。
 
 ## 常用 VSCode 扩展
 
@@ -52,9 +52,9 @@ Mono 是第三方的 .NET Framework 实现，可以跨平台，实现上比官�
 
 简单来讲，.NET 有三个分支。
 
--   .NET Framework：用于旧应用；
--   .NET Core：用于跨平台和新应用；
--   Xamarin：用于移动应用。
+- .NET Framework：用于旧应用；
+- .NET Core：用于跨平台和新应用；
+- Xamarin：用于移动应用。
 
 以上每个平台都有其使用场景，但这就导致了开发人员需要学习三个平台，且每个都有不同的限制，因此容易造成混乱，因此 .NET Standard 是一套所有平台都兼容的 API 规范，在 .NET Standard 2.0 中，已经满足了这三个平台的现代技术最低标准，可以在相互之间共享代码。
 
@@ -269,12 +269,13 @@ foreach (byte b in bin)
 string encode = ToBase64String(bin);
 WriteLine($"\nencode:\n{encode}");
 ```
+
 输出：
 
->   bin:
->   67 1C 6C C3 4B 07 19 05
->   encode:
->   Zxxsw0sHGQU=
+> bin:
+> 67 1C 6C C3 4B 07 19 05
+> encode:
+> Zxxsw0sHGQU=
 
 ### 字符串转换为数值或时间
 
@@ -431,7 +432,7 @@ WriteLine(i);       // 输出 48，ASCII ‘0’
 WriteLine(j);       // 输出 13，ASCII ‘\r’
 ```
 
->   在 Windows 中用 `\r\n` 表示换行。
+> 在 Windows 中用 `\r\n` 表示换行。
 
 还可以使用 Console 类中的 ReadKey 方法获取一个按键输入，可以配合单个如 Crtl、Alt 或 Shift 这样的控制键（注意和其他快捷键不能冲突），且上次输入中被丢弃的字符不会被当作按键输入。
 
@@ -464,11 +465,11 @@ dotnet run a b c 'hello world'
 
 输出：
 
->   4 arguments:
->   a
->   b
->   c
->   hello world
+> 4 arguments:
+> a
+> b
+> c
+> hello world
 
 ## 运算符
 
@@ -639,7 +640,7 @@ string message = s switch
 int n = int.Parse("123abc");
 ```
 
->   Unhandled exception. System.FormatException: Input string was not in a correct format.
+> Unhandled exception. System.FormatException: Input string was not in a correct format.
 
 要避免这种情况，可以使用 TryParse 方法，当成功时返回 true，否则返回 false。
 
@@ -704,7 +705,7 @@ checked
 }
 ```
 
->   Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.
+> Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.
 
 checked 只能检查是否溢出，并抛出异常信息，如果要处理还需要放到 try 中。
 
@@ -749,14 +750,12 @@ for (byte i = 0; i < 300; i++)  // 虽然会溢出，但不在编译期计算，
 
 面向对象有几个重要的概念：
 
--   封装：与对象相关的数据和操作。
--   组合：对象由什么组成。
--   聚合：对象可以与哪些其它对象结合。
--   继承：从基类或超类派生子类来重用代码。
--   抽象：只取对象的核心思想而忽略细节。
--   多态：派生类可以自定义父类的操作。
-
-
+- 封装：与对象相关的数据和操作。
+- 组合：对象由什么组成。
+- 聚合：对象可以与哪些其它对象结合。
+- 继承：从基类或超类派生子类来重用代码。
+- 抽象：只取对象的核心思想而忽略细节。
+- 多态：派生类可以自定义父类的操作。
 
 ## 创建类库
 
@@ -770,7 +769,7 @@ public class Class1
 
 `public` 关键字为访问修饰符，表示允许其它程序集访问这个类，默认的修饰符为 `internal`，表示只能在本程序集内访问。
 
->   程序集可以看作一个 DLL 文件，程序调用其它 DLL 文件中代码，即访问其它程序集。在 C# 中包含一个 `.csproj` 的文件夹内的代码通常为同一个程序集。
+> 程序集可以看作一个 DLL 文件，程序调用其它 DLL 文件中代码，即访问其它程序集。在 C# 中包含一个 `.csproj` 的文件夹内的代码通常为同一个程序集。
 
 ## 类成员
 
@@ -778,16 +777,16 @@ public class Class1
 
 字段用于存储数据，有三种类别：
 
--   常量字段：编译时就已经固定不变的数据。
--   只读字段：类实例化后不变的数据，初值可以在运行时计算。
--   事件：数据引用的方法，通过用在界面按钮或响应其它代码的请求。
+- 常量字段：编译时就已经固定不变的数据。
+- 只读字段：类实例化后不变的数据，初值可以在运行时计算。
+- 事件：数据引用的方法，通过用在界面按钮或响应其它代码的请求。
 
 方法用于执行语句，有四种类别：
 
--   构造函数：使用 `new` 关键字分配内存和实例化类。
--   属性：获取或设置数据的值。数据通常在字段中，但也可以在外部或运行时计算，主要用于封装字段。
--   索引器：使用数组语法 `[]` 获取或设置数据。
--   运算符：对类的操作符进行重载。
+- 构造函数：使用 `new` 关键字分配内存和实例化类。
+- 属性：获取或设置数据的值。数据通常在字段中，但也可以在外部或运行时计算，主要用于封装字段。
+- 索引器：使用数组语法 `[]` 获取或设置数据。
+- 运算符：对类的操作符进行重载。
 
 ## 使用类
 
@@ -906,13 +905,13 @@ namespace NewLibraryB
 
 输出：
 
->   MainProj -> PMain
->   MainProj -> POther
->   ProjTool -> ProgTool1
->   ProjTool -> ProgTool2
->   MyLibrary -> NewLibraryA - > ClassA
->   MyLibrary -> NewLibraryB - > ClassB1
->   MyLibrary -> NewLibraryB - > ClassB2
+> MainProj -> PMain
+> MainProj -> POther
+> ProjTool -> ProgTool1
+> ProjTool -> ProgTool2
+> MyLibrary -> NewLibraryA - > ClassA
+> MyLibrary -> NewLibraryB - > ClassB1
+> MyLibrary -> NewLibraryB - > ClassB2
 
 可以看出，以 `.csproj` 所在的文件夹看作一个程序集，程序集名称和文件夹名相同，其中的 `.cs` 文件名和程序集名没有关联，程序集名、名称空间、类名之间没有关联，程序只会从含有 `Main` 方法的类开始。一个程序集可以包含多个名称空间，一个名称空间也可以包含多个类。
 
@@ -988,10 +987,10 @@ namespace SomeSpace
 
 访问修饰遵循以下原则：
 
--   当直接在名称空间中声明的所有顶级类型（类、记录、结构、枚举、接口、委托），可以为 `public` 或 `internal`，默认为 `internal`。
--   类和结构的成员默认为 `private`，由于结构不能继承因此不能为 `protected`。
--   枚举和接口的成员始终为 `public`。
--   派生类和记录不能具有高于其基类型的可访问性。
+- 当直接在名称空间中声明的所有顶级类型（类、记录、结构、枚举、接口、委托），可以为 `public` 或 `internal`，默认为 `internal`。
+- 类和结构的成员默认为 `private`，由于结构不能继承因此不能为 `protected`。
+- 枚举和接口的成员始终为 `public`。
+- 派生类和记录不能具有高于其基类型的可访问性。
 
 ## 使用字段
 
@@ -1185,10 +1184,10 @@ static Person()
 
 析构函数有以下原则：
 
--   一个类只能有一个析构函数；
--   无法继承或重载析构函数；
--   无法调用析构函数，因为是自动调用的；
--   析构函数既没有访问修饰符，也没有参数。
+- 一个类只能有一个析构函数；
+- 无法继承或重载析构函数；
+- 无法调用析构函数，因为是自动调用的；
+- 析构函数既没有访问修饰符，也没有参数。
 
 定义析构函数和构造函数类似，名称和类名相同，并在前面加上 `~`：
 
@@ -1320,9 +1319,9 @@ QptPara(arg3:true, arg2:10);
 
 传递参数给方法时，有三种方式：
 
--   值传递，默认方式
--   作为 `ref` 参数
--   作为 `out` 参数
+- 值传递，默认方式
+- 作为 `ref` 参数
+- 作为 `out` 参数
 
 ```c#
 static void func(int x, ref int y, out int z)

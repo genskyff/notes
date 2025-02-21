@@ -2,7 +2,7 @@
 
 [Project X](https://xtls.github.io/) 是包含一系列网络工具的平台，前身是 [Project V](https://www.v2fly.org/)，包含更多功能和性能改进。
 
->   本文以 Debian 为例，记录搭建 Xray 的过程。
+> 本文以 Debian 为例，记录搭建 Xray 的过程。
 
 # 2 准备工作
 
@@ -20,7 +20,7 @@ dpkg-reconfigure tzdata
 
 ## 安装 Xray
 
->   参考：[Xray-install](https://github.com/XTLS/Xray-install)。
+> 参考：[Xray-install](https://github.com/XTLS/Xray-install)。
 
 ```shell
 # 安装和更新 Xray 和 dat 数据
@@ -49,7 +49,7 @@ systemctl <status|start|stop|restart> xray
 
 ### 配置文件格式
 
->   参考：[Xray 配置文件](https://xtls.github.io/config/)。
+> 参考：[Xray 配置文件](https://xtls.github.io/config/)。
 
 常用配置项如下：
 
@@ -81,7 +81,7 @@ xray uuid
 
 官方的仓库包含了大量的配置模板：
 
--   [XTLS/Xray-examples](https://github.com/XTLS/Xray-examples)
+- [XTLS/Xray-examples](https://github.com/XTLS/Xray-examples)
 
 ## 配置 TLS
 
@@ -187,4 +187,3 @@ systemctl reload nginx
 # 4 客户端
 
 Xray 本身不分服务端和客户端，只是配置文件不同，各个平台可以直接通过对应平台的 [Xray 内核](https://github.com/XTLS/Xray-core/releases) 使用，但是基于 Xray 内核开发的第三方 GUI 客户端有很多，可查看 [图形化客户端](https://xtls.github.io/document/install.html#%E5%9B%BE%E5%BD%A2%E5%8C%96%E5%AE%A2%E6%88%B7%E7%AB%AF)。
-

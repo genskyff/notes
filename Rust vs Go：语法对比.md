@@ -48,26 +48,26 @@ const X int = 1
 
 Rust
 
--   有符号：`i8`、`i16`、`i32`、`i64`、`i128`、`isize`
--   无符号：`u8`（`byte`）、`u16`、`u32`、`u64`、`u128`、`usize`
--   浮点：`f32`、`f64`
--   布尔：`bool`
--   字符：`char`（`u32`）
--   字符串：`&str`
--   引用：`&T`、`&mut T`
--   原始指针：`*const T`、`*mut T`
+- 有符号：`i8`、`i16`、`i32`、`i64`、`i128`、`isize`
+- 无符号：`u8`（`byte`）、`u16`、`u32`、`u64`、`u128`、`usize`
+- 浮点：`f32`、`f64`
+- 布尔：`bool`
+- 字符：`char`（`u32`）
+- 字符串：`&str`
+- 引用：`&T`、`&mut T`
+- 原始指针：`*const T`、`*mut T`
 
 Go
 
--   有符号：`int8`、`int16`、`int32`、`int64`、`int`
--   无符号：`uint8`、`uint16`、`uint32`、`uint64`、`uint`、`uintptr`
--   字节：`byte`（`uint8`）
--   浮点：`float32`、`float64`
--   复数：`complex64`、`complex128`
--   布尔：`bool`
--   字符：`rune`（`uint32`）
--   字符串：`string`
--   指针：`*T`
+- 有符号：`int8`、`int16`、`int32`、`int64`、`int`
+- 无符号：`uint8`、`uint16`、`uint32`、`uint64`、`uint`、`uintptr`
+- 字节：`byte`（`uint8`）
+- 浮点：`float32`、`float64`
+- 复数：`complex64`、`complex128`
+- 布尔：`bool`
+- 字符：`rune`（`uint32`）
+- 字符串：`string`
+- 指针：`*T`
 
 ### 类型别名
 
@@ -187,7 +187,7 @@ fmt.Println(s, len(s), cap(s))
 
 Rust
 
--   `a..b`、`a..`、`..b`、`..`、`a..=b`、`..=b`
+- `a..b`、`a..`、`..b`、`..`、`a..=b`、`..=b`
 
 ```rust
 let r = 1..=3;
@@ -198,7 +198,7 @@ for (_, e) in r.enumerate() {
 
 Go
 
--   `[a:b]`、`[a:]`、`[:b]`、`[..]`
+- `[a:b]`、`[a:]`、`[:b]`、`[..]`
 
 ```go
 s := []int{1, 2, 3}
@@ -329,7 +329,7 @@ fn main() {
         age: 18,
     };
     let pu = &u;
-    
+
     println!("{} {} {}", u.name, u.id, u.age);
     println!("{} {} {}", pu.name, pu.id, pu.age); // 无需 *
 }
@@ -346,10 +346,10 @@ type User struct {
 func main() {
 	u := User{"Alice", 1, 18}
     pu := &u
-    
+
 	fmt.Println(u.name, u.id, u.age)
     fmt.Println(pu.name, u.id, pu.age) // 无需 *
-    
+
     // 结构体切片
     a := []struct {
         a int
@@ -532,7 +532,7 @@ func main() {
 
 ## 方法
 
->   Rust 和 Go 对方法都具有自动引用和解引用的功能。
+> Rust 和 Go 对方法都具有自动引用和解引用的功能。
 
 Rust
 
@@ -588,7 +588,7 @@ func main() {
 
 ### newtype
 
->   Rust 和 Go 都具有孤儿规则，但可通过 newtype 来规避。
+> Rust 和 Go 都具有孤儿规则，但可通过 newtype 来规避。
 
 Rust
 
@@ -779,12 +779,12 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go say(&wg)
-    
+
 	for i := 0; i < 5; i++ {
 		fmt.Println("main: ", i)
 		time.Sleep(100 * time.Millisecond)
 	}
-    
+
 	wg.Wait()
 }
 ```
@@ -842,6 +842,7 @@ func main() {
 Rust
 
 ```rust
+
 ```
 
 Go
@@ -873,10 +874,3 @@ func main() {
 	fmt.Println(sc.cur())
 }
 ```
-
-
-
-
-
-
-

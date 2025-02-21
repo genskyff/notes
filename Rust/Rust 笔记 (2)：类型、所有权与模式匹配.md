@@ -2,9 +2,9 @@
 
 ## 标识符
 
--   由任意非空的，且非 emoji 的 Unicode 字符构成
--   不能以数字开头，且不能为关键字
--   单个 `_` 作为标识符表示**忽略**
+- 由任意非空的，且非 emoji 的 Unicode 字符构成
+- 不能以数字开头，且不能为关键字
+- 单个 `_` 作为标识符表示**忽略**
 
 ### 原始标识符
 
@@ -49,8 +49,8 @@ println!("{x}");
 
 常量和不可变变量的区别：
 
--   常量的值必须能够在编译期就计算出，不能是在运行时才计算出的值
--   常量可以在任何作用域中声明，包括全局作用域，而变量只能在函数作用域声明
+- 常量的值必须能够在编译期就计算出，不能是在运行时才计算出的值
+- 常量可以在任何作用域中声明，包括全局作用域，而变量只能在函数作用域声明
 
 ### 隐藏
 
@@ -98,8 +98,8 @@ assert_eq!(*ref_x, 5);
 
 所有访问静态项的操作都是安全的，但有一些限制：
 
--   静态项的数据类型必须实现 `Sync`
--   常量项不能引用静态项
+- 静态项的数据类型必须实现 `Sync`
+- 常量项不能引用静态项
 
 静态项可使用 `mut` 声明，但对其所有访问操作都是不安全的，需要在 `unsafe` 块中使用。
 
@@ -141,9 +141,9 @@ let y: f32 = 3.14;
 | 128 bit  | i128       | u128       |
 | arch     | isize      | usize      |
 
--   有符号数以**补码**形式存储
+- 有符号数以**补码**形式存储
 
--   `isize` 和 `usize` 依赖于运行程序的计算机架构
+- `isize` 和 `usize` 依赖于运行程序的计算机架构
 
 | **字面值**     | **例**        |
 | -------------- | ------------- |
@@ -153,10 +153,9 @@ let y: f32 = 3.14;
 | Binary         | `0b1010_1000` |
 | Byte (仅 `u8`) | `b'A'`        |
 
--   除 Byte 以外的所有字面值允许使用类型后缀，如 `12_u8`，也允许使用 `_` 作为分隔符
+- 除 Byte 以外的所有字面值允许使用类型后缀，如 `12_u8`，也允许使用 `_` 作为分隔符
 
--   对于整数溢出，非优化编译时，会检查这类问题并 panic。优化编译时不检查，并按照补码计算实际值
-
+- 对于整数溢出，非优化编译时，会检查这类问题并 panic。优化编译时不检查，并按照补码计算实际值
 
 #### 浮点型
 
@@ -189,9 +188,9 @@ let c = '';  // 错误，不能为空值
 
 可以将字符值赋给整型变量，但限制如下：
 
--   必须增加类型前缀 `b`
+- 必须增加类型前缀 `b`
 
--   仅支持 `u8`
+- 仅支持 `u8`
 
 ```rust
 let n: u8 = b'A';   // n = 65
@@ -243,9 +242,9 @@ arr[10];  // panic
 
 引用表示拥有某个值的借用，包含两种类型：
 
--   `&T`：不可变引用
+- `&T`：不可变引用
 
--   `&mut T`：可变引用
+- `&mut T`：可变引用
 
 引用是一个对齐且非 `null` 的指针，指向包含有效值 `T` 的内存。在值上使用 `&` 或 `&mut`，以及 `ref` 或 `ref mut` 模式可获得该值的借用。
 
@@ -267,9 +266,9 @@ assert_eq!(x, 6);
 
 裸指针包含两种类型：
 
--   `*const T`：不可变裸指针
+- `*const T`：不可变裸指针
 
--   `*mut T`：可变裸指针
+- `*mut T`：可变裸指针
 
 裸指针可以是未对齐或为 `null` 的。当使用 `*` 解引用裸指针时，要求必须对齐且非 `null`，因此对裸指针**进行解引用是不安全的**。
 
@@ -310,7 +309,7 @@ let empty: () = ();
 
 ### never 类型
 
- `!` 为 **never 类型**，主要用于在函数永不返回时充当返回值，这类函数也被称为**发散函数**。
+`!` 为 **never 类型**，主要用于在函数永不返回时充当返回值，这类函数也被称为**发散函数**。
 
 ```rust
 fn foo() -> ! {}
@@ -361,15 +360,15 @@ let s1: str = "foo";  // 错误
 let s2: &str = "bar"
 ```
 
--   指向 DST 的指针大小是固定的，且为指向 `Sized` 的指针大小的两倍：
-    -   指向切片的指针额外存储了切片的元素数量
-    -   指向 trait 对象的指针额外存储了 vtable 的地址
--   DST 可以作为实参来传递给有 `?Sized` 约束的泛型类型参数。当关联类型的声明有 `?Sized` 约束时，也可以被用于关联类型定义
--   默认情况下，任何泛型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束
--   与泛型类型参数不同，trait 定义中的默认约束为 `Self: ?Sized`，因此可以为 DST 实现 trait
--   结构体的最后一个字段可以为 DST，这让该结构体也是一个 DST
+- 指向 DST 的指针大小是固定的，且为指向 `Sized` 的指针大小的两倍：
+  - 指向切片的指针额外存储了切片的元素数量
+  - 指向 trait 对象的指针额外存储了 vtable 的地址
+- DST 可以作为实参来传递给有 `?Sized` 约束的泛型类型参数。当关联类型的声明有 `?Sized` 约束时，也可以被用于关联类型定义
+- 默认情况下，任何泛型参数或关联类型都有 `Sized` 约束，除非使用 `?Sized` 来放宽约束
+- 与泛型类型参数不同，trait 定义中的默认约束为 `Self: ?Sized`，因此可以为 DST 实现 trait
+- 结构体的最后一个字段可以为 DST，这让该结构体也是一个 DST
 
->   静态项、常量、变量和函数参数必须具有 `Sized`。
+> 静态项、常量、变量和函数参数必须具有 `Sized`。
 
 ## 类型别名
 
@@ -457,13 +456,13 @@ let s5: Box<str> = String::from("hehe").into_boxed_str();
 
 `&str` 和 `String`：
 
--   `&str`：一个字符串切片，表示对某个字符串数据的不可变引用
--   `String`：在堆上分配的字符串
+- `&str`：一个字符串切片，表示对某个字符串数据的不可变引用
+- `String`：在堆上分配的字符串
 
 `&str` 和 `&'static str`：
 
--   不是所有的 `&str` 都是 `&'static str`。一个字符串字面量如 `"hello"`，则默认具有 `'static` 生命周期
--   若从 `String` 创建一个切片，该切片的生命周期则不是 `'static`
+- 不是所有的 `&str` 都是 `&'static str`。一个字符串字面量如 `"hello"`，则默认具有 `'static` 生命周期
+- 若从 `String` 创建一个切片，该切片的生命周期则不是 `'static`
 
 大多数时候，可以不用显式标注 `&str` 或 `&'static str`，因为编译器会自动推断生命周期。
 
@@ -605,20 +604,20 @@ println!("Do this after loop");
 
 Rust 中的表达式有很多种，主要有：
 
--   字面量表达式
--   路径表达式
--   块表达式
--   运算符表达式
--   结构体表达式
--   调用表达式
--   闭包表达式
--   区间表达式
--   模式匹配表达式
--   返回表达式
--   异步表达式
--   ...
+- 字面量表达式
+- 路径表达式
+- 块表达式
+- 运算符表达式
+- 结构体表达式
+- 调用表达式
+- 闭包表达式
+- 区间表达式
+- 模式匹配表达式
+- 返回表达式
+- 异步表达式
+- ...
 
->   更多关于表达式的信息，可参考 [Expressions](https://doc.rust-lang.org/nightly/reference/expressions.html)。
+> 更多关于表达式的信息，可参考 [Expressions](https://doc.rust-lang.org/nightly/reference/expressions.html)。
 
 # 2 所有权
 
@@ -671,7 +670,7 @@ s.push_str("bar");
 
 当变量离开作用域时，在结尾的 `}` 处将自动调用析构函数 `drop` 释放内存。
 
->   在 C++ 中，这种在生命周期结束时释放**资源**的模式被称作 RAII（Resource Acquisition Is Initialization，资源获取即初始化）。资源可以是内存地址，包含某个值的变量、共享内存引用、文件句柄、网络套接字或数据库连接句柄等。
+> 在 C++ 中，这种在生命周期结束时释放**资源**的模式被称作 RAII（Resource Acquisition Is Initialization，资源获取即初始化）。资源可以是内存地址，包含某个值的变量、共享内存引用、文件句柄、网络套接字或数据库连接句柄等。
 
 ### 移动语义
 
@@ -790,7 +789,7 @@ fn main() {
 
 引用和指针类似，其保存了一个地址，可以由此访问储存于该地址的数据，并且确保指向的值是有效的。
 
->   与 `&` 相反的操作是**解引用**，使用解引用运算符 `*`。
+> 与 `&` 相反的操作是**解引用**，使用解引用运算符 `*`。
 
 ### 区分引用和借用
 
@@ -801,7 +800,7 @@ let s = String::new();
 let s1 = &s;
 ```
 
->   通常情况下可以不用严格区分这两者。
+> 通常情况下可以不用严格区分这两者。
 
 ### 可变引用
 
@@ -1031,7 +1030,7 @@ foo(s2);
 foo(&s2[..]);
 ```
 
-###  其它切片类型
+### 其它切片类型
 
 除了字符串切片，任何 `&[T]` 都是切片，如 `&[i32]`。
 
@@ -1045,20 +1044,20 @@ assert_eq!(slice, &[2, 3]);
 
 常见切片方法：
 
--   `chunks`、`concat`、`contains`、`flatten`、`to_vec`
--   `first`、`last`
--   `start_with`、`end_with`、`fill`、`fill_with`
--   `strip_prefix`、`strip_suffix`
--   `get`、`swap`、`join`、`len`
--   `repeat`、`reverse`、`windows`
--   `is_ascii`、`is_empty`、`is_sorted`
--   `make_ascii_lowercase`、`make_ascii_uppercase`
--   `to_ascii_lowercase`、`to_ascii_uppercase`
--   `rotate_left`、`rotate_right`
--   `sort`、`sort_by`
--   `split`、`split_at`、`splitn`
+- `chunks`、`concat`、`contains`、`flatten`、`to_vec`
+- `first`、`last`
+- `start_with`、`end_with`、`fill`、`fill_with`
+- `strip_prefix`、`strip_suffix`
+- `get`、`swap`、`join`、`len`
+- `repeat`、`reverse`、`windows`
+- `is_ascii`、`is_empty`、`is_sorted`
+- `make_ascii_lowercase`、`make_ascii_uppercase`
+- `to_ascii_lowercase`、`to_ascii_uppercase`
+- `rotate_left`、`rotate_right`
+- `sort`、`sort_by`
+- `split`、`split_at`、`splitn`
 
->   更多关于切片的方法，可参考 [slice - Rust](https://doc.rust-lang.org/std/primitive.slice.html#implementations)。
+> 更多关于切片的方法，可参考 [slice - Rust](https://doc.rust-lang.org/std/primitive.slice.html#implementations)。
 
 # 3 自定义类型
 
@@ -1185,10 +1184,10 @@ enum Message {
 
 这个枚举有四个含有不同类型的变体：
 
--   `Quit` 没有关联任何数据
--   `Move` 包含一个匿名结构体
--   `Write` 包含一个 `String`
--   `Color` 包含三个 `u8`
+- `Quit` 没有关联任何数据
+- `Move` 包含一个匿名结构体
+- `Write` 包含一个 `String`
+- `Color` 包含三个 `u8`
 
 使用结构体也可以这样定义，但没有使用枚举简洁：
 
@@ -1237,14 +1236,14 @@ let absent_number: Option<i32> = None;
 
 常见 `Option` 方法：
 
--   `is_some`、`is_none`
--   `and`、`and_then`
--   `or`、`or_else`
--   `map`、`map_or`、`map_or_else`
--   `expect`、`unwrap`
--   `unwrap_or`、`unwrap_or_else`
+- `is_some`、`is_none`
+- `and`、`and_then`
+- `or`、`or_else`
+- `map`、`map_or`、`map_or_else`
+- `expect`、`unwrap`
+- `unwrap_or`、`unwrap_or_else`
 
->   更多关于 `Option` 的方法，可参考 [Option in std::option](https://doc.rust-lang.org/std/option/enum.Option.html#implementations)。
+> 更多关于 `Option` 的方法，可参考 [Option in std::option](https://doc.rust-lang.org/std/option/enum.Option.html#implementations)。
 
 ## 联合体
 
@@ -1268,8 +1267,8 @@ fn main() {
 
 实现有两种：
 
--   固有实现：包含方法、关联函数或关联常量
--   trait 实现：与固有实现类似，但使用 `for` 来为某个具体类型实现 trait
+- 固有实现：包含方法、关联函数或关联常量
+- trait 实现：与固有实现类似，但使用 `for` 来为某个具体类型实现 trait
 
 ```rust
 #[derive(Debug)]
@@ -1316,18 +1315,17 @@ fn main() {
 
 `new` 和 `red` 是**关联函数**，因为其作用于类型而非实例，`WHITE` 是**关联常量**，`mix` 是**方法**。
 
--   关联函数、关联常量：通过 `::` 调用
--   方法：通过 `.` 调用
+- 关联函数、关联常量：通过 `::` 调用
+- 方法：通过 `.` 调用
 
 方法与函数类似，但第一个参数总是 `self`，代表调用该方法的实例。`&self` 表示引用实例本身，这实际上是 `self: &Self` 的缩写。在一个 `impl` 块中，`Self` 是类型的别名。只要第一个参数名为 `self`，就代表了实例本身。
 
--   `Self`：实例类型的别名
--   `self`：获取 `self` 的所有权
--   `&self`：不可变地借用 `self`
--   `&mut self`：可变地借用 `self`
+- `Self`：实例类型的别名
+- `self`：获取 `self` 的所有权
+- `&self`：不可变地借用 `self`
+- `&mut self`：可变地借用 `self`
 
->   在同一 Crate 内，对同一个程序项的实现可分为多个 `impl` 块，也可合并到一起。
->
+> 在同一 Crate 内，对同一个程序项的实现可分为多个 `impl` 块，也可合并到一起。
 
 ### 自动引用和解引用
 
@@ -1448,9 +1446,9 @@ fn main() {
 
 **模式**是 Rust 中特殊的语法，用来匹配类型中的结构，由以下内容组成：
 
--   字面值、命名变量
--   解构元组、数组、结构体、枚举和联合体
--   通配符、占位符
+- 字面值、命名变量
+- 解构元组、数组、结构体、枚举和联合体
+- 通配符、占位符
 
 ## 使用模式的位置
 
@@ -1539,7 +1537,7 @@ while let Some(top) = stack.pop() {
 
 `while` 循环只要 `pop` 返回 `Some` 就会一直运行其块中的代码。一旦其返回 `None`，`while` 循环停止。
 
->   `while let` 不能使用 `else if`、`else if let` 和 `else` 分支组合。
+> `while let` 不能使用 `else if`、`else if let` 和 `else` 分支组合。
 
 ### 函数参数
 
@@ -1551,14 +1549,14 @@ fn pair(&(x, y): &(i32, i32)) {
 }
 ```
 
->   闭包参数也能使用模式。
+> 闭包参数也能使用模式。
 
 ## 可反驳性
 
 模式有两种形式：
 
--   可反驳的：可能会匹配会失败的模式，如 `match` 分支、`if let` 和 `while let` 表达式
--   不可反驳的：能匹配任意值的模式，如 `let` 语句、`for` 循环和函数参数
+- 可反驳的：可能会匹配会失败的模式，如 `match` 分支、`if let` 和 `while let` 表达式
+- 不可反驳的：能匹配任意值的模式，如 `let` 语句、`for` 循环和函数参数
 
 ```rust
 // 错误

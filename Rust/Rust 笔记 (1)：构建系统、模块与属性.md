@@ -1,17 +1,17 @@
->   本系列文章使用的 Rust Edition 为 `2024`。
+> 本系列文章使用的 Rust Edition 为 `2024`。
 >
->   参考：
+> 参考：
 >
->   -   [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
->   -   [Programming Rust](https://book.douban.com/subject/36547630/)
->   -   [The Rustonomicon](https://nomicon.purewhite.io/)
->   -   [Rust Atomics and Locks](https://rustcc.github.io/Rust_Atomics_and_Locks/)
->   -   [Rust 语言圣经](https://course.rs/about-book.html)
->   -   [The Rust Reference](https://doc.rust-lang.org/nightly/reference/)
->   -   [The Rust Standard Library](https://doc.rust-lang.org/std/)
->   -   [The Cargo Book](https://doc.rust-lang.org/cargo/)
->   -   [The rustc book](https://doc.rust-lang.org/rustc/what-is-rustc.html)
->   -   [The rustdoc book](https://doc.rust-lang.org/rustdoc/)
+> - [The Rust Programming Language](https://kaisery.github.io/trpl-zh-cn/)
+> - [Programming Rust](https://book.douban.com/subject/36547630/)
+> - [The Rustonomicon](https://nomicon.purewhite.io/)
+> - [Rust Atomics and Locks](https://rustcc.github.io/Rust_Atomics_and_Locks/)
+> - [Rust 语言圣经](https://course.rs/about-book.html)
+> - [The Rust Reference](https://doc.rust-lang.org/nightly/reference/)
+> - [The Rust Standard Library](https://doc.rust-lang.org/std/)
+> - [The Cargo Book](https://doc.rust-lang.org/cargo/)
+> - [The rustc book](https://doc.rust-lang.org/rustc/what-is-rustc.html)
+> - [The rustdoc book](https://doc.rust-lang.org/rustdoc/)
 
 # 1 构建系统
 
@@ -29,21 +29,21 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ### 配置文件
 
-默认会在 *~/.rustup* 中安装工具链，在 *~/.cargo* 安装 Cargo 相关工具、二进制 Crate 和依赖包。
+默认会在 _~/.rustup_ 中安装工具链，在 _~/.cargo_ 安装 Cargo 相关工具、二进制 Crate 和依赖包。
 
-*~/.rustup/settings.toml* 保存了工具链相关的配置。对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置，构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级**从高到低**为：
+_~/.rustup/settings.toml_ 保存了工具链相关的配置。对于 Cargo 的构建配置，支持全局配置和针对特定项目的本地配置，构建时 Cargo 会在**当前目录和所有父目录**中查找配置文件，其查找顺序按照优先级**从高到低**为：
 
--   通过命令行 `--config <key>=<value>` 传递的参数
--   环境变量
--   *<workspace>/foo/bar/.cargo/config.toml*
--   *<workspace>/foo/.cargo/config.toml*
--   *<package>/.cargo/config.toml*
--   *~/.cargo/config.toml*
+- 通过命令行 `--config <key>=<value>` 传递的参数
+- 环境变量
+- _<workspace>/foo/bar/.cargo/config.toml_
+- _<workspace>/foo/.cargo/config.toml_
+- _<package>/.cargo/config.toml_
+- _~/.cargo/config.toml_
 
 所有配置文件的键值会被合并，重复的以优先级高的为准，相同优先级以最后定义的为准。命令行直接传递的优先级最，项目中嵌套越深的优先级越高。执行 Cargo 时，当前目录的子目录中的配置文件会被忽略。
 
->   -   配置文件使用 [TOML](https://toml.io/cn/v1.0.0) 格式
->   -   环境变量的配置可参考 [Cargo Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
+> - 配置文件使用 [TOML](https://toml.io/cn/v1.0.0) 格式
+> - 环境变量的配置可参考 [Cargo Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
 
 ## 构建工具
 
@@ -92,7 +92,7 @@ rustup override set <stable|nightly>
 rustup override unset
 ```
 
->   更多关于 rustup 的信息，可参考 [The rustup book](https://rust-lang.github.io/rustup/)。
+> 更多关于 rustup 的信息，可参考 [The rustup book](https://rust-lang.github.io/rustup/)。
 
 ### rustc
 
@@ -142,7 +142,7 @@ rustc <file> -O
 rustc <file> -g
 ```
 
->   更多关于 rustc 的信息，可参考 [The rustc book](https://doc.rust-lang.org/rustc/index.html)。
+> 更多关于 rustc 的信息，可参考 [The rustc book](https://doc.rust-lang.org/rustc/index.html)。
 
 ### Cargo
 
@@ -213,7 +213,7 @@ cargo clean
 cargo metadata
 ```
 
->   更多关于 Cargo 的信息，可参考 [The Cargo Book](https://doc.rust-lang.org/cargo/)。
+> 更多关于 Cargo 的信息，可参考 [The Cargo Book](https://doc.rust-lang.org/cargo/)。
 
 ## 项目结构
 
@@ -255,7 +255,7 @@ cargo metadata
 
 ### Cargo 配置文件
 
- 项目配置文件 *Cargo.toml* 的结构通常为：
+项目配置文件 _Cargo.toml_ 的结构通常为：
 
 ```toml
 [package]
@@ -276,16 +276,16 @@ criterion = { version = "0.5.1", features = ["html_reports"] }
 cc = "1.2"
 ```
 
--   `[package]`：包的主要信息
--   `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)
--   `[dev-dependencies]`：dev 的依赖
--   `[build-dependencies]`：构建脚本的依赖
+- `[package]`：包的主要信息
+- `[dependencies]`：dev 和 release 的依赖，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)
+- `[dev-dependencies]`：dev 的依赖
+- `[build-dependencies]`：构建脚本的依赖
 
->   更多关于 Cargo 配置的信息，可以参考 [Cargo Manifest Format](https://doc.rust-lang.org/cargo/reference/manifest.html)。
+> 更多关于 Cargo 配置的信息，可以参考 [Cargo Manifest Format](https://doc.rust-lang.org/cargo/reference/manifest.html)。
 
 ### 编译产物
 
-在 Windows 上，使用 `cargo build` 编译后，*target/debug* 通常包含：
+在 Windows 上，使用 `cargo build` 编译后，_target/debug_ 通常包含：
 
 ```
 ./target/debug
@@ -301,31 +301,31 @@ cc = "1.2"
 └── libhello.rlib
 ```
 
--   **.fingerprint**：包含构建状态的元数据
--   **build**：构建脚本 *build.rs* 的输出结果
--   **deps**：依赖和库的编译结果
--   **examples**：示例代码 *examples* 的编译结果
--   **incremental**：包含增量编译的状态信息
--   **hello.d**：*hello.exe* 的所有依赖声明
--   **hello.exe**：可执行文件
--   **hello.pdb**：包含调试信息
--   **libhello.d**：*libhello.rlib* 的所有依赖声明
--   **libhello.rlib**：静态库文件
+- **.fingerprint**：包含构建状态的元数据
+- **build**：构建脚本 _build.rs_ 的输出结果
+- **deps**：依赖和库的编译结果
+- **examples**：示例代码 _examples_ 的编译结果
+- **incremental**：包含增量编译的状态信息
+- **hello.d**：_hello.exe_ 的所有依赖声明
+- **hello.exe**：可执行文件
+- **hello.pdb**：包含调试信息
+- **libhello.d**：_libhello.rlib_ 的所有依赖声明
+- **libhello.rlib**：静态库文件
 
 ## 构建配置
 
-在 *config.toml* 和 *Cargo.toml* 中可以配置构建相关参数来影响编译器行为。
+在 _config.toml_ 和 _Cargo.toml_ 中可以配置构建相关参数来影响编译器行为。
 
 ### profile 配置
 
 `profile` 为发布配置，默认包含四种：
 
--   **dev**：`cargo build/run/check/rustc` 使用
--   **release**：构建时使用 `-r` 和 `cargo install` 使用
--   **test**：`cargo test` 使用，基于 dev，用于单元、集成和文档测试
--   **bench**：`cargo bench` 使用，基于 release，用于基准测试
+- **dev**：`cargo build/run/check/rustc` 使用
+- **release**：构建时使用 `-r` 和 `cargo install` 使用
+- **test**：`cargo test` 使用，基于 dev，用于单元、集成和文档测试
+- **bench**：`cargo bench` 使用，基于 release，用于基准测试
 
->   *examples* 中的示例代码默认使用 `dev` 配置。
+> _examples_ 中的示例代码默认使用 `dev` 配置。
 
 ```toml
 [profile.release]
@@ -337,32 +337,37 @@ panic = "abort"
 
 常见配置选项：
 
--   **opt-level**：`-C opt-level` 标志，表示优化级别，级别越高编译时间越多
-    -   `0`：dev 默认值
+- **opt-level**：`-C opt-level` 标志，表示优化级别，级别越高编译时间越多
 
-    -   `3`：release 默认值
+  - `0`：dev 默认值
 
-    -   `s`：优化二进制文件大小
--   **debug**：`-C debuginfo` 标志，控制二进制文件中包含的调试信息
-    -   `false`：无调试信息，release 默认值
+  - `3`：release 默认值
 
-    -   `true`：所有调试信息，dev 默认值
--   **strip**：` -C strip` 标志，控制链接器需要删除哪些信息
-    -   `false`：默认值，保留所有信息
-    -   `true`：删除调试和符号信息
--   **lto**：`-C lto` 标志，控制链接时优化策略，会增加编译时间和内存消耗
-    -   `false`：默认值，只对代码生成单元中的本地包进行优化，若 `codegen-units` 为 1 或 `opt-level` 为 0，则不进行优化
-    -   `true`：最大程度优化，但最消耗资源
--   **codegen-units**：`-C codegen-units` 标志，控制一个 Crate 会被拆分成多少个代码生成单元。多个单元可以并行处理，以减少编译时间，但生成后的代码性能可能较低
-    -   增量构建，默认为 256
-    -   非增量构建，默认为 16
+  - `s`：优化二进制文件大小
 
--   **panic**：`-C panic` 标志，控制 panic 发生时的策略，所有类型的测试、构建脚本和过程宏只能使用 `unwind`
-    -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源
-    -   `abort`：panic 后直接中止程序，由操作系统回收资源
+- **debug**：`-C debuginfo` 标志，控制二进制文件中包含的调试信息
 
->   -   针对编译优化，可参考 [min-sized-rust](https://github.com/johnthagen/min-sized-rust)
->   -   更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)
+  - `false`：无调试信息，release 默认值
+
+  - `true`：所有调试信息，dev 默认值
+
+- **strip**：` -C strip` 标志，控制链接器需要删除哪些信息
+  - `false`：默认值，保留所有信息
+  - `true`：删除调试和符号信息
+- **lto**：`-C lto` 标志，控制链接时优化策略，会增加编译时间和内存消耗
+  - `false`：默认值，只对代码生成单元中的本地包进行优化，若 `codegen-units` 为 1 或 `opt-level` 为 0，则不进行优化
+  - `true`：最大程度优化，但最消耗资源
+- **codegen-units**：`-C codegen-units` 标志，控制一个 Crate 会被拆分成多少个代码生成单元。多个单元可以并行处理，以减少编译时间，但生成后的代码性能可能较低
+
+  - 增量构建，默认为 256
+  - 非增量构建，默认为 16
+
+- **panic**：`-C panic` 标志，控制 panic 发生时的策略，所有类型的测试、构建脚本和过程宏只能使用 `unwind`
+  - `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源
+  - `abort`：panic 后直接中止程序，由操作系统回收资源
+
+> - 针对编译优化，可参考 [min-sized-rust](https://github.com/johnthagen/min-sized-rust)
+> - 更多关于 profile 的信息，可参考 [Cargo Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)
 
 ### 自定义 profile
 
@@ -380,7 +385,7 @@ lto = true
 cargo build --profile my-profile
 ```
 
-自定义 profile 的编译结果存放在 *target* 下的同名目录中。
+自定义 profile 的编译结果存放在 _target_ 下的同名目录中。
 
 ### 构建依赖 profile
 
@@ -421,21 +426,21 @@ strip = true
 
 profile 的优先级从高到低为：
 
--   `[profile.<name>.package.<name>]`
--   `[profile.<name>.package."*"]`
--   `[profile.<name>.build-override]`
--   `[profile.<name>]`
--   默认配置
+- `[profile.<name>.package.<name>]`
+- `[profile.<name>.package."*"]`
+- `[profile.<name>.build-override]`
+- `[profile.<name>]`
+- 默认配置
 
 ### target 配置
 
 可以指定源文件编译的 target：
 
--   **lib**：编译为可被链接的库
--   **bin**：编译为可执行文件
--   **example**：编译示例代码
--   **test**：编译单元测试或集成测试
--   **bench**：编译基准测试
+- **lib**：编译为可被链接的库
+- **bin**：编译为可执行文件
+- **example**：编译示例代码
+- **test**：编译单元测试或集成测试
+- **bench**：编译基准测试
 
 ```toml
 [lib]  # lib 只能有一个
@@ -445,13 +450,13 @@ profile 的优先级从高到低为：
 [[bench]]
 ```
 
->   更多关于 target 字段的信息，可参考 [Cargo Targets](https://doc.rust-lang.org/cargo/reference/cargo-targets.html)。
+> 更多关于 target 字段的信息，可参考 [Cargo Targets](https://doc.rust-lang.org/cargo/reference/cargo-targets.html)。
 
 ### features 配置
 
-在 *Cargo.toml* 中添加 `[features]` 并给依赖指定 `features`，就可给包添加条件编译和可选依赖的功能，通常用于库 Crate。
+在 _Cargo.toml_ 中添加 `[features]` 并给依赖指定 `features`，就可给包添加条件编译和可选依赖的功能，通常用于库 Crate。
 
-如工作区中 `mypkg` 依赖于 `utils`，要在 `utils` 中配置 features，在其 *Cargo.toml* 中添加：
+如工作区中 `mypkg` 依赖于 `utils`，要在 `utils` 中配置 features，在其 _Cargo.toml_ 中添加：
 
 ```toml
 # utils/Cargo.toml
@@ -520,7 +525,7 @@ utils = { path = "utils", default-features = false }
 foo = ["utils/foo"]
 ```
 
->   更多关于 features 的信息，可参考 [Cargo Features](https://doc.rust-lang.org/cargo/reference/features.html)。
+> 更多关于 features 的信息，可参考 [Cargo Features](https://doc.rust-lang.org/cargo/reference/features.html)。
 
 ### 其它配置字段
 
@@ -534,7 +539,7 @@ foo = ["utils/foo"]
 [target.<cfg>]
 ```
 
->   更多关于可配置选项的信息，可参考 [Cargo Configuration](https://doc.rust-lang.org/cargo/reference/config.html)。
+> 更多关于可配置选项的信息，可参考 [Cargo Configuration](https://doc.rust-lang.org/cargo/reference/config.html)。
 
 ## 构建脚本
 
@@ -547,7 +552,7 @@ foo = ["utils/foo"]
 fn main() {
     // 一旦指定的文件发生了改变，Cargo 就重新运行当前的构建脚本
     println!("cargo::rerun-if-changed=src/hello.c");
-    
+
     // 使用 cc 来构建一个 C 文件，然后进行静态链接
     cc::Build::new()
         .file("src/hello.c")
@@ -555,7 +560,7 @@ fn main() {
 }
 ```
 
-*Cargo.toml* 的 `[package.build]` 可用于自定义脚本名称：
+_Cargo.toml_ 的 `[package.build]` 可用于自定义脚本名称：
 
 ```toml
 [package]
@@ -564,10 +569,10 @@ build = "my-build.rs"
 
 构建脚本的使用场景通常为：
 
--   构建 C 依赖库
--   寻找指定的 C 依赖库
--   根据描述文件生成 Rust 模块
--   执行一些平台相关的配置
+- 构建 C 依赖库
+- 寻找指定的 C 依赖库
+- 根据描述文件生成 Rust 模块
+- 执行一些平台相关的配置
 
 ### 构建流程
 
@@ -581,23 +586,23 @@ Cargo 在构建 Rust 项目之前会先将这个脚本编译为可执行文件�
 
 ### Cargo 识别指令
 
--   `cargo::rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行
--   `cargo::rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行
--   `cargo::rustc-link-search=[KIND=]PATH`：添加库搜索路径
--   `cargo::rustc-link-lib=LIB`：添加要链接的库
--   `cargo::rustc-link-arg=FLAG`：将标志传递给链接器
--   `cargo::rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器
--   `cargo::rustc-flags=FLAGS`：将标志传递给编译器
--   `cargo::rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置
--   `cargo::rustc-env=VAR=VALUE`：传递环境变量
--   `cargo::warning=MESSAGE`：显示警告信息
--   `cargo::KEY=VALUE`：元数据，由脚本使用 `links`
+- `cargo::rerun-if-changed=PATH`：指定路径的文件发生变化时重新执行
+- `cargo::rerun-if-env-changed=VAR`：指定的环境变量发生变化时重新执行
+- `cargo::rustc-link-search=[KIND=]PATH`：添加库搜索路径
+- `cargo::rustc-link-lib=LIB`：添加要链接的库
+- `cargo::rustc-link-arg=FLAG`：将标志传递给链接器
+- `cargo::rustc-cdylib-link-arg=FLAG`：将标志传递给 cdylib Crate 的链接器
+- `cargo::rustc-flags=FLAGS`：将标志传递给编译器
+- `cargo::rustc-cfg=KEY[="VALUE"]`：启用编译时 `cfg` 设置
+- `cargo::rustc-env=VAR=VALUE`：传递环境变量
+- `cargo::warning=MESSAGE`：显示警告信息
+- `cargo::KEY=VALUE`：元数据，由脚本使用 `links`
 
->   更多关于 Cargo 识别指令的信息，可参考 [Cargo Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargorustc-link-argflag)。
+> 更多关于 Cargo 识别指令的信息，可参考 [Cargo Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargorustc-link-argflag)。
 
 ### links
 
-*Cargo.toml* 的 `[package.links]` 用于 Rust 项目所链接的本地库，同时可在构建脚本之间传递元数据。
+_Cargo.toml_ 的 `[package.links]` 用于 Rust 项目所链接的本地库，同时可在构建脚本之间传递元数据。
 
 ```toml
 [package]
@@ -621,40 +626,40 @@ cc = "1.2"
 
 **模块系统**是 Rust 中一系列与作用域相关的功能，其中包含：
 
--   **包**（Package）：Cargo 用来构建、测试和分享 Crate 的单元
--   **Crate**：编译和链接的基本单元
-    -   一个或多个二进制 Crate 或一个库 Crate
-    -   Crate **根**（Root）描述如何构建该 Crate
-    -   *Cargo.toml* 描述如何构建这些 Crate
--   **模块**（Module）：使用 `use` 关键字控制作用域和路径的私有性
--   **路径**（Path）：命名结构体、枚举、函数或模块等项的方式
+- **包**（Package）：Cargo 用来构建、测试和分享 Crate 的单元
+- **Crate**：编译和链接的基本单元
+  - 一个或多个二进制 Crate 或一个库 Crate
+  - Crate **根**（Root）描述如何构建该 Crate
+  - _Cargo.toml_ 描述如何构建这些 Crate
+- **模块**（Module）：使用 `use` 关键字控制作用域和路径的私有性
+- **路径**（Path）：命名结构体、枚举、函数或模块等项的方式
 
 ## 包和 Crate
 
 编译模型以 Crate 为中心，每次编译一个 Crate，并生成一个二进制可执行或库文件。
 
-默认情况下，使用 `cargo new` 时会创建一个包，同时也会创建一个二进制 Crate。若一个目录含有 *Cargo.toml*，以及 *src/main.rs* 或 *src/lib.rs*，则该目录自动成为一个包。
+默认情况下，使用 `cargo new` 时会创建一个包，同时也会创建一个二进制 Crate。若一个目录含有 _Cargo.toml_，以及 _src/main.rs_ 或 _src/lib.rs_，则该目录自动成为一个包。
 
-一个包必须至少有一个二进制或库 Crate，可以同时拥有，但库 Crate 最多有一个。其中 *src/main.rs* 或 *src/lib.rs* 就是与包同名的二进制或库 Crate 的根。Crate 根文件将由 Cargo 传递给 rustc 来构建。
+一个包必须至少有一个二进制或库 Crate，可以同时拥有，但库 Crate 最多有一个。其中 _src/main.rs_ 或 _src/lib.rs_ 就是与包同名的二进制或库 Crate 的根。Crate 根文件将由 Cargo 传递给 rustc 来构建。
 
-若包带有多个二进制 Crate，需置于 *src/bin* 中，其中每个文件都需要包含一个 `main` 函数，都是一个独立的二进制 Crate，都会被编译成与文件名相同的可执行文件。此时可以不再需要 *src/main.rs*，但若存在也会被当作二进制 Crate，并编译成与包名相同的可执行文件。
+若包带有多个二进制 Crate，需置于 _src/bin_ 中，其中每个文件都需要包含一个 `main` 函数，都是一个独立的二进制 Crate，都会被编译成与文件名相同的可执行文件。此时可以不再需要 _src/main.rs_，但若存在也会被当作二进制 Crate，并编译成与包名相同的可执行文件。
 
 ```
 ./src
-├── bin       
+├── bin
 │   ├── foo.rs（二进制 Crate）
 │   └── baz.rs（二进制 Crate）
 ├── lib.rs（库 Crate）
 └── main.rs（二进制 Crate）
 ```
 
-默认情况下，`cargo build` 会编译包含库 Crate 在内的所有 Crate，若想单独编译 *src/bin* 中的二进制 Crate，可以使用 `--bin`。
+默认情况下，`cargo build` 会编译包含库 Crate 在内的所有 Crate，若想单独编译 _src/bin_ 中的二进制 Crate，可以使用 `--bin`。
 
 ```shell
 cargo build --bin <crate>
 ```
 
-但这种方式不能单独编译 *src/main.rs*，因为它代表整个包，因此需要使用包名。
+但这种方式不能单独编译 _src/main.rs_，因为它代表整个包，因此需要使用包名。
 
 ```shell
 cargo build --bin <package>
@@ -718,7 +723,7 @@ fn main() {
 
 使用 Shebang 将源文件作为脚本由操作系统使用指定的解释器来执行。Rust 在设计上可由编译器和解释器实现，但目前仅有 rustc 这唯一的编译器实现，因此可以通过编译，但无实际效果。
 
->   Shebang 前不能有包括注释在内的行。
+> Shebang 前不能有包括注释在内的行。
 
 ### main 函数
 
@@ -726,15 +731,15 @@ fn main() {
 
 标准库中实现了 `Termination` 的类型为：
 
--   `()`
--   `!`
--   `ExitCode`
--   `Result<(), E> where E: Debug`
--   `Result<Infallible, E> where E: Debug`
+- `()`
+- `!`
+- `ExitCode`
+- `Result<(), E> where E: Debug`
+- `Result<Infallible, E> where E: Debug`
 
 ### 库 Crate
 
-可以在一个包中同时包含二进制 Crate 和库 Crate，如一个名为 `mypkg` 包，其中包含了 *main.rs* 和 *lib.rs*，那么这两个的 Crate 名都与包名相同，但要在 main.rs 中使用库 Crate 的内容，需要使用 `use` 关键字引入项，或在路径中包含 Crate 名。
+可以在一个包中同时包含二进制 Crate 和库 Crate，如一个名为 `mypkg` 包，其中包含了 _main.rs_ 和 _lib.rs_，那么这两个的 Crate 名都与包名相同，但要在 main.rs 中使用库 Crate 的内容，需要使用 `use` 关键字引入项，或在路径中包含 Crate 名。
 
 ```rust
 // lib.rs
@@ -751,9 +756,9 @@ fn main() {
 
 ### 外部 Crate
 
-[Crates.io](https://crates.io/) 上有很多第三方 Crate，使用它们需要先在 *Cargo.toml* 中添加依赖，然后用 `use` 引入到包的作用域中。
+[Crates.io](https://crates.io/) 上有很多第三方 Crate，使用它们需要先在 _Cargo.toml_ 中添加依赖，然后用 `use` 引入到包的作用域中。
 
-标准库 `std` 对于自己的包来说也是外部 Crate，但默认被预导入，因此无需在 *Cargo.toml* 中显式导入，但也需要用 `use` 引入一些没有被预导入的项，如 `HashMap`。
+标准库 `std` 对于自己的包来说也是外部 Crate，但默认被预导入，因此无需在 _Cargo.toml_ 中显式导入，但也需要用 `use` 引入一些没有被预导入的项，如 `HashMap`。
 
 ```rust
 use std::collections::HashMap;
@@ -768,7 +773,7 @@ extern crate std as ruststd;
 extern crate foo as _;
 ```
 
-这种方式会将外部 Crate 的名称作为标识符绑定到当前作用域中，但若是在 Crate 的根中声明，那么此 Crate 名称也会被添加到外部预导入包中，这样在所有模块的作用域中都会被导入。在 *Cargo.toml* 中引入的依赖相当于在 Crate 根中隐式地使用了这种方式导入。
+这种方式会将外部 Crate 的名称作为标识符绑定到当前作用域中，但若是在 Crate 的根中声明，那么此 Crate 名称也会被添加到外部预导入包中，这样在所有模块的作用域中都会被导入。在 _Cargo.toml_ 中引入的依赖相当于在 Crate 根中隐式地使用了这种方式导入。
 
 `as` 用于将导入的 Crate 绑定到不同的名称上。`_` 用于匿名导入，当仅需该 Crate 被链接进来，但不会使用其中的项时使用。
 
@@ -797,7 +802,7 @@ extern crate my_pkg;
 
 `core` Crate 总是自动地被添加到外部预导入包中，在非 `no_std` 环境中，`std` Crate 也会被添加。
 
-通过 *Cargo.toml* 添加的依赖实际上就相当于被添加到外部预导入包，因此无需再使用 `extern crate` 导入，可以直接使用 `use` 引入其中的项。
+通过 _Cargo.toml_ 添加的依赖实际上就相当于被添加到外部预导入包，因此无需再使用 `extern crate` 导入，可以直接使用 `use` 引入其中的项。
 
 并不是所有 Rust 自带的 Crate 都会被自动导入，如 `alloc`、`test` 和 `proc_macro`，在使用这些包时需要显式导入。
 
@@ -833,14 +838,14 @@ fn main() {
 
 语言预导入包是语言内置的类型名称和属性名称，且总是在所有作用域都有效。
 
--   类型命名空间
-    -   布尔型：`bool`
-    -   字符型：`char` 和 `str`
-    -   整型：`i8`，`i16`，`i32`，`i64`，`i128`，`u8`，`u16`，`u32`，`u64`，`u128`
-    -   平台相关整型：`isize` 和 `usize`
-    -   浮点型：`f32` 和 `f64`
--   宏命名空间
-    -   内置属性
+- 类型命名空间
+  - 布尔型：`bool`
+  - 字符型：`char` 和 `str`
+  - 整型：`i8`，`i16`，`i32`，`i64`，`i128`，`u8`，`u16`，`u32`，`u64`，`u128`
+  - 平台相关整型：`isize` 和 `usize`
+  - 浮点型：`f32` 和 `f64`
+- 宏命名空间
+  - 内置属性
 
 #### 工具类预导入包
 
@@ -860,11 +865,11 @@ name: String
 
 在命名空间中，名称被组织在不同的层次结构中，层次结构的每一层都有自己的命名实体集合。
 
--   类型命名空间
--   值命名空间
--   宏命名空间
--   生命周期命名空间
--   标签命名空间
+- 类型命名空间
+- 值命名空间
+- 宏命名空间
+- 生命周期命名空间
+- 标签命名空间
 
 ```rust
 // Foo 在类型命名空间中引入一个类型，在值命名空间中引入一个构造函数
@@ -900,21 +905,21 @@ fn example<'Foo>(f: Foo) {
 
 有以下几类程序项:
 
--   常量项
--   静态项
--   类型定义
--   函数定义
--   结构体定义
--   枚举定义
--   联合体定义
--   use 声明
--   外部 Crate 声明
--   trait
--   impl
--   模块
--   外部块
+- 常量项
+- 静态项
+- 类型定义
+- 函数定义
+- 结构体定义
+- 枚举定义
+- 联合体定义
+- use 声明
+- 外部 Crate 声明
+- trait
+- impl
+- 模块
+- 外部块
 
->   更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/nightly/reference/items.html)。
+> 更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/nightly/reference/items.html)。
 
 ## 模块
 
@@ -924,11 +929,11 @@ fn example<'Foo>(f: Foo) {
 
 有两种管理模块的方式：
 
--   新风格：创建与模块同名的文件
--   旧风格：创建与模块同名的**文件夹**，并在其中创建 *mod.rs*
+- 新风格：创建与模块同名的文件
+- 旧风格：创建与模块同名的**文件夹**，并在其中创建 _mod.rs_
 
->   -   推荐使用新风格的形式，因为嵌套更少，结构更加清晰一致
->   -   可以在同一个项目中混用两种风格
+> - 推荐使用新风格的形式，因为嵌套更少，结构更加清晰一致
+> - 可以在同一个项目中混用两种风格
 
 ### 新风格
 
@@ -994,9 +999,9 @@ pub fn baz() {}
 
 路径是一个或多个由命名空间限定符 `::` 分隔的路径段组成的序列，用来引用模块树中的项。
 
--   **绝对路径**从 Crate 根开始，以 Crate 名或 `crate` 开头
--   **相对路径**从当前模块开始，以 `self`、`super` 或当前模块名开头
--   **全局路径**从外部预导入包开始，以 `::` 开头，其后必须跟一个外部预导入 Crate 名
+- **绝对路径**从 Crate 根开始，以 Crate 名或 `crate` 开头
+- **相对路径**从当前模块开始，以 `self`、`super` 或当前模块名开头
+- **全局路径**从外部预导入包开始，以 `::` 开头，其后必须跟一个外部预导入 Crate 名
 
 ```rust
 mod std {
@@ -1031,10 +1036,10 @@ fn main() {
 
 私有性规则有如下：
 
--   所有项默认私有
--   `pub` 关键字使项变为公有
--   不允许使用定义于当前模块的子模块中的私有代码
--   允许使用任何定义于父模块或当前模块中的私有代码
+- 所有项默认私有
+- `pub` 关键字使项变为公有
+- 不允许使用定义于当前模块的子模块中的私有代码
+- 允许使用任何定义于父模块或当前模块中的私有代码
 
 ### 结构体可见性
 
@@ -1083,7 +1088,7 @@ mod a {
         A,
         B
     }
-    
+
     pub trait Bar {
         fn a();
         fn b();
@@ -1095,12 +1100,12 @@ mod a {
 
 除了最常见的通过 `pub` 来控制可见性外，还可以指定作用域内的可见性：
 
--   `pub(self)`：默认值，仅在当前或子模块中可见
+- `pub(self)`：默认值，仅在当前或子模块中可见
 
--   `pub`：完全公开
--   `pub(crate)`：仅 Crate 内可见
--   `pub(super)`：上级模块中可见
--   `pub(in <path>)`：指定的路径中可见
+- `pub`：完全公开
+- `pub(crate)`：仅 Crate 内可见
+- `pub(super)`：上级模块中可见
+- `pub(in <path>)`：指定的路径中可见
 
 ```rust
 pub fn call() {
@@ -1172,7 +1177,7 @@ fn main() {
 }
 ```
 
->   关于 Rust 的 API 设计，可参考 [The Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)。
+> 关于 Rust 的 API 设计，可参考 [The Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)。
 
 ### as 关键字
 
@@ -1225,13 +1230,13 @@ use std::io::prelude::*;
 
 工作区是一系列包的集合，这些包被称为**工作区成员**，并被一起管理。
 
--   命令可以在所有工作区成员上运行，如 `cargo check --workspace`
--   所有工作区成员共享工作区根目录下的 *Cargo.lock* 和 *target*
--   共享包元数据
+- 命令可以在所有工作区成员上运行，如 `cargo check --workspace`
+- 所有工作区成员共享工作区根目录下的 _Cargo.lock_ 和 _target_
+- 共享包元数据
 
 ### 创建
 
-在一个已经存在的包的 *Cargo.toml* 中添加 `[workspace]`，那么这个包就是这个工作区的**根包**，工作区根目录就是根包的目录，然后在 `members` 字段中添加工作区成员。
+在一个已经存在的包的 _Cargo.toml_ 中添加 `[workspace]`，那么这个包就是这个工作区的**根包**，工作区根目录就是根包的目录，然后在 `members` 字段中添加工作区成员。
 
 ```toml
 [workspace]
@@ -1256,7 +1261,7 @@ edition = "2021"
 └── target
 ```
 
-若 *Cargo.toml* 不存在 `[package]`，那么就是一个虚拟工作区，没有根包，仅用于组织各个包，该 *Cargo.toml* 所在的目录就是工作区根目录。
+若 _Cargo.toml_ 不存在 `[package]`，那么就是一个虚拟工作区，没有根包，仅用于组织各个包，该 _Cargo.toml_ 所在的目录就是工作区根目录。
 
 ```toml
 [workspace]
@@ -1278,7 +1283,7 @@ members = ["backend", "frontend"]
 └── target
 ```
 
-在工作区根目录的 *Cargo.toml* 为整个工作区的配置，每个包也有自己的配置，但只会有一个 *Cargo.lock* 和 *target*。
+在工作区根目录的 _Cargo.toml_ 为整个工作区的配置，每个包也有自己的配置，但只会有一个 _Cargo.lock_ 和 _target_。
 
 工作区成员还可使用如下格式：
 
@@ -1289,7 +1294,7 @@ members = ["foo", "foo-*", "bar/*"]
 
 ### 配置
 
-可以为工作区的所有包进行统一配置，如 `[dependencies]`、`[package.authors]` 等，然后在各个包自己的 *Cargo.toml* 中设定 `key.workspace = true` 来继承工作区配置。
+可以为工作区的所有包进行统一配置，如 `[dependencies]`、`[package.authors]` 等，然后在各个包自己的 _Cargo.toml_ 中设定 `key.workspace = true` 来继承工作区配置。
 
 ```toml
 # Cargo.toml
@@ -1324,18 +1329,18 @@ cc.workspace = true
 
 对于继承的依赖，其 `features` 会合并。
 
->   更多工作区配置相关的信息，可参考 [工作区字段](https://doc.rust-lang.org/cargo/reference/workspaces.html#the-members-and-exclude-fields)。
+> 更多工作区配置相关的信息，可参考 [工作区字段](https://doc.rust-lang.org/cargo/reference/workspaces.html#the-members-and-exclude-fields)。
 
 ### 依赖关系
 
-构建时 Cargo 并不假定工作区中的包之间会相互依赖，所以需要在各包的 *Cargo.toml* 中明确标明依赖关系。
+构建时 Cargo 并不假定工作区中的包之间会相互依赖，所以需要在各包的 _Cargo.toml_ 中明确标明依赖关系。
 
 ```toml
 [dependencies]
 frontend = { path = "../frontend" }
 ```
 
-同时各个包都可以有自己的依赖，还可以是同一依赖的不同版本，都会被记录到 *Cargo.lock* 中。
+同时各个包都可以有自己的依赖，还可以是同一依赖的不同版本，都会被记录到 _Cargo.lock_ 中。
 
 ### 构建
 
@@ -1390,7 +1395,7 @@ fn it_works() {}
 mod a {}
 ```
 
->   不是所有的属性都可以声明为外部或内部属性。
+> 不是所有的属性都可以声明为外部或内部属性。
 
 属性由指向属性的路径和路径后跟的可选的带定界符的 Token 树组成。除了宏属性之外，其它属性的输入也允许使用 `=` 后跟表达式的格式。
 
@@ -1458,26 +1463,26 @@ struct Foo {
 fn foo() {}
 ```
 
->   Rust 内置的外部工具为 `clippy` 和 `rustfmt`。
+> Rust 内置的外部工具为 `clippy` 和 `rustfmt`。
 
 ### 活跃属性和惰性属性
 
 属性要么是活跃的，要么是惰性的。在属性处理过程中，活跃属性将从其所在的对象上移除，而惰性属性依然保持不变。
 
--   `cfg` 和 `cfg_attr` 属性是活跃的
--   `test` 属性在测试中是惰性的，否则是活跃的
--   宏属性是活跃的
--   所有其它属性都是惰性的
+- `cfg` 和 `cfg_attr` 属性是活跃的
+- `test` 属性在测试中是惰性的，否则是活跃的
+- 宏属性是活跃的
+- 所有其它属性都是惰性的
 
 这样的区分主要是为了明确哪些属性会影响编译过程，哪些属性会保留到运行时。
 
 ## 内置属性
 
->   更多关于内置属性的信息，可参考 [Built-in attributes index](https://doc.rust-lang.org/nightly/reference/attributes.html#built-in-attributes-index)。
+> 更多关于内置属性的信息，可参考 [Built-in attributes index](https://doc.rust-lang.org/nightly/reference/attributes.html#built-in-attributes-index)。
 
 ### 条件编译
 
--   `cfg`：条件编译
+- `cfg`：条件编译
 
 ```rust
 #[cfg(target_os = "macos")]
@@ -1496,7 +1501,7 @@ fn needs_not_foo() {}
 fn when_unwinding() {}
 ```
 
--   `cfg_attr`：条件包含属性
+- `cfg_attr`：条件包含属性
 
 ```rust
 #[cfg_attr(target_os = "linux", path = "linux.rs")]
@@ -1516,9 +1521,9 @@ fn fuzz() {}
 
 ### 测试
 
--   `test`：标记为测试项
--   `ignore`：忽略测试项
--   `should_panic`：测试项应产生 panic
+- `test`：标记为测试项
+- `ignore`：忽略测试项
+- `should_panic`：测试项应产生 panic
 
 ### 派生
 
@@ -1528,31 +1533,31 @@ fn fuzz() {}
 
 ### 宏
 
--   `macro_export`：导出由 `macro_rules!` 创建的声明宏
--   `macro_use`：扩展宏可见性，或从其它 Crate 导入宏
--   `proc_macro`：定义类函数宏
--   `proc_macro_attribute`：定义属性宏
--   `proc_macro_derive`：定义派生宏
+- `macro_export`：导出由 `macro_rules!` 创建的声明宏
+- `macro_use`：扩展宏可见性，或从其它 Crate 导入宏
+- `proc_macro`：定义类函数宏
+- `proc_macro_attribute`：定义属性宏
+- `proc_macro_derive`：定义派生宏
 
 ### 诊断
 
--   `allow`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别
--   `deprecated`：弃用标记
--   `must_use`：为未使用的值生成 lint 提醒
+- `allow`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别
+- `deprecated`：弃用标记
+- `must_use`：为未使用的值生成 lint 提醒
 
 ### ABI、链接、符号和 FFI
 
--   `link`：指定与外部 extern 块链接的本地库
--   `link_name`：指定外部 extern 块中的函数或静态项的符号名
--   `no_link`：防止链接外部 Crate
--   `repr`：控制类型的内存布局
--   `crate_type`：指定 Crate 类型
--   `crate_name`：指定 Crate 名
--   `no_main`：禁止 main 符号
--   `export_name`：指定函数或静态项导出的符号名
--   `link_section`：指定函数或静态项在所在的段
--   `no_mangle`：禁用对符号名编码
--   `used`：强制编译器在输出对象文件中保留静态项
+- `link`：指定与外部 extern 块链接的本地库
+- `link_name`：指定外部 extern 块中的函数或静态项的符号名
+- `no_link`：防止链接外部 Crate
+- `repr`：控制类型的内存布局
+- `crate_type`：指定 Crate 类型
+- `crate_name`：指定 Crate 名
+- `no_main`：禁止 main 符号
+- `export_name`：指定函数或静态项导出的符号名
+- `link_section`：指定函数或静态项在所在的段
+- `no_mangle`：禁用对符号名编码
+- `used`：强制编译器在输出对象文件中保留静态项
 
 ### 代码生成
 
@@ -1572,29 +1577,28 @@ fn fuzz() {}
 
 ### 预导入包
 
--   `no_std`：从预导入包中移除 std
--   `no_implicit_prelude`：禁用模块内的预导入包
+- `no_std`：从预导入包中移除 std
+- `no_implicit_prelude`：禁用模块内的预导入包
 
 ### 模块
 
--   `path`：指定模块的路径
+- `path`：指定模块的路径
 
 ### 极限值
 
--   `recursion_limit`：设置某些编译时操作的最大递归限制
--   `type_length_limit`：设置在单态化过程中构造具体类型时所做的最大类型替换次数
+- `recursion_limit`：设置某些编译时操作的最大递归限制
+- `type_length_limit`：设置在单态化过程中构造具体类型时所做的最大类型替换次数
 
 ### 运行时
 
--   `panic_handler`：设置处理 panic 的函数
--   `global_allocator`：设置全局内存分配器
--   `windows_subsystem`：指定要链接的 Windows 子系统
+- `panic_handler`：设置处理 panic 的函数
+- `global_allocator`：设置全局内存分配器
+- `windows_subsystem`：指定要链接的 Windows 子系统
 
 ### 特性
 
--   `feature`：用于启用非稳定的或实验性的编译器特性
+- `feature`：用于启用非稳定的或实验性的编译器特性
 
 ### 类型系统
 
--   `non_exhaustive`：表明类型将来会添加更多的字段或变体
-
+- `non_exhaustive`：表明类型将来会添加更多的字段或变体

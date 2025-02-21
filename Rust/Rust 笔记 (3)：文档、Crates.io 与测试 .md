@@ -18,7 +18,7 @@ rustdoc src/lib.rs
 cargo doc --open
 ```
 
-rustdoc 默认会在当前目录下生成 *doc* 目录，把 Crate 根文件名作为文档名，且不会生成依赖的文档。而使用 cargo 生成的文档则会在 *target* 下生成，把项目名作为文档名，依赖的文档也会生成。
+rustdoc 默认会在当前目录下生成 _doc_ 目录，把 Crate 根文件名作为文档名，且不会生成依赖的文档。而使用 cargo 生成的文档则会在 _target_ 下生成，把项目名作为文档名，依赖的文档也会生成。
 
 Cargo 则会生成依赖的的文档，可通过 `--no-deps` 来关闭，`--open` 可以在生成后自动在浏览器中打开。
 
@@ -29,8 +29,8 @@ cargo doc --open --no-deps
 `cargo doc -v` 可以查看调用 rustdoc 时实际传递的参数：
 
 ```shell
-rustdoc --crate-name mylib src/lib.rs 
-        -o target/doc 
+rustdoc --crate-name mylib src/lib.rs
+        -o target/doc
         -L dependency=target/debug/deps
 ```
 
@@ -40,7 +40,7 @@ rustdoc --crate-name mylib src/lib.rs
 
 `///` 表示外部文档注释，`//!` 表示内部文档注释。其作用的项与外部属性和内部属性相同，并支持通过 Markdown 来格式化文本，其对应的多行形式使用 `/**..*/` 和 `/*!..*/`。
 
-```rust
+````rust
 /// Returns the sum of the two arguments.
 ///
 /// # Example
@@ -52,15 +52,15 @@ rustdoc --crate-name mylib src/lib.rs
 pub fn add(x: i32, y: i32) -> i32 {
     x + y
 }
-```
+````
 
 ### 常用文档注释项
 
 `Examples` 为示例代码标题，其它常用的有：
 
--   **Panics**：函数可能会 `panic!` 的场景
--   **Errors**：若函数返回 `Result`，此部分描述可能会出现的错误以及什么情况会造成这些错误
--   **Safety**：若函数使用了 `unsafe`，此部分描述确保 `unsafe` 块中代码能正常工作的必要条件
+- **Panics**：函数可能会 `panic!` 的场景
+- **Errors**：若函数返回 `Result`，此部分描述可能会出现的错误以及什么情况会造成这些错误
+- **Safety**：若函数使用了 `unsafe`，此部分描述确保 `unsafe` 块中代码能正常工作的必要条件
 
 ## 文档属性
 
@@ -96,7 +96,7 @@ pub fn add(x: i32, y: i32) -> i32 {
 #[doc(alias = "TheAlias")]
 ```
 
->   更多关于文档属性的信息，可参考 [The #[doc] attribute](https://doc.rust-lang.org/rustdoc/write-documentation/the-doc-attribute.html)。
+> 更多关于文档属性的信息，可参考 [The #[doc] attribute](https://doc.rust-lang.org/rustdoc/write-documentation/the-doc-attribute.html)。
 
 # 2 Crates.io
 
@@ -108,19 +108,19 @@ pub fn add(x: i32, y: i32) -> i32 {
 cargo login <token>
 ```
 
-这会将 API Token 储存在 *~/.cargo/credentials* 中。
+这会将 API Token 储存在 _~/.cargo/credentials_ 中。
 
 ## 发布准备
 
-在发布之前，需要在 Crate 的 *Cargo.toml* 文件的 `[package]` 部分增加一些元信息。
+在发布之前，需要在 Crate 的 _Cargo.toml_ 文件的 `[package]` 部分增加一些元信息。
 
 以下字段是必须的：
 
--   `name`：Crate 的名称，当要发布到 Cartes.io 上时，该名称必须是唯一的
--   `version`：Crate 的版本
--   `edition`： Rust 的版本
--   `description`：对 Crate 的简单描述
--   `license`：Crate 使用的许可证，可以是任意 [SPDX](https://spdx.org/licenses/) 中的标识符
+- `name`：Crate 的名称，当要发布到 Cartes.io 上时，该名称必须是唯一的
+- `version`：Crate 的版本
+- `edition`： Rust 的版本
+- `description`：对 Crate 的简单描述
+- `license`：Crate 使用的许可证，可以是任意 [SPDX](https://spdx.org/licenses/) 中的标识符
 
 一个准备好发布的 Crate 的 Cargo.toml 的最小元信息如下：
 
@@ -153,7 +153,7 @@ license = "MIT OR LGPL-2.0"
 cargo package --list
 ```
 
-该命令会在 *target/package* 下创建一个目录和一个 *.crate* 文件，目录包含库的所有源文件，`--list` 可以查看其中包含的文件，Cargo 随后会基于这个 *.crate* 文件构建库。该命令还会提示一些必要的补充信息。
+该命令会在 _target/package_ 下创建一个目录和一个 _.crate_ 文件，目录包含库的所有源文件，`--list` 可以查看其中包含的文件，Cargo 随后会基于这个 _.crate_ 文件构建库。该命令还会提示一些必要的补充信息。
 
 准备好后就可以发布 Crate：
 
@@ -163,7 +163,7 @@ cargo publish
 
 同时，发布之后，包的文档也会自动发布到 [Docs.rs](https://docs.rs/)。当更新了版本后，可以修改 `version` 字段，然后再次发布。
 
->   工作区中可能有多个 Crate，Cargo 并不支持一次性全部发布，都需要进入这些 Crate 目录中来单独发布。
+> 工作区中可能有多个 Crate，Cargo 并不支持一次性全部发布，都需要进入这些 Crate 目录中来单独发布。
 
 ## 撤回版本
 
@@ -183,7 +183,7 @@ cargo yank --vers 1.0.1
 cargo yank --vers 1.0.1 --undo
 ```
 
->   撤回操作代表所有带有 *Cargo.lock* 的项目的依赖不会被破坏，同时任何新生成的 *Cargo.lock* 将不能使用被撤回的版本。
+> 撤回操作代表所有带有 _Cargo.lock_ 的项目的依赖不会被破坏，同时任何新生成的 _Cargo.lock_ 将不能使用被撤回的版本。
 
 ## 安装二进制 Crate
 
@@ -209,7 +209,7 @@ cargo install --list
 cargo uninstall <crate>
 ```
 
->   所有来自 `cargo install` 的二进制文件都会被默认安装到 `~/.cargo/bin`。
+> 所有来自 `cargo install` 的二进制文件都会被默认安装到 `~/.cargo/bin`。
 
 ## 扩展 Cargo 子命令
 
@@ -223,15 +223,15 @@ cargo --list
 
 常用扩展：
 
--   `cargo-binstall`：不编译直接安装二进制
--   `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
--   `cargo-edit`：检查和更新项目依赖
--   `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
--   `cargo-outdated`：检查和更新 *Cargo.toml* 中的依赖
--   `cargo-generate`：项目模板生成
--   `cargo-watch`：代码更新后进行自动构建
--   `cargo-deny`：检查第三方依赖的授权、来源和安全漏洞等
--   `cargo-zigbuild`：使用 Zig 更方便的进行交叉编译
+- `cargo-binstall`：不编译直接安装二进制
+- `cargo-cache`：清理 Cargo 所下载依赖的全局缓存
+- `cargo-edit`：检查和更新项目依赖
+- `cargo-update`：检查和更新通过 `cargo install` 安装的二进制 Crate
+- `cargo-outdated`：检查和更新 _Cargo.toml_ 中的依赖
+- `cargo-generate`：项目模板生成
+- `cargo-watch`：代码更新后进行自动构建
+- `cargo-deny`：检查第三方依赖的授权、来源和安全漏洞等
+- `cargo-zigbuild`：使用 Zig 更方便的进行交叉编译
 
 # 3 测试
 
@@ -254,17 +254,17 @@ fn test_add() {
 
 测试中以 `assert` 开头的宏为断言，常用断言有：
 
--   `assert!`：接受一个参数，断言是否为 `true`
+- `assert!`：接受一个参数，断言是否为 `true`
 
--   `assert_eq!`：接受两个参数，断言是否相等
+- `assert_eq!`：接受两个参数，断言是否相等
 
--   `assert_ne!`：接受两个参数，断言是否不等
+- `assert_ne!`：接受两个参数，断言是否不等
 
--   `debug_assert!`：与 `assert!` 相同，但仅在非优化构建中起作用
+- `debug_assert!`：与 `assert!` 相同，但仅在非优化构建中起作用
 
--   `debug_assert_eq!`：与 `assert_eq!` 相同，但仅在非优化构建中起作用
+- `debug_assert_eq!`：与 `assert_eq!` 相同，但仅在非优化构建中起作用
 
--   `debug_assert_ne!`：与 `assert_ne!` 相同，但仅在非优化构建中起作用
+- `debug_assert_ne!`：与 `assert_ne!` 相同，但仅在非优化构建中起作用
 
 接受两个参数的断言如 `assert_eq!` 和 `assert_ne!` 在底层分别使用了 `==` 和 `!=`。当断言失败时，程序会 panic，并且会使用调试格式打印其参数，因此比较的值必需实现了 `PartialEq` 和 `Debug`。
 
@@ -321,7 +321,7 @@ fn it_works() -> Result<(), String> {
 }
 ```
 
->   `#[should_panic]` 只能用于返回 `()` 的测试函数，因此不能在这种情况下使用。
+> `#[should_panic]` 只能用于返回 `()` 的测试函数，因此不能在这种情况下使用。
 
 当断言一个返回 `Result<(), E>` 的表达式时，不能使用 `?`。
 
@@ -402,10 +402,10 @@ cargo test -- --include-ignored
 
 Rust 中，测试可以分为：
 
--   单元测试：小规模集中的测试一个模块或私有项
--   集成测试：测试整个库，相当于作为库的使用者，因此只能测试公有项
--   文档测试：测试文档注释中的代码示例
--   基准测试：测试函数的性能
+- 单元测试：小规模集中的测试一个模块或私有项
+- 集成测试：测试整个库，相当于作为库的使用者，因此只能测试公有项
+- 文档测试：测试文档注释中的代码示例
+- 基准测试：测试函数的性能
 
 ### 单元测试
 
@@ -435,7 +435,7 @@ mod tests {
 
 ### 集成测试
 
-在 *src* 的同级目录下创建 *tests* 目录，该目录作为集成测试目录，其中可以创建任意多的测试文件，每一个文件都是一个集成测试，且都是独立的二进制 Crate。
+在 _src_ 的同级目录下创建 _tests_ 目录，该目录作为集成测试目录，其中可以创建任意多的测试文件，每一个文件都是一个集成测试，且都是独立的二进制 Crate。
 
 ```rust
 // src/lib.rs
@@ -452,7 +452,7 @@ fn test_add() {
 }
 ```
 
-由于每个集成测试都是独立的 Crate，因此需要导入外部 Crate，同时也可以导入 *Cargo.toml* 中的依赖。
+由于每个集成测试都是独立的 Crate，因此需要导入外部 Crate，同时也可以导入 _Cargo.toml_ 中的依赖。
 
 这里不需要使用 `#[cfg(test)]`，因为 `tests` 是一个特殊的目录，只会在运行测试时编译这个目录中的文件。
 
@@ -462,7 +462,7 @@ fn test_add() {
 cargo test --test integration_test
 ```
 
-由于每一个 *tests* 中的文件都被看作独立的二进制 Crate，若需要在这些测试文件中编写模块，如一些共享的辅助功能，那么不能直接将模块放到该目录下，需要创建一个和模块同名的文件夹，并在其中创建 *mod.rs*，然后在其中编写功能，实际上这是创建模块的旧风格形式。
+由于每一个 _tests_ 中的文件都被看作独立的二进制 Crate，若需要在这些测试文件中编写模块，如一些共享的辅助功能，那么不能直接将模块放到该目录下，需要创建一个和模块同名的文件夹，并在其中创建 _mod.rs_，然后在其中编写功能，实际上这是创建模块的旧风格形式。
 
 ```rust
 // tests/common/mod.rs
@@ -485,7 +485,7 @@ fn test_add() {
 
 由于文档注释中的代码块会被当做一段独立的代码来看待，因此需要使用 `use` 导入使用的包，否则会编译错误。
 
-```rust
+````rust
 /// ```
 /// use mylib::add;
 ///
@@ -494,18 +494,18 @@ fn test_add() {
 pub fn add(x: i32, y: i32) -> i32 {
     x + y
 }
-```
+````
 
 这里不需要显式写出 `main` 函数，是因为示例代码会被默认放在 `main` 中，但若需要返回一个 `Result<(), E>`，则需要显式写出。
 
 `use` 导入或 `main` 函数这类对示例代码实际上是多余的，可通过在文档注释的代码行前增加 `#`，从而在实际生成的文档中隐藏这些行，但在测试中依然会编译这些行。
 
-```rust
+````rust
 /// ```
 /// # // 被隐藏的行以 `#` 开始，但仍然会被编译
 /// # use mylib::try_div;
 /// # fn main() -> Result<(), String> {
-/// let res = try_div(10, 2)?;  // 只有这行会在文档中显示 
+/// let res = try_div(10, 2)?;  // 只有这行会在文档中显示
 /// # Ok(())
 /// # }
 /// ```
@@ -516,7 +516,7 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
         Ok(a / b)
     }
 }
-```
+````
 
 ### 基准测试
 
@@ -524,7 +524,7 @@ pub fn try_div(a: i32, b: i32) -> Result<i32, String> {
 
 Rust 内置了基准测试框架来通过多次运行迭代来评估性能。
 
->   目前需要使用 nightly 版本才能使用内置的基准测试。
+> 目前需要使用 nightly 版本才能使用内置的基准测试。
 
 将当前项目切换为 nightly 版本：
 
@@ -558,7 +558,7 @@ fn bench_fast(b: &mut test::Bencher) {
 }
 ```
 
->导入内置的 Crate 不需要在 *Cargo.toml* 的 `[dependencies]` 中添加，但必须使用 `extern crate` 来导入。
+> 导入内置的 Crate 不需要在 _Cargo.toml_ 的 `[dependencies]` 中添加，但必须使用 `extern crate` 来导入。
 
 在函数中使用 `println!`，这样编译器就不会对空循环进行优化，使用 `tests::black_box` 函数也是同样的。
 
@@ -569,7 +569,7 @@ fn bench_slow(b: &mut test::Bencher) {
 }
 ```
 
->   实际上 `black_box` 函数也不能保证不会进行优化。
+> 实际上 `black_box` 函数也不能保证不会进行优化。
 
 执行基准测试：
 
@@ -587,7 +587,7 @@ cargo bench
 rustup override unset
 ```
 
-在 *Cargo.toml* 中添加依赖和配置：
+在 _Cargo.toml_ 中添加依赖和配置：
 
 ```toml
 [dev-dependencies]
@@ -600,7 +600,7 @@ harness = false
 
 基准测试只会在开发阶段进行，因此在 `[dev-dependencies]` 中添加依赖。此外还添加了一个 `[[bench]]` 项，`name` 字段为测试名，`harness` 字段表示是否使用内置的基准测试工具，这里不使用所以为 `false`。
 
-criterion 要求将用于基准测试的代码放在项目根目录下的 *benches* 中，且每个测试文件名要与 `[[bench]]` 中 `name` 字段的值相同。
+criterion 要求将用于基准测试的代码放在项目根目录下的 _benches_ 中，且每个测试文件名要与 `[[bench]]` 中 `name` 字段的值相同。
 
 ```rust
 // src/lib.rs
@@ -635,4 +635,3 @@ criterion_main!(benches);
 ```
 
 多次运行测试后，每次测试都会对比前几次的结果。
-

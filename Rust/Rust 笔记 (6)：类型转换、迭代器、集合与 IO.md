@@ -10,84 +10,84 @@
 
 自动强转点包括：
 
--   `let`、`const`、`static` 声明语句：
+- `let`、`const`、`static` 声明语句：
 
-    ```rust
-    let _: &i8 = &mut 10; // 从 &mut i32 转换成 &i8
-    ```
+  ```rust
+  let _: &i8 = &mut 10; // 从 &mut i32 转换成 &i8
+  ```
 
--   函数调用时的参数：
+- 函数调用时的参数：
 
-    ```rust
-    fn foo(_: &i8) {}
+  ```rust
+  fn foo(_: &i8) {}
 
-    fn main() {
-        foo(&mut 10); // 从 &mut i32 转换成 &i8
-    }
-    ```
+  fn main() {
+      foo(&mut 10); // 从 &mut i32 转换成 &i8
+  }
+  ```
 
--   实例化结构体、联合体或枚举变体的字段：
+- 实例化结构体、联合体或枚举变体的字段：
 
-    ```rust
-    struct Foo<'a> {
-        x: &'a i8,
-    }
+  ```rust
+  struct Foo<'a> {
+      x: &'a i8,
+  }
 
-    fn main() {
-        Foo { x: &mut 10 }; // 从 &mut i32 转换成 &i8
-    }
-    ```
+  fn main() {
+      Foo { x: &mut 10 }; // 从 &mut i32 转换成 &i8
+  }
+  ```
 
--   函数返回值：
+- 函数返回值：
 
-    ```rust
-    fn foo(x: &i32) -> &dyn std::fmt::Display {
-        x // 从 &i32 转换成 &dyn Display
-    }
-    ```
+  ```rust
+  fn foo(x: &i32) -> &dyn std::fmt::Display {
+      x // 从 &i32 转换成 &dyn Display
+  }
+  ```
 
--   `Deref` 自动强转：
+- `Deref` 自动强转：
 
-    ```rust
-    use std::ops::Deref;
+  ```rust
+  use std::ops::Deref;
 
-    struct Wrap {
-        value: String,
-    }
+  struct Wrap {
+      value: String,
+  }
 
-    impl Deref for Wrap {
-        type Target = String;
+  impl Deref for Wrap {
+      type Target = String;
 
-        fn deref(&self) -> &Self::Target {
-            &self.value
-        }
-    }
+      fn deref(&self) -> &Self::Target {
+          &self.value
+      }
+  }
 
-    fn main() {
-        let w = Wrap {
-            value: "foo".to_string(),
-        };
-        w.len(); // 从 &Wrap 转换成 &String
-    }
-    ```
+  fn main() {
+      let w = Wrap {
+          value: "foo".to_string(),
+      };
+      w.len(); // 从 &Wrap 转换成 &String
+  }
+  ```
 
 ### 自动强转类型
 
 并不是所有类型都能在自动强转点被自动转换，有着以下限制：
 
--   `T` 到 `U`，当 `T` 是 `U` 的子类型（反射性）
--   `T` 到 `S`，当 `T` 能到 `U` 且 `U` 能到 `S`（传递性）
--   `&mut T` 到 `&T`
--   `*mut T` 到 `*const T`
--   `&T` 到 `*const T`
--   `&mut T` 到 `*mut T`
--   `&T` 或 `&mut T` 到 `&U`，当 `T` 实现了 `Deref<Target = U>`
--   `&mut T` 到 `&mut U`，当 `T` 实现了 `DerefMut<Target = U>`
--   函数到函数指针
--   非捕获闭包到函数指针
--   `!` 到 `T`
+- `T` 到 `U`，当 `T` 是 `U` 的子类型（反射性）
+- `T` 到 `S`，当 `T` 能到 `U` 且 `U` 能到 `S`（传递性）
+- `&mut T` 到 `&T`
+- `*mut T` 到 `*const T`
+- `&T` 到 `*const T`
+- `&mut T` 到 `*mut T`
+- `&T` 或 `&mut T` 到 `&U`，当 `T` 实现了 `Deref<Target = U>`
+- `&mut T` 到 `&mut U`，当 `T` 实现了 `DerefMut<Target = U>`
+- 函数到函数指针
+- 非捕获闭包到函数指针
+- `!` 到 `T`
 
->   更多关于类型自动强转的信息，可参考 [Type coercions](https://doc.rust-lang.org/nightly/reference/type-coercions.html)。
+> 更多关于类型自动强转的信息，可参考 [Type coercions](https://doc.rust-lang.org/nightly/reference/type-coercions.html)。
 
 ## 显式类型转换
 
@@ -146,14 +146,14 @@ unsafe {
 
 `std::convert` 提供了多种从一种类型转换到另一种类型的 trait：
 
--   `From` 和 `Into`：`T` 到 `U` 之间的转换
--   `TryFrom` 和 `TryInto`：`T` 到 `U` 之间的转换，但转换可能失败
--   `AsRef` 和 `AsMut`：`&T` 到 `&U` 和 `&mut T` 到 `&mut U` 之间转换
+- `From` 和 `Into`：`T` 到 `U` 之间的转换
+- `TryFrom` 和 `TryInto`：`T` 到 `U` 之间的转换，但转换可能失败
+- `AsRef` 和 `AsMut`：`&T` 到 `&U` 和 `&mut T` 到 `&mut U` 之间转换
 
 `std::borrow` 则提供了另一种针对引用转换的 trait：
 
--   `ToOwned`：`&T` 到 `U` 的转换
--   `Borrow` 和 `BorrowMut`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`
+- `ToOwned`：`&T` 到 `U` 的转换
+- `Borrow` 和 `BorrowMut`：与 `AsRef` 和 `AsMut` 相同，但还要求 `hash(T) == hash(U)`
 
 ### From 和 Into
 
@@ -169,7 +169,7 @@ pub trait Into<T>: Sized {
 }
 ```
 
--   若实现了 `From<T> for U`，则自动实现 `Into<U> for T`，因此推荐实现 `From` 而不是 `Into`，这是因为标准库有如下实现：
+- 若实现了 `From<T> for U`，则自动实现 `Into<U> for T`，因此推荐实现 `From` 而不是 `Into`，这是因为标准库有如下实现：
 
 ```rust
 impl<T, U> Into<U> for T where U: From<T> {
@@ -179,7 +179,7 @@ impl<T, U> Into<U> for T where U: From<T> {
 }
 ```
 
--   `From` 和 `Into` 是自反的：把 `T` 转换为 `T`，会直接返回，这是因为标准库有如下实现：
+- `From` 和 `Into` 是自反的：把 `T` 转换为 `T`，会直接返回，这是因为标准库有如下实现：
 
 ```rust
 impl<T> From<T> for T {
@@ -189,9 +189,9 @@ impl<T> From<T> for T {
 }
 ```
 
--   这两种转换 trait 虽然都是用作转换，但是用途不同：
-    -   `From` 主要用在构造函数，用于从 `T` 构造 `U` 的实例
-    -   `Into` 主要用在函数参数和返回值，让参数类型更灵活
+- 这两种转换 trait 虽然都是用作转换，但是用途不同：
+  - `From` 主要用在构造函数，用于从 `T` 构造 `U` 的实例
+  - `Into` 主要用在函数参数和返回值，让参数类型更灵活
 
 ```rust
 struct Wrap {
@@ -250,7 +250,7 @@ impl<T, U> TryInto<U> for T where U: TryFrom<T> {
 }
 ```
 
--   若实现了 `TryFrom<T> for U`，则自动实现 `TryInto<U> for T`，因此推荐实现 `TryFrom` 而不是 `TryInto`，这是因为标准库有如下实现：
+- 若实现了 `TryFrom<T> for U`，则自动实现 `TryInto<U> for T`，因此推荐实现 `TryFrom` 而不是 `TryInto`，这是因为标准库有如下实现：
 
 ```rust
 impl<T, U> TryInto<U> for T where U: TryFrom<T> {
@@ -374,8 +374,8 @@ pub trait AsMut<T: ?Sized> {
 
 `AsRef` 和 `AsMut` 都会自动解引用：
 
--   若实现了 `AsRef<T> for U`，则 `&U`、`&mut U`、`&&mut U` 都能调用 `as_ref`
--   若实现了 `AsMut<T> for U`，则 `&mut U`、`&mut &mut U` 都能调用 `as_mut`
+- 若实现了 `AsRef<T> for U`，则 `&U`、`&mut U`、`&&mut U` 都能调用 `as_ref`
+- 若实现了 `AsMut<T> for U`，则 `&mut U`、`&mut &mut U` 都能调用 `as_mut`
 
 ```rust
 struct Wrap {
@@ -562,7 +562,7 @@ assert_eq!(v_iter.next(), None);
 | `for e in &list`     | `for e in list.iter()`      | 只读       |
 | `for e in &mut list` | `for e in list.iter_mut()`  | 读 / 写    |
 
->   只有在类型具有集合语义时，才有必要实现 `Iterator`，如对 `i32` 或 `()` 实现是无意义的。
+> 只有在类型具有集合语义时，才有必要实现 `Iterator`，如对 `i32` 或 `()` 实现是无意义的。
 
 ### IntoIterator
 
@@ -570,15 +570,15 @@ assert_eq!(v_iter.next(), None);
 
 生成迭代器的方法有三种：
 
--   `into_iter`：获取元素序列的所有权并返回拥有所有权的迭代器
--   `iter`：返回元素序列的不可变引用的迭代器
--   `iter_mut`：返回元素序列的可变引用的迭代器
+- `into_iter`：获取元素序列的所有权并返回拥有所有权的迭代器
+- `iter`：返回元素序列的不可变引用的迭代器
+- `iter_mut`：返回元素序列的可变引用的迭代器
 
 `Iterator` 和 `IntoIterator` 的关系：
 
--   实现了 `Iterator` 的就是迭代器，不需要转换即可使用迭代器方法
--   实现了 `IntoIterator` 的可通过  `into_iter()` 方法转换为迭代器
--   若类型 `T` 实现了 `Iterator`，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现
+- 实现了 `Iterator` 的就是迭代器，不需要转换即可使用迭代器方法
+- 实现了 `IntoIterator` 的可通过 `into_iter()` 方法转换为迭代器
+- 若类型 `T` 实现了 `Iterator`，那么就不能为 `T` 再实现 `IntoIterator`，因为 `T` 本身就是一个迭代器，不需要转换，但可为 `&T` 或 `&mut T` 实现
 
 ## 消耗适配器
 
@@ -591,21 +591,21 @@ let total= v_iter.sum::<u32>();
 v_iter;    // 此处 v_iter 已失效
 ```
 
->   某些消耗适配器方法不一定会消耗完所有的元素，或在消耗完后会把迭代器重置到最开始的状态，因此迭代器在之后还可以继续使用。
+> 某些消耗适配器方法不一定会消耗完所有的元素，或在消耗完后会把迭代器重置到最开始的状态，因此迭代器在之后还可以继续使用。
 
 常见消耗适配器方法：
 
--   `next`、`last`、`nth`
--   `count`、`sum`
--   `fold`、`reduce`、`product`
--   `position`、`rposition`、`find`、`find_map`
--   `all`、`any`
--   `max`、`max_by`、`min`、`min_by`
--   `cmp`、`partial_cmp`
--   `eq`、`ne`、`ge`、`gt`、`le`、`lt`
--   `for_each`、`partition`、`collect`
+- `next`、`last`、`nth`
+- `count`、`sum`
+- `fold`、`reduce`、`product`
+- `position`、`rposition`、`find`、`find_map`
+- `all`、`any`
+- `max`、`max_by`、`min`、`min_by`
+- `cmp`、`partial_cmp`
+- `eq`、`ne`、`ge`、`gt`、`le`、`lt`
+- `for_each`、`partition`、`collect`
 
->   更多关于消耗适配器的方法，可参考 [Iterator in std::iter](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
+> 更多关于消耗适配器的方法，可参考 [Iterator in std::iter](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
 
 ## 迭代适配器
 
@@ -623,18 +623,18 @@ assert_eq!(r, 18);
 
 常见迭代适配器方法：
 
--   `map`、`map_while`
--   `filter`、`filter_map`
--   `flatten`、`flat_map`
--   `take`、`take_while`
--   `skip`、`skip_while`
--   `fuse`、`step_by`
--   `chain`、`chunk`、`zip`、`unzip`
--   `enumerate`、`rev`、`cycle`
--   `cloned`、`copied`
--   `inspect`、`by_ref`
+- `map`、`map_while`
+- `filter`、`filter_map`
+- `flatten`、`flat_map`
+- `take`、`take_while`
+- `skip`、`skip_while`
+- `fuse`、`step_by`
+- `chain`、`chunk`、`zip`、`unzip`
+- `enumerate`、`rev`、`cycle`
+- `cloned`、`copied`
+- `inspect`、`by_ref`
 
->   更多关于迭代适配器的方法，可参考 [Iterator in std::iter](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
+> 更多关于迭代适配器的方法，可参考 [Iterator in std::iter](https://doc.rust-lang.org/std/iter/trait.Iterator.html#provided-methods)。
 
 ## 自定义迭代器
 
@@ -690,17 +690,17 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 
 标准库 `std::collections` 中含有最常见的通用数据结构，分为四大类：
 
--   Sequences：`Vec`、`VecDeque`、`LinkedList`
--   Maps：`HashMap`、`BTreeMap`
--   Sets：`HashSet`、`BTreeSet`
--   Heap：`BinaryHeap`
+- Sequences：`Vec`、`VecDeque`、`LinkedList`
+- Maps：`HashMap`、`BTreeMap`
+- Sets：`HashSet`、`BTreeSet`
+- Heap：`BinaryHeap`
 
 其中最广泛使用的四种集合：
 
--   `Vec`：顺序存储的动态数组
--   `String`：顺序存储的 UTF-8 字符序列
--   `HashMap`：无序存储的键值对集合，其中键是唯一的
--   `HashSet`：无序存储的唯一值集合
+- `Vec`：顺序存储的动态数组
+- `String`：顺序存储的 UTF-8 字符序列
+- `HashMap`：无序存储的键值对集合，其中键是唯一的
+- `HashSet`：无序存储的唯一值集合
 
 ## Vec
 
@@ -710,9 +710,9 @@ Rust 标准库中有一系列被称为**集合**的数据结构。一般的数�
 
 有多种方法来创建 `Vec`：
 
--   `new` 创建空 `Vec`
--   `from` 将其它类型转换成 `Vec`
--   `vec!` 创建指定 `Vec`
+- `new` 创建空 `Vec`
+- `from` 将其它类型转换成 `Vec`
+- `vec!` 创建指定 `Vec`
 
 ```rust
 let v1: Vec<i32> = Vec::new();
@@ -740,16 +740,16 @@ v.iter().for_each(|e| println!("{e}"));
 
 常见 `Vec` 方法：
 
--   `new`、`from`、`with_capacity`
--   `len`、`ptr`、`capacity`
--   `get`、`get_mut`
--   `first`、`last`
--   `push`、`pop`
--   `insert`、`remove`、`swap_remove`
--   `dedup`、`clear`、`is_empty`
--   `splice`、`split_off`
+- `new`、`from`、`with_capacity`
+- `len`、`ptr`、`capacity`
+- `get`、`get_mut`
+- `first`、`last`
+- `push`、`pop`
+- `insert`、`remove`、`swap_remove`
+- `dedup`、`clear`、`is_empty`
+- `splice`、`split_off`
 
->   更多关于 `Vec` 的方法，可参考 [Vec in std::vec](https://doc.rust-lang.org/std/vec/struct.Vec.html#implementations)。
+> 更多关于 `Vec` 的方法，可参考 [Vec in std::vec](https://doc.rust-lang.org/std/vec/struct.Vec.html#implementations)。
 
 ### 重新分配
 
@@ -789,10 +789,10 @@ Rust 只有一种原生字符串类型：`&str`，它是一些储存在别处的
 
 有多种方法来创建 `String`：
 
--   `new` 创建空 `String`
--   `from` 或 `to_string` 将其它类型转换成 `String`
--   `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`
--   `from_utf8_lossy` / `from_utf16_lossy` 与不带 `lossy` 的方法类似，但包括无效字节序列
+- `new` 创建空 `String`
+- `from` 或 `to_string` 将其它类型转换成 `String`
+- `from_utf8` / `from_utf16` 创建来自**有效** UTF-8 / UTF-16 字节序列的 `String`
+- `from_utf8_lossy` / `from_utf16_lossy` 与不带 `lossy` 的方法类似，但包括无效字节序列
 
 ```rust
 let s1 = String::from("foo");
@@ -846,7 +846,7 @@ let s2 = String::from("bar");
 let s3 = s1 + &s2;   // s1 被移动了，不能继续使用
 ```
 
- 要拼接多个字符串，`+` 的行为就十分繁琐：
+要拼接多个字符串，`+` 的行为就十分繁琐：
 
 ```rust
 let s1 = String::from("tic");
@@ -868,27 +868,27 @@ let s = format!("{}-{}-{}", s1, s2, s3);
 
 常见 `String` 方法：
 
--   `new`、`from`
--   `from_utf8`、`from_utf_16`
--   `from_utf8_lossy`、`from_utf16_lossy`
--   `get`、`get_mut`
--   `push`、`push_str`、`pop`
--   `insert`、`insert_str`、`remove`
--   `clear`、`is_empty`、`is_ascii`
--   `find`、`matches`、`contains`
--   `split`、`splitn`、`split_once`、`split_inclusive`、`split_off`、`split_whitespace`
--   `chars`、`char_indices`、`bytes`、`lines`、`encode_utf16`
--   `replace`、`replacen`
--   `into_bytes`、`into_boxed_str`
--   `as_bytes`、`as_str`
--   `to_lowercase`、`to_uppercase`
--   `make_ascii_lowercase`、`make_ascii_uppercase`
--   `repeat`、`parse`
--   `strip_prefix`、`strip_suffix`
--   `start_with`、`end_with`
--   `trim`、`trim_start`、`trim_end`
+- `new`、`from`
+- `from_utf8`、`from_utf_16`
+- `from_utf8_lossy`、`from_utf16_lossy`
+- `get`、`get_mut`
+- `push`、`push_str`、`pop`
+- `insert`、`insert_str`、`remove`
+- `clear`、`is_empty`、`is_ascii`
+- `find`、`matches`、`contains`
+- `split`、`splitn`、`split_once`、`split_inclusive`、`split_off`、`split_whitespace`
+- `chars`、`char_indices`、`bytes`、`lines`、`encode_utf16`
+- `replace`、`replacen`
+- `into_bytes`、`into_boxed_str`
+- `as_bytes`、`as_str`
+- `to_lowercase`、`to_uppercase`
+- `make_ascii_lowercase`、`make_ascii_uppercase`
+- `repeat`、`parse`
+- `strip_prefix`、`strip_suffix`
+- `start_with`、`end_with`
+- `trim`、`trim_start`、`trim_end`
 
->   更多关于 `String` 的方法，可参考 [String in std::string](https://doc.rust-lang.org/std/string/struct.String.html#implementations)。
+> 更多关于 `String` 的方法，可参考 [String in std::string](https://doc.rust-lang.org/std/string/struct.String.html#implementations)。
 
 ## HashMap
 
@@ -904,9 +904,9 @@ use std::collections::HashMap;
 
 有多种方法来创建 `HashMap`：
 
--   `new` 创建空 `HashMap`
--   `from` 将其它类型转换成 `HashMap`
--   通过迭代器创建 `HashMap`
+- `new` 创建空 `HashMap`
+- `from` 将其它类型转换成 `HashMap`
+- 通过迭代器创建 `HashMap`
 
 ```rust
 let hm1: HashMap<&str, i32> = HashMap::new();
@@ -942,8 +942,8 @@ hm.iter().for_each(|(k, v)| println!("{k}: {v}"));
 
 由于每个键只能关联一个值，因此对 `HashMap` 的更新可能有不同的策略：
 
--   若键已存在，可以选择是否更新旧值
--   若键不存在，可以选择是否插入条目
+- 若键已存在，可以选择是否更新旧值
+- 若键不存在，可以选择是否插入条目
 
 要根据键的存在来决定是否插入条目，可使用 `entry`，其获取键作为参数，并返回一个 `Entry` 枚举，该枚举表示该键是否存在，其上有很多实用方法，如 `insert_or` 返回对值的可变引用，并在不存在时插入指定值。
 
@@ -955,22 +955,22 @@ assert_eq!(hm["b"], 2);
 
 常见 `Entry` 方法：
 
--   `or_default`、`or_insert`、`or_insert_with`
--   `key`、`and_modify`
+- `or_default`、`or_insert`、`or_insert_with`
+- `key`、`and_modify`
 
->   更多关于 `Entry` 的信息，可参考 [Entry in std::collections::hash_map](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)。
+> 更多关于 `Entry` 的信息，可参考 [Entry in std::collections::hash_map](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)。
 
 常见 `HashMap` 方法：
 
--   `new`、`from`
--   `get`、`get_mut`、`get_key_value`
--   `insert`、`remove`、`remove_entry`
--   `contains_key`、`entry`
--   `clear`、`is_empty`
--   `keys`、`into_keys`
--   `values`、`into_values`、`values_mut`
+- `new`、`from`
+- `get`、`get_mut`、`get_key_value`
+- `insert`、`remove`、`remove_entry`
+- `contains_key`、`entry`
+- `clear`、`is_empty`
+- `keys`、`into_keys`
+- `values`、`into_values`、`values_mut`
 
->   更多关于 `HashMap` 的方法，可参考 [HashMap in std::collections](https://doc.rust-lang.org/std/collections/struct.HashMap.html#implementations)。
+> 更多关于 `HashMap` 的方法，可参考 [HashMap in std::collections](https://doc.rust-lang.org/std/collections/struct.HashMap.html#implementations)。
 
 ### 所有权
 
@@ -983,7 +983,7 @@ let hm = HashMap::from([(key, value)]);
 (key, value); // 错误，key 和 value 已被移动
 ```
 
->   若将值的引用插入 `HashMap`，那么引用指向的值必须至少在 `HashMap` 有效时也是有效的。
+> 若将值的引用插入 `HashMap`，那么引用指向的值必须至少在 `HashMap` 有效时也是有效的。
 
 ## HashSet
 
@@ -999,9 +999,9 @@ use std::collections::HashSet;
 
 有多种方法来创建 `HashSet`：
 
--   `new` 创建空 `HashSet`
--   `from` 将其它类型转换成 `HashSet`
--   通过迭代器创建 `HashSet`
+- `new` 创建空 `HashSet`
+- `from` 将其它类型转换成 `HashSet`
+- 通过迭代器创建 `HashSet`
 
 ```rust
 let hs1: HashSet<i32> = HashSet::new();
@@ -1049,15 +1049,15 @@ assert_eq!(HashSet::from([&0, &3]), sym_diff);
 
 常见 `HashSet` 方法：
 
--   `new`、`from`
--   `get`、`take`
--   `insert`、`remove`
--   `replace`、`contains`
--   `clear`、`is_empty`
--   `union`、`intersection`、`difference`、`symmetric_difference`
--   `is_disjoint`、`is_subset`、`is_superset`
+- `new`、`from`
+- `get`、`take`
+- `insert`、`remove`
+- `replace`、`contains`
+- `clear`、`is_empty`
+- `union`、`intersection`、`difference`、`symmetric_difference`
+- `is_disjoint`、`is_subset`、`is_superset`
 
->   更多关于 `HashSet` 的方法，可参考 [HashSet in std::collections](https://doc.rust-lang.org/std/collections/struct.HashSet.html#implementations)。
+> 更多关于 `HashSet` 的方法，可参考 [HashSet in std::collections](https://doc.rust-lang.org/std/collections/struct.HashSet.html#implementations)。
 
 ## 扩展集合
 
@@ -1135,7 +1135,7 @@ Rect {
 
 另一种使用 `Debug` 格式打印数值的方法是使用 `dbg!` 宏。`dbg!` 宏接收一个表达式的所有权，打印出代码中调用宏时所在的文件和行号，以及该表达式的结果值，并返回该值的所有权。
 
->   `dbg!` 宏会打印到 `stderr`，而 `println!` 会打印到 `stdout`。
+> `dbg!` 宏会打印到 `stderr`，而 `println!` 会打印到 `stdout`。
 
 ```rust
 let rect = Rect {
@@ -1149,7 +1149,5 @@ dbg!(area(&rect));
 因为 `dbg!` 返回表达式值的所有权，所以 `width` 字段将获得相同的值。而 `dbg!` 不需要获得所有权，因此传递一个 `rect` 的引用。
 
 ## 文件 IO
-
-
 
 ## 网络 IO
