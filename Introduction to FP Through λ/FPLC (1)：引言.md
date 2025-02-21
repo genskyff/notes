@@ -1,6 +1,6 @@
->   参考：
+> 参考：
 >
->   -   [An Introduction to Functional Programming Through Lambda Calculus](https://book.douban.com/subject/6887111/)
+> - [An Introduction to Functional Programming Through Lambda Calculus](https://book.douban.com/subject/6887111/)
 
 # 1 引言
 
@@ -141,9 +141,9 @@ new_list = [1, 5, 3] # 显式创建新的数据结构
 
 函数式没有数组，而是使用列表（List）这种基于递归的嵌套数据结构，这与嵌套函数调用类似。这带来了许多优势：
 
--   标准化：数据结构有统一的显示和存储格式
--   简化调试：不需要为不同结构写特殊的打印程序
--   数据流清晰：函数间的数据传递更加明确
+- 标准化：数据结构有统一的显示和存储格式
+- 简化调试：不需要为不同结构写特殊的打印程序
+- 数据流清晰：函数间的数据传递更加明确
 
 另一个区别是命令式语言具有全局变量，可以不通过函数参数传递来直接修改外部变量。而函数式没有全局变量，必须显式作为函数参数传递，更改整个结构后再完整的返回。虽然这会导致参数变多，但也让程序逻辑更加清晰。
 
@@ -152,44 +152,44 @@ new_list = [1, 5, 3] # 显式创建新的数据结构
 在许多命令式语言中，函数不被当做值，无法作为参数或返回值。而在函数式语言中，函数本身也是值，可以作为参数和返回值。
 
 ```typescript
-type OpType = 'ADD' | 'SUB' | 'MUL' | 'QUO';
+type OpType = "ADD" | "SUB" | "MUL" | "QUO";
 type ArithmeticFn = (x: number, y: number) => number;
 
 function arith(op: OpType): ArithmeticFn {
-    function sum(x: number, y: number): number {
-        return x + y;
-    }
+  function sum(x: number, y: number): number {
+    return x + y;
+  }
 
-    function diff(x: number, y: number): number {
-        return x - y;
-    }
+  function diff(x: number, y: number): number {
+    return x - y;
+  }
 
-    function times(x: number, y: number): number {
-        return x * y;
-    }
+  function times(x: number, y: number): number {
+    return x * y;
+  }
 
-    function divide(x: number, y: number): number {
-        return x / y;
-    }
+  function divide(x: number, y: number): number {
+    return x / y;
+  }
 
-    switch(op) {
-        case 'ADD':
-            return sum;
-        case 'SUB':
-            return diff;
-        case 'MUL':
-            return times;
-        case 'QUO':
-            return divide;
-    }
+  switch (op) {
+    case "ADD":
+      return sum;
+    case "SUB":
+      return diff;
+    case "MUL":
+      return times;
+    case "QUO":
+      return divide;
+  }
 }
 ```
 
 这将允许使用像这样的方式来进行函数调用：
 
 ```typescript
-arith('ADD')(1, 2);
-arith('MUL')(3, 4);
+arith("ADD")(1, 2);
+arith("MUL")(3, 4);
 ```
 
 这在许多命令式语言中是非法的，因为无法构造函数类型。而函数式语言则可以，这赋予了其更灵活的表达能力。这个特性也被称为**高阶函数**（Higher-order function），是函数式的核心特征之一，体现了函数作为**一等公民**（First-class citizens）的概念。
@@ -208,21 +208,21 @@ arith('MUL')(3, 4);
 
 函数式编程的理论基础源于 λ 演算和递归函数理论。1963 年麦卡锡创造的 Lisp 语言首次将这些理论实现为编程语言，引入了**无类型变量**和**程序即数据**的核心概念。60 年代中期，兰丁的 SECD 机器和斯特雷奇的指称语义学，结合斯科特的数学理论，为函数式编程奠定了完整的理论框架。这期间涌现出 ML、SASL 等重要语言。1978 年，巴克斯提出函数式编程的概念，强调了其数学基础和时序独立性，推动了函数式编程在实践领域的广泛应用，形成了现代函数式编程的理论与实践体系。
 
->   **指称语义学**（Denotational semantics）是一种描述编程语言语义的数学方法，其基本原则为：每个程序结构都映射到一个数学对象（通常是一个函数），这个数学对象就是该程序的含义或指称。
+> **指称语义学**（Denotational semantics）是一种描述编程语言语义的数学方法，其基本原则为：每个程序结构都映射到一个数学对象（通常是一个函数），这个数学对象就是该程序的含义或指称。
 >
->   如：
+> 如：
 >
->   -   变量的指称是值
->   -   表达式的指称是计算该表达式得到的结果
->   -   程序的指称是将输入状态映射到输出状态的函数
+> - 变量的指称是值
+> - 表达式的指称是计算该表达式得到的结果
+> - 程序的指称是将输入状态映射到输出状态的函数
 >
->   其重要性在于：
+> 其重要性在于：
 >
->   -   提供了一种精确的、不依赖于具体实现的方式来描述程序的含义
->   -   使得程序的正确性证明变得更加规范和严谨
->   -   为不同编程语言提供了一个统一的数学基础
+> - 提供了一种精确的、不依赖于具体实现的方式来描述程序的含义
+> - 使得程序的正确性证明变得更加规范和严谨
+> - 为不同编程语言提供了一个统一的数学基础
 >
->   这种方法在形式化验证和语言设计中起着关键作用。
+> 这种方法在形式化验证和语言设计中起着关键作用。
 
 ## 1.9 λ 演算
 
@@ -232,30 +232,30 @@ arith('MUL')(3, 4);
 
 基本结构：
 
--   命令式：基于赋值序列
--   函数式：基于嵌套函数调用
+- 命令式：基于赋值序列
+- 函数式：基于嵌套函数调用
 
 变量特性：
 
--   命令式：一个名称可关联多个值（可变）
--   函数式：一个名称只关联一个值（不可变）
+- 命令式：一个名称可关联多个值（可变）
+- 函数式：一个名称只关联一个值（不可变）
 
 求值顺序：
 
--   命令式：求值顺序固定
--   函数式：求值顺序不固定
+- 命令式：求值顺序固定
+- 函数式：求值顺序不固定
 
 状态更新方式：
 
--   命令式：通过命令重复来更新同一名称的值
--   函数式：通过递归函数调用嵌套，用新名称关联新值
+- 命令式：通过命令重复来更新同一名称的值
+- 函数式：通过递归函数调用嵌套，用新名称关联新值
 
 独特性：
 
--   函数式语言提供显式的数据结构表示
--   函数式语言中函数被视为值（一等公民）
+- 函数式语言提供显式的数据结构表示
+- 函数式语言中函数被视为值（一等公民）
 
 理论基础：
 
--   命令式语言源于冯·诺依曼体系结构
--   函数式语言源于数学逻辑、计算理论、λ 演算和递归函数理论
+- 命令式语言源于冯·诺依曼体系结构
+- 函数式语言源于数学逻辑、计算理论、λ 演算和递归函数理论

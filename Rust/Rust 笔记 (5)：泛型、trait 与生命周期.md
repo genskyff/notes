@@ -1,5 +1,3 @@
-
-
 # 1 泛型
 
 **参数多态**指类型是一个满足某些约束的参数，而非具体的类型，在 Rust 中由泛型来支持。
@@ -8,9 +6,9 @@
 
 泛型参数分为三类：
 
--   生命周期参数：以 `'` 开头的参数，用作生命周期标注
--   类型参数：最为广泛使用的场景
--   常量参数：仅允许除浮点型以外的基本类型，且只能在常量上下文中有限制地使用
+- 生命周期参数：以 `'` 开头的参数，用作生命周期标注
+- 类型参数：最为广泛使用的场景
+- 常量参数：仅允许除浮点型以外的基本类型，且只能在常量上下文中有限制地使用
 
 其顺序被规定为：生命周期参数必须放置于后两类之前，后两类顺序没有要求
 
@@ -18,10 +16,10 @@
 
 常量参数允许程序项在常量值上泛型化，并在常量上下文中使用：
 
--   只与常量表达式和常量函数共存
--   只能独立使用，通常作为某类型的参数标注
--   除非是单路径或字面量，否则只能使用 `{ ... }` 形式
--   与关联常量类似，在单态化之后计算值
+- 只与常量表达式和常量函数共存
+- 只能独立使用，通常作为某类型的参数标注
+- 除非是单路径或字面量，否则只能使用 `{ ... }` 形式
+- 与关联常量类似，在单态化之后计算值
 
 ```rust
 fn double<const N: i32>() {
@@ -38,7 +36,7 @@ fn example() {
 }
 ```
 
->   更多关于常量参数的使用和限制，可参考 [Const generics](https://doc.rust-lang.org/nightly/reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
+> 更多关于常量参数的使用和限制，可参考 [Const generics](https://doc.rust-lang.org/nightly/reference/items/generics.html#const-generics) 和 [针对常量泛型参数的分类实现](https://rustcc.cn/article?id=282459c8-8e7d-4cf7-bc89-ca91fc004630)。
 
 ## 泛型定义
 
@@ -88,7 +86,7 @@ fn add<T>(x: T, y: T) -> T {
 }
 ```
 
->   由于没有对泛型 `T` 进行 trait 约束，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
+> 由于没有对泛型 `T` 进行 trait 约束，这段代码暂时无法编译，因为不是所有类型都能够进行 `+` 操作。
 
 ### 泛型 trait
 
@@ -257,7 +255,7 @@ struct Foo<'a, T> {
 }
 ```
 
->   更多关于 `PhantomData` 的信息，可参考 [PhantomData in std::marker](https://doc.rust-lang.org/std/marker/struct.PhantomData.html)。
+> 更多关于 `PhantomData` 的信息，可参考 [PhantomData in std::marker](https://doc.rust-lang.org/std/marker/struct.PhantomData.html)。
 
 # 2 trait
 
@@ -620,16 +618,16 @@ fn foo3<T: MyTrait>(value: T) -> T {
 }
 ```
 
--   对于 `foo1`，返回实现了 `MyTrait` 的类型，而 `impl MyTrait` 指定了返回值是某个具体实现了 `MyTrait` 的类型，但不指定具体是哪一种类型，而返回值 `Foo` 实现了 `MyTrait`，因此正确。
--   对于 `foo2`，返回类型 `T` 的值，其中 `T` 是任何实现了 `MyTrait` 的类型。**这里的 `T` 由调用者决定，而不是由函数内部指定**。因此内部返回固定的 `Foo` 类型的实例，这可能不符合调用者的期望，因为调用者可以使用 `foo2::<Bar>()` 这样的形式来调用，导致返回类型不匹配。
--   对于 `foo3`，接收类型为 `T` 的参数，并返回同样类型为 `T` 的值。这里的 `T` 同样由调用者指定。但函数内部没有假定任何具体的类型，返回什么类型都由调用者来决定，因此正确。
+- 对于 `foo1`，返回实现了 `MyTrait` 的类型，而 `impl MyTrait` 指定了返回值是某个具体实现了 `MyTrait` 的类型，但不指定具体是哪一种类型，而返回值 `Foo` 实现了 `MyTrait`，因此正确。
+- 对于 `foo2`，返回类型 `T` 的值，其中 `T` 是任何实现了 `MyTrait` 的类型。**这里的 `T` 由调用者决定，而不是由函数内部指定**。因此内部返回固定的 `Foo` 类型的实例，这可能不符合调用者的期望，因为调用者可以使用 `foo2::<Bar>()` 这样的形式来调用，导致返回类型不匹配。
+- 对于 `foo3`，接收类型为 `T` 的参数，并返回同样类型为 `T` 的值。这里的 `T` 同样由调用者指定。但函数内部没有假定任何具体的类型，返回什么类型都由调用者来决定，因此正确。
 
 ### 特殊约束
 
 有几种在 trait 前使用 `?` 和 `!` 的特殊约束，通常仅用于特定 trait。
 
--   `?T`：不确定 `T` 是否实现，如 `?Sized` 表示类型大小可能不固定
--   `!T`：移除 `T` 的实现，如 `!Send` 和 `!Sync` 表示类型不能实现并发安全
+- `?T`：不确定 `T` 是否实现，如 `?Sized` 表示类型大小可能不固定
+- `!T`：移除 `T` 的实现，如 `!Send` 和 `!Sync` 表示类型不能实现并发安全
 
 ### 多个约束
 
@@ -711,10 +709,10 @@ fn main() {
 
 对于 trait 对象，有如下特征：
 
--   大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 的对象大小无法确定
--   使用 trait 对象时，总是使用引用的方式：
-    -   虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小：一个指向具体类型的实例，另一个指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
-    -   trait 对象的引用方式有多种： `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等
+- 大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 的对象大小无法确定
+- 使用 trait 对象时，总是使用引用的方式：
+  - 虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小：一个指向具体类型的实例，另一个指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
+  - trait 对象的引用方式有多种： `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等
 
 ```rust
 trait Person {
@@ -783,34 +781,34 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
 
 只有对象安全的 trait 才可以组成 trait 对象，当 trait 中的函数或方法满足以下条件时才是对象安全的：
 
--   返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型
+- 返回值类型不能为 `Self`：trait 对象在产生时，原来的具体类型会被抹去，因此返回一个 `Self` 并不能知道具体返回什么类型
 
-    ```rust
-    // 错误，Clone 返回的是 Self
-    fn foo(v: Box<dyn Clone>) {}
-    ```
+  ```rust
+  // 错误，Clone 返回的是 Self
+  fn foo(v: Box<dyn Clone>) {}
+  ```
 
--   不能含有泛型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定
+- 不能含有泛型参数：泛型类型在编译时会被单态化，而 trait 对象是运行时才被确定
 
-    ```rust
-    trait Foo {
-        fn foo<T>(&self) -> T;
-    }
+  ```rust
+  trait Foo {
+      fn foo<T>(&self) -> T;
+  }
 
-    // 错误，trait 方法含有泛型参数
-    fn bar(v: Box<dyn Foo>) {}
-    ```
+  // 错误，trait 方法含有泛型参数
+  fn bar(v: Box<dyn Foo>) {}
+  ```
 
--   不能拥有关联函数：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接收 `&self`
+- 不能拥有关联函数：因为无法知道在哪个实例上调用方法，即 trait 的函数参数必须接收 `&self`
 
-    ```rust
-    trait Foo {
-        fn foo();
-    }
+  ```rust
+  trait Foo {
+      fn foo();
+  }
 
-    // 错误，trait 含有关联函数
-    fn bar(v: Box<dyn Foo>) {}
-    ```
+  // 错误，trait 含有关联函数
+  fn bar(v: Box<dyn Foo>) {}
+  ```
 
 ## trait 进阶
 
@@ -990,11 +988,11 @@ fn main() {
 
 目前编译器对该特性的实现并不完善，存在以下限制：
 
--   隐含 `'static` 约束：GATs 可能会导致编译器错误地要求某些类型比 `'static` 生命周期更长
--   非对象安全：带有 GATs 的 trait 无法作为 trait 对象使用
--   借用检查错误：GATs 可能会导致借用检查器对正确的代码检查出错
+- 隐含 `'static` 约束：GATs 可能会导致编译器错误地要求某些类型比 `'static` 生命周期更长
+- 非对象安全：带有 GATs 的 trait 无法作为 trait 对象使用
+- 借用检查错误：GATs 可能会导致借用检查器对正确的代码检查出错
 
->   更多关于 GATs 的信息，可参考 [Rust Blog](https://blog.rust-lang.org/2022/10/28/gats-stabilization.html)。
+> 更多关于 GATs 的信息，可参考 [Rust Blog](https://blog.rust-lang.org/2022/10/28/gats-stabilization.html)。
 
 ### 默认泛型参数
 
@@ -1051,8 +1049,8 @@ pub trait Add {
 
 不能这样做的原因有两点：
 
--   无法给函数级别的泛型参数设置默认值（函数级别无法设置 `where Rhs: Self`）
--   即使能够设置，但没有提供类型的具体实现，无法在重载时获得信息
+- 无法给函数级别的泛型参数设置默认值（函数级别无法设置 `where Rhs: Self`）
+- 即使能够设置，但没有提供类型的具体实现，无法在重载时获得信息
 
 要在实现 `Add` 时自定义 `Rhs` 类型而不使用默认类型，如实现一个能够将毫米与米相加，且 `Add` 的实现能正确处理转换，可以为 `Millis` 实现 `Add` 并以 `Meters` 作为 `Rhs`。
 
@@ -1075,8 +1073,8 @@ impl Add<Meters> for Millis {
 
 默认参数类型主要用于：
 
--   扩展类型而不破坏现有代码
--   在大部分不需要特定的情况进行自定义
+- 扩展类型而不破坏现有代码
+- 在大部分不需要特定的情况进行自定义
 
 ### 完全限定语法
 
@@ -1242,9 +1240,9 @@ fn main() {
 
 如 `::<T, U>` 的形式为 **turbofish** 语法，通常在以下情况使用：
 
--   明确指定泛型类型时
--   明确指定 trait 的关联类型时
--   无法进行类型推断时
+- 明确指定泛型类型时
+- 明确指定 trait 的关联类型时
+- 无法进行类型推断时
 
 ```rust
 trait ValueWrap {
@@ -1339,39 +1337,39 @@ impl fmt::Display for Person {
 
 ### PartialEq 和 Eq
 
--   `std::cmp::PartialEq`：部分值相等关系
--   `std::cmp::Eq`：完全相等关系
+- `std::cmp::PartialEq`：部分值相等关系
+- `std::cmp::Eq`：完全相等关系
 
 ```rust
 #[derive(PartialEq, Eq)]
 struct Point(i32, i32);
 ```
 
->   要实现 `Eq`，必须同时实现 `PartialEq`。
+> 要实现 `Eq`，必须同时实现 `PartialEq`。
 
 ### PartialOrd 和 Ord
 
--   `std::cmp::PartialOrd`：部分顺序关系
--   `std::cmp::Ord`：完全顺序关系
+- `std::cmp::PartialOrd`：部分顺序关系
+- `std::cmp::Ord`：完全顺序关系
 
 ```rust
 #[derive(PartialOrd, Ord)]
 struct Point(i32, i32);
 ```
 
->   要实现 `Ord`，必须同时实现 `PartialOrd`。
+> 要实现 `Ord`，必须同时实现 `PartialOrd`。
 
 ### Clone 和 Copy
 
--   `std::clone::Clone`：显式深拷贝
--   `std::marker::Copy`：复制语义
+- `std::clone::Clone`：显式深拷贝
+- `std::marker::Copy`：复制语义
 
 ```rust
 #[derive(Clone, Copy)]
 struct Point(i32, i32);
 ```
 
->   要实现 `Copy`，必须同时实现 `Clone`。
+> 要实现 `Copy`，必须同时实现 `Clone`。
 
 ### Iterator 和 IntoIterator
 
@@ -1431,15 +1429,14 @@ let mut map = HashMap::new();
 map.insert(Point(1, 2), 1);
 ```
 
->   -   要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`
->
->   -   若所有字段都实现了 `Hash`，则可通过 `derive` 派生 `Hash`，产生的 Hash 值将是在每个字段上调用 Hash 函数得到结果的组合
+> - 要实现 `Hash`，必须同时实现 `PartialEq` 和 `Eq`
+> - 若所有字段都实现了 `Hash`，则可通过 `derive` 派生 `Hash`，产生的 Hash 值将是在每个字段上调用 Hash 函数得到结果的组合
 
 ### 运算符重载
 
 Rust 中的操作符均为某个 trait 方法的语法糖，有一系列用于运算符重载的 trait，可以方便的为类型实现各种运算操作，如 `a + b` 表达式会在编译的过程中会被转换为 `a.add(b)`。
 
--   `std::ops::{Add, Sub, Mul, Div, Rem}`：重载加减乘除取余 `+` / `-` / `*` / `/` / `%`：
+- `std::ops::{Add, Sub, Mul, Div, Rem}`：重载加减乘除取余 `+` / `-` / `*` / `/` / `%`：
 
 ```rust
 use std::ops::Add;
@@ -1462,7 +1459,7 @@ fn main() {
 }
 ```
 
--   `std::ops::{Index, IndexMut}`：重载不可变和可变索引 `[]`：
+- `std::ops::{Index, IndexMut}`：重载不可变和可变索引 `[]`：
 
 ```rust
 use std::ops::Index;
@@ -1514,7 +1511,7 @@ fn main() {
 }
 ```
 
->   更多关于运算符重载的 trait，可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
+> 更多关于运算符重载的 trait，可参考 [std::ops](https://doc.rust-lang.org/std/ops/index.html#traits)。
 
 # 3 生命周期
 
@@ -1633,22 +1630,22 @@ println!("{r}");
 
 泛型参数都可以添加约束，生命周期同样可以。
 
--   `T: 'a`：`T` 本身或其内部的包含的引用都至少具有 `'a` 的生命周期
+- `T: 'a`：`T` 本身或其内部的包含的引用都至少具有 `'a` 的生命周期
 
--   `T: 'a + U`：`T` 必须实现 `U`，且 `T` 本身或其内部包含的引用都至少具有 `'a` 的生命周期
+- `T: 'a + U`：`T` 必须实现 `U`，且 `T` 本身或其内部包含的引用都至少具有 `'a` 的生命周期
 
 ```rust
 struct Ref<'a, T>(&'a T);
 struct Ref2<'a, T: 'a>(&'a T);
 ```
 
--   `Ref ` 接收 `T` 的引用，`Ref` 本身和该引用都至少具有 `'a` 的生命周期
--   `Ref2` 接收 `T` 的引用，`Ref2` 本身、该引用及其内部包含的引用都至少具有 `'a` 的生命周期
+- `Ref ` 接收 `T` 的引用，`Ref` 本身和该引用都至少具有 `'a` 的生命周期
+- `Ref2` 接收 `T` 的引用，`Ref2` 本身、该引用及其内部包含的引用都至少具有 `'a` 的生命周期
 
 `Ref` 和 `Ref2` 的区别在于：
 
--   `Ref` 对 `T` 没有生命周期约束，可以使用 `Ref<'a, i32>` 或 `Ref<'a, String>`，因为 `i32` 和 `String` 都不包含引用
--   `Ref2` 对 `T` 约束为必须满足生命周期 `'a`，因此 `T` 中若包含引用，也必须满足该约束
+- `Ref` 对 `T` 没有生命周期约束，可以使用 `Ref<'a, i32>` 或 `Ref<'a, String>`，因为 `i32` 和 `String` 都不包含引用
+- `Ref2` 对 `T` 约束为必须满足生命周期 `'a`，因此 `T` 中若包含引用，也必须满足该约束
 
 ### 生命周期转换
 
@@ -1768,9 +1765,9 @@ static NUM: i32 = 10;
 
 要理解 `'static` 生命周期，需要区分类型和实例的生命周期。`'static` 生命周期通常关联引用，但也适用于类型。
 
--   **类型的 `'static` 资格**：当类型没有包含任何非 `'static` 引用字段时，该类型**能夠**拥有 `'static` 生命周期，但不代表类型的所有实例都具有 `'static` 生命周期
--   **实例的生命周期**：类型具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域
--   **`'static` 生命周期的实例**：要让具有 `'static` 资格的类型的实例拥有 `'static` 生命周期，需要在一个静态上下文中创建它，如声明为全局静态变量
+- **类型的 `'static` 资格**：当类型没有包含任何非 `'static` 引用字段时，该类型**能夠**拥有 `'static` 生命周期，但不代表类型的所有实例都具有 `'static` 生命周期
+- **实例的生命周期**：类型具体实例的生命周期是由其创建和存在的上下文决定的。即使类型具有 `'static` 的资格，其实例的生命周期仍然受限于被声明的作用域
+- **`'static` 生命周期的实例**：要让具有 `'static` 资格的类型的实例拥有 `'static` 生命周期，需要在一个静态上下文中创建它，如声明为全局静态变量
 
 对于 trait 对象，若没有包含非 `'static` 的引用，则 **trait 对象隐式地具有 `'static` 生命周期**，因此 `Box<dyn T>` 和 `Box<dyn T + 'static>`是等价的。
 
@@ -2127,13 +2124,13 @@ fn main() {
 
 泛型参数 `T: U` 的含义：
 
--   `T` 是 `U` 的子类型，`U` 是 `T` 的父类型
--   任何使用 `U` 的地方，都能够使用 `T`
+- `T` 是 `U` 的子类型，`U` 是 `T` 的父类型
+- 任何使用 `U` 的地方，都能够使用 `T`
 
 对于生命周期这种泛型，`'a: 'b` 的含义：
 
--   `'a` 是 `'b` 的子类型，任何使用 `'b` 的地方，都能够使用 `'a`
--   `'a` 可当做 `'b` 去使用，因为 `'a` 的生命周期至少和 `'b` 一样长
+- `'a` 是 `'b` 的子类型，任何使用 `'b` 的地方，都能够使用 `'a`
+- `'a` 可当做 `'b` 去使用，因为 `'a` 的生命周期至少和 `'b` 一样长
 
 当把 `T: U` 中的 `T` 当作 `U` 去使用时，称作**子类型化**。Rust 中的子类型化的适用范围仅限于生命周期和型变，子类型化是隐式的，可出现在类型检查或类型推断中。
 
@@ -2161,9 +2158,9 @@ let sup: &for<'c> fn(&'c str, &'c str) = sub;
 
 **型变**是通过泛型参数来定义引用之间子类型关系的概念，设 `F<T>` 是 `T` 的类型构造器：
 
--   若 `T` 是 `U` 的子类型，且 `F<T>` 是 `F<U>` 子类型，则称 `F<T>` 在 `T` 上是**协变的 **(Covariant)
--   若 `T` 是 `U` 的子类型，且 `F<U>` 是 `F<T>` 的子类型，则称 `F<T>` 在 `T` 上是**逆变的** (Contravariant)
--   若不能由参数类型的子类型化关系推断出泛型的型变关系，则称 `F<T>` 在 `T` 上是**不变的** (Invariant)
+- 若 `T` 是 `U` 的子类型，且 `F<T>` 是 `F<U>` 子类型，则称 `F<T>` 在 `T` 上是**协变的 **(Covariant)
+- 若 `T` 是 `U` 的子类型，且 `F<U>` 是 `F<T>` 的子类型，则称 `F<T>` 在 `T` 上是**逆变的** (Contravariant)
+- 若不能由参数类型的子类型化关系推断出泛型的型变关系，则称 `F<T>` 在 `T` 上是**不变的** (Invariant)
 
 类型的型变关系由下表中的规则自动确定：
 
@@ -2216,9 +2213,9 @@ fn f2<'a>(s: &'a str) -> &'a str;
 
 然而当 `T` 被多个字段使用时：
 
--   若 `T` 所有使用的位置都是协变的，则 `Foo` 在 `T` 上是协变的
--   若 `T` 所有使用的位置都是逆变的，则 `Foo` 在 `T` 上是逆变的
--   否则，`Foo` 在 `T` 上是不变的
+- 若 `T` 所有使用的位置都是协变的，则 `Foo` 在 `T` 上是协变的
+- 若 `T` 所有使用的位置都是逆变的，则 `Foo` 在 `T` 上是逆变的
+- 否则，`Foo` 在 `T` 上是不变的
 
 ```rust
 use std::cell::Cell;
@@ -2244,7 +2241,7 @@ struct Foo<'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mix> {
 }
 ```
 
->   更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Subtyping and Variance](https://doc.rust-lang.org/nightly/reference/subtyping.html?highlight=subtyping#subtyping-and-variance)。
+> 更多有关子类型化和型变的信息，可参考 [Rust 秘典](https://nomicon.purewhite.io/subtyping.html) 和 [Subtyping and Variance](https://doc.rust-lang.org/nightly/reference/subtyping.html?highlight=subtyping#subtyping-and-variance)。
 
 ## 深入生命周期
 
@@ -2349,7 +2346,7 @@ let b = temp().f();
 let b = temp() + temp();
 ```
 
->   更多关于临时生命周期扩展的信息，可参考 [Temporary lifetime extension](https://doc.rust-lang.org/nightly/reference/destructors.html#temporary-lifetime-extension)。
+> 更多关于临时生命周期扩展的信息，可参考 [Temporary lifetime extension](https://doc.rust-lang.org/nightly/reference/destructors.html#temporary-lifetime-extension)。
 
 ### 再借用
 
@@ -2476,10 +2473,11 @@ fn get_fn2<'a>(f: fn(&'a str, &'a str) -> &'a str) {
 }
 ```
 
--   `get_fn1` 使用 HRTB，`f` 可以接收**任何**生命周期 `'a` 的引用，这使其更加灵活，处理不同长度引用的函数指针或闭包都可以传递给 `get_fn1`
--   `get_fn2` 在函数本身上声明了生命周期参数 `'a`。这意味着传递给 `get_fn2` 的函数必须能够接收**特定**生命周期 `'a` 的引用。这里的 `'a` 由 `get_fn2` 的调用上下文决定，因此所有涉及的引用都必须具有相同的生命周期
+- `get_fn1` 使用 HRTB，`f` 可以接收**任何**生命周期 `'a` 的引用，这使其更加灵活，处理不同长度引用的函数指针或闭包都可以传递给 `get_fn1`
+- `get_fn2` 在函数本身上声明了生命周期参数 `'a`。这意味着传递给 `get_fn2` 的函数必须能够接收**特定**生命周期 `'a` 的引用。这里的 `'a` 由 `get_fn2` 的调用上下文决定，因此所有涉及的引用都必须具有相同的生命周期
 
 对于包含生命周期的闭包对象，也需要使用 HRTB：
+
 ```rust
 let clo: &dyn for<'a> Fn(&'a str) -> &'a str = &|s: &str| s;
 ```

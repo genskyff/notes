@@ -1,4 +1,4 @@
->   Linux 环境：Debian 12 & Arch Linux
+> Linux 环境：Debian 12 & Arch Linux
 
 # 软件包配置
 
@@ -61,4 +61,3 @@ yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin mise-b
 yay -S --needed --noconfirm reflector
 reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
 ```
-

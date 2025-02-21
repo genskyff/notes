@@ -1,4 +1,4 @@
->   Mac 环境：Apple M1 Sonoma
+> Mac 环境：Apple M1 Sonoma
 
 # 终端配置
 
@@ -36,4 +36,3 @@ git clone https://github.com/mbadolato/iTerm2-Color-Schemes.git
 下载安装完后，在 `iTerm2` → `Settings` → `Profiles` → `Text` 中设置字体。
 
 <img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202406011401942.png" alt="设置终端字体" style="zoom: 50%;" />
-

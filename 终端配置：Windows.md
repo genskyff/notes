@@ -1,4 +1,4 @@
->    PC 环境：Windows 11 x64
+> PC 环境：Windows 11 x64
 
 # 1 终端配置
 
@@ -14,20 +14,21 @@ $PSVersionTable
 
 PowerShell 5 与 7 是共存的，但安装路径、名称、可执行文件名、配置文件、模块路径等都是独立的。
 
-5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`。7+ 的名称为 `PowerShell`，可执行文件名为 `pwsh`。 
+5 的名称为 `Windows PowerShell`，可执行文件名为 `powershell`。7+ 的名称为 `PowerShell`，可执行文件名为 `pwsh`。
 
 查看配置文件路径：
 
 ```powershell
 $PROFILE | Select-Object *Host* | Format-List
 ```
+
 查看模块路径：
 
 ```powershell
 $env:PSModulePath -split (';')
 ```
 
->   关于 PowerShell 5 和 7 的具体差异以及迁移指南，可参考 [从 Windows PowerShell 5.1 迁移到 PowerShell 7](https://learn.microsoft.com/zh-cn/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7?view=powershell-7.3)。
+> 关于 PowerShell 5 和 7 的具体差异以及迁移指南，可参考 [从 Windows PowerShell 5.1 迁移到 PowerShell 7](https://learn.microsoft.com/zh-cn/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7?view=powershell-7.3)。
 
 ### PSReadLine
 
@@ -39,7 +40,7 @@ $env:PSModulePath -split (';')
 Get-Module PSReadLine | Select-Object Name, Version
 ```
 
->   关于 PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
+> 关于 PSReadLine 的配置选项，可参考 [PSReadLine Reference](https://learn.microsoft.com/en-us/powershell/module/psreadline/?view=powershell-7.3)。
 
 ## Windows Terminal
 
@@ -286,4 +287,3 @@ Set-Alias -Name grl -Value Git-Reflog -Force
 ```powershell
 . $profile
 ```
-

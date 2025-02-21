@@ -148,23 +148,23 @@ assert!(equal_to_x(3));
 
 闭包通过三种方式捕获值，对应函数的三种获取参数的方式：
 
--   获取所有权
+- 获取所有权
 
--   可变借用
+- 可变借用
 
--   不可变借用
+- 不可变借用
 
 这三种捕获值的方式对应三个 `Fn` trait，所有函数都自动实现了这三个 trait，所有闭包都自动实现了其中一个或多个 trait：
 
--   `std::ops::FnOnce` 从环境获取值的所有权，因此该类闭包只能使用一次
--   `std::ops::FnMut` 从环境获取值的可变借用
--   `std::ops::Fn` 从环境获取值的不可变借用
+- `std::ops::FnOnce` 从环境获取值的所有权，因此该类闭包只能使用一次
+- `std::ops::FnMut` 从环境获取值的可变借用
+- `std::ops::Fn` 从环境获取值的不可变借用
 
 定义闭包时，若没有使用 `move`，则编译器会自动推断捕获值的方式：
 
--   由于所有闭包都可以被至少调用一次，因此所有闭包都实现了 `FnOnce`
--   没有获取被捕获值的所有权的闭包都实现了 `FnMut`
--   没有对被捕获值进行可变访问的闭包都实现了 `Fn`
+- 由于所有闭包都可以被至少调用一次，因此所有闭包都实现了 `FnOnce`
+- 没有获取被捕获值的所有权的闭包都实现了 `FnMut`
+- 没有对被捕获值进行可变访问的闭包都实现了 `Fn`
 
 ```rust
 // FnOnce
@@ -194,13 +194,13 @@ puts();
 
 所有闭包类型都实现了 `Sized`。此外，若闭包捕获值的类型实现了如下 trait，则闭包类型也会自动实现这些 trait：
 
--   `Clone`、`Copy`、`Sync`、`Send`
+- `Clone`、`Copy`、`Sync`、`Send`
 
 由于捕获通常是通过引用进行的，因此有以下一般规则：
 
--   若所有捕获值都实现了 `Sync`，则此闭包也实现了 `Sync`
--   若所有**非唯一不可变引用**的捕获值都实现了 `Sync`，且所有由唯一不可变引用、可变引用、复制或移动语义捕获的值都实现了 `Send`，则此闭包也实现了 `Send`
--   若闭包没有通过唯一不可变引用或可变引用捕获任何值，并且它通过复制或移动语义捕获的所有值都分别实现了 `Clone` 或 `Copy`，则此闭包也实现了 `Clone` 或 `Copy`
+- 若所有捕获值都实现了 `Sync`，则此闭包也实现了 `Sync`
+- 若所有**非唯一不可变引用**的捕获值都实现了 `Sync`，且所有由唯一不可变引用、可变引用、复制或移动语义捕获的值都实现了 `Send`，则此闭包也实现了 `Send`
+- 若闭包没有通过唯一不可变引用或可变引用捕获任何值，并且它通过复制或移动语义捕获的所有值都分别实现了 `Clone` 或 `Copy`，则此闭包也实现了 `Clone` 或 `Copy`
 
 对于非 `Copy` 类型，`move` 会强制获取捕获值的所有权，但闭包类型依然会根据使用方式进行推断：
 
@@ -392,14 +392,14 @@ size of main: 0
 
 Rust 有两种错误类别：
 
--   **不可恢复错误**：无法恢复的 Bug，如数组访问越界，通常使用 `panic!`
--   **可恢复错误**：报告错误并重试，如未找到文件，通常使用 `Result`
+- **不可恢复错误**：无法恢复的 Bug，如数组访问越界，通常使用 `panic!`
+- **可恢复错误**：报告错误并重试，如未找到文件，通常使用 `Result`
 
 ## 不可恢复错误
 
 当执行 `panic!` 时，会打印出错误信息，并进行**栈展开**并清理栈数据；或不进行清理而直接**终止**，转而由操作系统来清理。发生 panic 的线程会结束，若为主线程，则整个程序结束。
 
-通过在 *Cargo.toml* 的 `[profile]` 设置策略，`abort` 表示直接终止：
+通过在 _Cargo.toml_ 的 `[profile]` 设置策略，`abort` 表示直接终止：
 
 ```toml
 [profile.release]
@@ -430,7 +430,7 @@ RUST_BACKTRACE=1 cargo run
 env RUST_BACKTRACE=1 cargo run
 ```
 
->   仅在 Debug 下有效。
+> 仅在 Debug 下有效。
 
 ## 可恢复的错误
 
@@ -482,16 +482,16 @@ fn main() {
 
 常见 `Result` 方法：
 
--   `is_ok`、`is_err`
--   `and`、`and_then`
--   `or`、`or_else`
--   `map`、`map_err`
--   `map_or`、`map_or_else`
--   `expect`、`expect_err`
--   `unwrap`、`unwrap_err`
--   `unwrap_or`、`unwrap_or_else`
+- `is_ok`、`is_err`
+- `and`、`and_then`
+- `or`、`or_else`
+- `map`、`map_err`
+- `map_or`、`map_or_else`
+- `expect`、`expect_err`
+- `unwrap`、`unwrap_err`
+- `unwrap_or`、`unwrap_or_else`
 
->   更多关于 `Result` 的方法，可参考 [Result in std::result](https://doc.rust-lang.org/std/result/enum.Result.html#implementations)。
+> 更多关于 `Result` 的方法，可参考 [Result in std::result](https://doc.rust-lang.org/std/result/enum.Result.html#implementations)。
 
 ## 传播错误
 
@@ -522,7 +522,7 @@ fn main() {
 
 ### 简化传播错误
 
-使用传播错误的模式十分常见，因此 Rust 提供了 `?`  运算符来简化，用于返回 `Result` 的表达式后。
+使用传播错误的模式十分常见，因此 Rust 提供了 `?` 运算符来简化，用于返回 `Result` 的表达式后。
 
 ```rust
 fn read_content(path: &str) -> Result<String, io::Error> {
@@ -554,4 +554,3 @@ fn plus_one(n: Option<i32>) -> Option<i32> {
     Some(n? + 1)
 }
 ```
-

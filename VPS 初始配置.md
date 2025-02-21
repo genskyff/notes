@@ -1,4 +1,4 @@
->   Linux 环境：Debian 12
+> Linux 环境：Debian 12
 
 # 1 前言
 
@@ -83,7 +83,7 @@ Port 12345
 PermitRootLogin no
 ```
 
-之后则使用普通用户登录，再通过 `su -` 切换为 root 进行操作。 
+之后则使用普通用户登录，再通过 `su -` 切换为 root 进行操作。
 
 ### 使用密钥登录（可选）
 
@@ -101,7 +101,7 @@ ssh-keygen -t ed25519
 
 这时会在 `~/.ssh` 目录下生成 `id_ed25519` 和 `id_ed25519.pub` 两个文件，分别是**私钥**和**公钥**，公钥放服务器，私钥放本机。
 
->   推荐使用本机上 SSH 工具来生成密钥文件（如 SSH-Keygen 或 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH。
+> 推荐使用本机上 SSH 工具来生成密钥文件（如 SSH-Keygen 或 Xshell），再把公钥上传至服务器，以防止忘记下载私钥而无法 SSH。
 
 在服务器上放置公钥：
 
@@ -156,7 +156,7 @@ sysctl net.ipv4.tcp_available_congestion_control
 sysctl net.ipv4.tcp_congestion_control
 ```
 
->   若当前已经使用 BBR 算法，则可忽略下一步骤。
+> 若当前已经使用 BBR 算法，则可忽略下一步骤。
 
 ### 启用 BBR
 
@@ -180,7 +180,7 @@ echo "* soft nofile 51200
 
 ## iptables 配置
 
->   从 Debian 10 起，nftables 是使用 iptables 时的默认后端，具体可参考 [iptables - Debian Wiki](https://wiki.debian.org/iptables)。
+> 从 Debian 10 起，nftables 是使用 iptables 时的默认后端，具体可参考 [iptables - Debian Wiki](https://wiki.debian.org/iptables)。
 
 ### 查看 iptables 配置
 
@@ -263,4 +263,3 @@ cat /etc/group
 ```shell
 cut -d: -f1 /etc/passwd
 ```
-
