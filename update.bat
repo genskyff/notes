@@ -1,7 +1,6 @@
 @echo off
 call pnpm run lint
 if errorlevel 1 (
-    echo Lint check failed
     pause
     exit /b 1
 )
