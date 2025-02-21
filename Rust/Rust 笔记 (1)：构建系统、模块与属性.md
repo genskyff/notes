@@ -1,4 +1,4 @@
->   本系列文章使用的 Rust Edition 为 `2021`。
+>   本系列文章使用的 Rust Edition 为 `2024`。
 >
 >   参考：
 >
@@ -35,16 +35,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 -   通过命令行 `--config <key>=<value>` 传递的参数
 -   环境变量
-
--   *<workspace>/foo/baz/.cargo/config.toml*
-
+-   *<workspace>/foo/bar/.cargo/config.toml*
 -   *<workspace>/foo/.cargo/config.toml*
-
 -   *<package>/.cargo/config.toml*
 -   *~/.cargo/config.toml*
--   *<package>/Cargo.toml*
 
-所有配置文件的键值会被合并，重复的以优先级高的为准，相同优先级以最后定义的为准。命令行直接传递的优先级最高，*config.toml* 优先级大于 *Cargo.toml*。对于 *config.toml*，嵌套越深的优先级越高。执行 Cargo 时，当前目录的子目录中的配置文件会被忽略。
+所有配置文件的键值会被合并，重复的以优先级高的为准，相同优先级以最后定义的为准。命令行直接传递的优先级最，项目中嵌套越深的优先级越高。执行 Cargo 时，当前目录的子目录中的配置文件会被忽略。
 
 >   -   配置文件使用 [TOML](https://toml.io/cn/v1.0.0) 格式
 >   -   环境变量的配置可参考 [Cargo Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
@@ -128,7 +124,7 @@ rustc <file> --extern <name>[=path]
 rustc <file> --edition <2015|2018|2021|2024>
 
 # 编译时输出中间文件
-rustc <file> --emit <asm|llvm-ir|obj>
+rustc <file> --emit <asm|llvm-ir>
 
 # 编译时配置额外编译信息
 rustc <file> --cfg <name>[="value"]
@@ -170,6 +166,15 @@ cargo add <name>
 
 # 添加 dev 依赖
 cargo add --dev <name>
+
+# 添加 build 依赖
+cargo add --build <name>
+
+# 从 Git 仓库添加依赖
+cargo add --git <url> [--branch <branch>] <name>
+
+# 从本地添加依赖
+cargo add --path <path>
 
 # 删除依赖
 cargo remove <name>
@@ -253,19 +258,19 @@ cargo metadata
 [package]
 name = "hello"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-rand = "0.8.5"
+rand = "0.9.0"
 tokio = "*"
 my-lib = { path = "../my-lib" }
 axum = { git = "https://github.com/tokio-rs/axum", branch = "main" }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
 
 [build-dependencies]
-cc = "1.0"
+cc = "1.2"
 ```
 
 -   `[package]`：包的主要信息
@@ -285,20 +290,24 @@ cc = "1.0"
 ├── build
 ├── deps
 ├── examples
+├── incremental
 ├── hello.d
 ├── hello.exe
 ├── hello.pdb
-└── incremental
+├── libhello.d
+└── libhello.rlib
 ```
 
 -   **.fingerprint**：包含构建状态的元数据
 -   **build**：构建脚本 *build.rs* 的输出结果
 -   **deps**：依赖和库的编译结果
 -   **examples**：示例代码 *examples* 的编译结果
--   **hello.d**：二进制输出 *hello.exe* 的所有依赖声明
--   **hello.exe**：二进制输出
--   **hello.pdb**：包含调试信息
 -   **incremental**：包含增量编译的状态信息
+-   **hello.d**：*hello.exe* 的所有依赖声明
+-   **hello.exe**：可执行文件
+-   **hello.pdb**：包含调试信息
+-   **libhello.d**：*libhello.rlib* 的所有依赖声明
+-   **libhello.rlib**：静态库文件
 
 ## 构建配置
 
@@ -317,8 +326,6 @@ cc = "1.0"
 
 ```toml
 [profile.release]
-opt-level = 3
-debug = false
 strip = true
 lto = true
 codegen-units = 1
@@ -347,7 +354,7 @@ panic = "abort"
     -   增量构建，默认为 256
     -   非增量构建，默认为 16
 
--   **panic**：`-C panic` 标志，控制 panic 发生时的策略，单元、集成、文档和基准测试，以及构建脚本、过程宏只能使用 `unwind`
+-   **panic**：`-C panic` 标志，控制 panic 发生时的策略，所有类型的测试、构建脚本和过程宏只能使用 `unwind`
     -   `unwind`：默认值，panic 后进行栈展开并调用析构函数回收资源
     -   `abort`：panic 后直接中止程序，由操作系统回收资源
 
@@ -394,7 +401,7 @@ members = ["utils"]
 
 [dependencies]
 utils = { path = "./utils" }
-rand = "0.8"
+rand = "0.9"
 
 # 指定 utils 包的配置
 [profile.dev.package.utils]
