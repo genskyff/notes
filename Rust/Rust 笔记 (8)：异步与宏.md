@@ -2,7 +2,7 @@
 
 根据计算机处理任务的类型，主要分为：
 
--   计算密集型（Compute bound）：主要占用大量用于计算的运行时间，如视频编解码、代码编译等
+-   计算密集型（Compute bound）：主要占用大量用于计算的运行时间，如科学计算、代码编译等
 -   I/O 密集型（I/O bound）：主要占用对数据读取的时间，如硬盘读写、网络传输等
 
 操作系统的中断机制提供了程序级别的并发，但对程序内部更细粒度的控制则无法做到。特别是对于 I/O 密集型任务，处理器会花大量时间来等待读写操作，这类任务会**阻塞**（Blocking）当前线程。
@@ -41,7 +41,7 @@ use std::time::Duration;
 async fn async_count(label: &str, count: u32) {
     for i in 0..count {
         println!("{label}: {i}");
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        tokio::time::sleep(Duration::from_millis(200)).await;
     }
 }
 ```
@@ -60,7 +60,7 @@ fn async_count(label: &str, count: u32) -> impl Future<Output = ()> + '_ {
     async move {
         for i in 0..count {
             println!("{label}: {i}");
-            tokio::time::sleep(Duration::from_millis(500)).await;
+            tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
 }
@@ -96,8 +96,6 @@ fn run<F: Future>(future: F) -> F::Output {
     tokio::runtime::Runtime::new().unwrap().block_on(future)
 }
 ```
-
->   不同异步运行时不能混用。
 
 然后就可以在 `main` 中执行：
 
@@ -150,7 +148,7 @@ pub enum Either<A, B> {
 }
 ```
 
-当一个结束后，另一个也会立即结束，即使任务还没完成。
+当一个结束后，另一个也会立即结束，即使任务还没结束。
 
 ### join
 
