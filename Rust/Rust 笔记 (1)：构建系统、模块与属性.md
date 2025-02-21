@@ -734,12 +734,12 @@ fn main() {
 - `()`
 - `!`
 - `ExitCode`
-- `Result<(), E> where E: Debug`
-- `Result<Infallible, E> where E: Debug`
+- `Infallible`
+- `Result<T, E> where T: Termination, E: Debug`
 
 ### 库 Crate
 
-可以在一个包中同时包含二进制 Crate 和库 Crate，如一个名为 `mypkg` 包，其中包含了 _main.rs_ 和 _lib.rs_，那么这两个的 Crate 名都与包名相同，但要在 main.rs 中使用库 Crate 的内容，需要使用 `use` 关键字引入项，或在路径中包含 Crate 名。
+可以在一个包中同时包含二进制 Crate 和库 Crate，如一个名为 `mypkg` 包，其中包含了 _src/main.rs_ 和 _src/lib.rs_，那么这两个的 Crate 名都与包名相同，但要在 _main.rs_ 中使用 _lib.rs_ 中的内容，需要使用 `use` 关键字引入项，或在路径中包含 Crate 名。
 
 ```rust
 // lib.rs
@@ -775,7 +775,7 @@ extern crate foo as _;
 
 这种方式会将外部 Crate 的名称作为标识符绑定到当前作用域中，但若是在 Crate 的根中声明，那么此 Crate 名称也会被添加到外部预导入包中，这样在所有模块的作用域中都会被导入。在 _Cargo.toml_ 中引入的依赖相当于在 Crate 根中隐式地使用了这种方式导入。
 
-`as` 用于将导入的 Crate 绑定到不同的名称上。`_` 用于匿名导入，当仅需该 Crate 被链接进来，但不会使用其中的项时使用。
+`as` 用于将导入的 Crate 绑定到不同的名称上。`_` 用于匿名导入，当仅需该 Crate 被链接进来，但不使用其中的项时使用。
 
 Crate 名不能使用 `-`，但包名可以使用，在使用时会被自动转换为 `_`。
 
@@ -813,7 +813,7 @@ use alloc::rc::Rc;
 
 #### macro_use 预导入包
 
-`macro_use` 预导入包是外部 Crate 中的宏。外部 Crate 中的声明宏并不会被自动导入，需要在 `extern crate ` 上使用 `#[macro_use]` 来导入 Crate 中的使用了 `#[macro_export]` 的宏。
+`macro_use` 预导入包是外部 Crate 中的宏。外部 Crate 中的声明宏并不会被自动导入，需要在 `extern crate` 上使用 `#[macro_use]` 来导入 Crate 中的使用了 `#[macro_export]` 的宏。
 
 ```rust
 // lib.rs
@@ -905,19 +905,19 @@ fn example<'Foo>(f: Foo) {
 
 有以下几类程序项:
 
-- 常量项
-- 静态项
-- 类型定义
+- 模块
+- 外部 Crate 声明
+- use 声明
 - 函数定义
+- 类型定义
 - 结构体定义
 - 枚举定义
 - 联合体定义
-- use 声明
-- 外部 Crate 声明
-- trait
+- 常量项
+- 静态项
+- trait 定义
 - impl
-- 模块
-- 外部块
+- extern 块
 
 > 更多关于程序项的信息，可参考 [Items](https://doc.rust-lang.org/nightly/reference/items.html)。
 
@@ -930,10 +930,10 @@ fn example<'Foo>(f: Foo) {
 有两种管理模块的方式：
 
 - 新风格：创建与模块同名的文件
-- 旧风格：创建与模块同名的**文件夹**，并在其中创建 _mod.rs_
+- 旧风格：创建与模块同名的**目录**，并在其中创建 _mod.rs_
 
 > - 推荐使用新风格的形式，因为嵌套更少，结构更加清晰一致
-> - 可以在同一个项目中混用两种风格
+> - 可在同一个项目中混用两种风格
 
 ### 新风格
 
@@ -1039,7 +1039,7 @@ fn main() {
 - 所有项默认私有
 - `pub` 关键字使项变为公有
 - 不允许使用定义于当前模块的子模块中的私有代码
-- 允许使用任何定义于父模块或当前模块中的私有代码
+- 允许使用任何定义于当前模块及父模块中的私有代码
 
 ### 结构体可见性
 
@@ -1181,7 +1181,7 @@ fn main() {
 
 ### as 关键字
 
-将两个同名类型引入同一作用域时，可以通过在 `use` 后加上 `as` 来重命名引入作用域的类型。
+将两个同名类型引入同一作用域时，可以通过在 `use` 后加上 `as` 来重命名引入作用域的项。
 
 ```rust
 use std::fmt::Result;
@@ -1245,7 +1245,7 @@ members = ["frontend"]
 [package]
 name = "hello"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 ```
 
 其中 `hello` 是根包，`frontend` 是工作区成员，目录树为：
@@ -1300,16 +1300,16 @@ members = ["foo", "foo-*", "bar/*"]
 # Cargo.toml
 [workspace]
 members = ["frontend"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["someone"]
 documentation = "https://example.com/"
 
 [workspace.dependencies]
-cc = "1.0"
-rand = "0.8"
-regex = { version = "1.9", default-features = false, features = ["std"] }
+cc = "1.2"
+rand = "0.9"
+regex = { version = "1.11", default-features = false, features = ["std"] }
 
 # frontend/Cargo.toml
 [package]
@@ -1350,7 +1350,7 @@ frontend = { path = "../frontend" }
 cargo run -p <package>
 ```
 
-在工作区配置 `[workspace.default-members]` 中设定默认包，可以不需要该选项。
+可选的在工作区配置 `[workspace.default-members]` 中设定默认包。
 
 ```toml
 [workspace]
@@ -1411,7 +1411,7 @@ mod a {}
 
 ### 属性宏
 
-属性宏，也叫过程宏属性，由带有 `#[proc_macro_attribute]`，以 `(TokenStream, TokenStream) -> TokenStream` 签名的公有函数所定义的可应用于项上的过程宏，能够生成新的代码或对现有代码进行修改。
+属性宏，也叫过程宏属性，由带有 `#[proc_macro_attribute]` 属性，并以 `(TokenStream, TokenStream) -> TokenStream` 签名的公有函数所定义的可应用于项上的过程宏，能够生成新的代码或对现有代码进行修改。
 
 ```rust
 // myproc/src/lib.rs
@@ -1431,7 +1431,7 @@ fn invoke() {}
 
 ### 派生宏
 
-派生宏，也叫过程宏派生，由带有 `#[proc_macro_derive]`，属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
+派生宏，也叫过程宏派生，由带有 `#[proc_macro_derive]` 属性，且属性中带有标识符列表构成的 `attributes` 键所定义，这些标识符是辅助属性的名称，用于将额外的属性添加到其所在的程序项的作用域中。
 
 ```rust
 // myproc/src/lib.rs
@@ -1467,7 +1467,7 @@ fn foo() {}
 
 ### 活跃属性和惰性属性
 
-属性要么是活跃的，要么是惰性的。在属性处理过程中，活跃属性将从其所在的对象上移除，而惰性属性依然保持不变。
+属性要么是活跃的，要么是惰性的。在属性处理过程中，活跃属性将从其所在的对象上移除，不会保留到运行时中，而惰性属性依然保留。
 
 - `cfg` 和 `cfg_attr` 属性是活跃的
 - `test` 属性在测试中是惰性的，否则是活跃的
@@ -1541,7 +1541,7 @@ fn fuzz() {}
 
 ### 诊断
 
-- `allow`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别
+- `allow`、`expect`、`warn`、`deny`、`forbid`：更改默认的 lint 检查级别
 - `deprecated`：弃用标记
 - `must_use`：为未使用的值生成 lint 提醒
 
@@ -1561,15 +1561,13 @@ fn fuzz() {}
 
 ### 代码生成
 
-`inline`：内联代码
+- `inline`：内联代码
 
-`cold`：表示函数不太可能被调用
-
-`no_builtins`：禁用某些内置函数
-
-`target_feature`：配置特定目标的代码生成
-
-`track_caller`：将调用位置传递给 `std::panic::Location::caller` 函数
+- `cold`：表示函数不太可能被调用
+- `no_builtins`：禁用某些内置函数
+- `target_feature`：配置特定目标的代码生成
+- `track_caller`：将调用位置传递给 `std::panic::Location::caller` 函数
+- `instruction_set`：指定用于生成代码的指令集
 
 ### 文档
 
