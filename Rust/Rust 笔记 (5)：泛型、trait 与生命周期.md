@@ -805,7 +805,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
   trait Foo {
       fn foo();
   }
-
+  
   // 错误，trait 含有关联函数
   fn bar(v: Box<dyn Foo>) {}
   ```
@@ -2095,6 +2095,94 @@ impl<'a> Wrap<'a> {
     }
 }
 ```
+
+## RPIT 生命周期捕获
+
+RPIT（Return-position impl Trait）通过使用 `use` 来明确哪些泛型参数需要捕获。如明确捕获 `'a` 和 `T` 泛型参数：
+
+```rust
+fn capture<'a, T>(x: &'a (), y: T) -> impl Sized + use<'a, T> {
+    (x, y)
+}
+```
+
+泛型参数是否被捕获会影响行为：
+
+```rust
+fn capture<'a>(x: &'a ()) -> impl Sized + use<'a> {}
+
+fn test<'a>(x: &'a ()) -> impl Sized + 'static {
+    capture(x) // 错误
+}
+```
+
+因为 `capture` 捕获了 `'a`，因此返回值的生命周期与 `x` 一样长，但是 `test` 的返回值又是 `'static` 的，因此就要求 `'a` 要至少与 `'static` 一样长，从而报错。这可以通过 `use` 来显式明确不捕获生命周期来解决：
+
+```rust
+fn capture<'a>(x: &'a ()) -> impl Sized + use<> {}
+```
+
+### use 行为
+
+编译器会根据 Rust 版本来确定使用的规则。
+
+在所有版本中，若 `use` 不存在，则隐式捕获所有表示类型的泛型参数：
+
+```rust
+fn implicit<T, const C: usize>() -> impl Sized {}
+// 等价于
+fn explicit<T, const C: usize>() -> impl Sized + use<T, C> {}
+```
+
+对于生命周期参数，在 2021 及更早版本中，若 `use` 不存在，当生命周期参数在语法上出现在约束中时，才会被捕获，但 2024 开始，所有作用域内的生命周期参数都会被捕获。
+
+```rust
+fn implicit(_: &()) -> impl Sized {}
+// 2021 版等价
+fn f_2021(_: &()) -> impl Sized + use<> {}
+// 2024 版等价
+fn f_2024(_: &()) -> impl Sized + use<'_> {}
+```
+
+### 外部泛型参数
+
+隐式捕获时，来自外部的泛型参数也被认为在作用域内：
+
+```rust
+struct S<T, const C: usize>((T, [(); C]));
+impl<T, const C: usize> S<T, C> {
+    fn implicit<U>() -> impl Sized {}
+    // 等价于
+    fn explicit<U>() -> impl Sized + use<T, C, U> {}
+}
+```
+
+### HRTB
+
+对于 `for<...>` 中的生命周期参数，也被认为在作用域内：
+
+```rust
+trait Tr<'a> {
+    type Ty;
+}
+impl Tr<'_> for () {
+    type Ty = ();
+}
+fn implicit() -> impl for<'a> Tr<'a, Ty = impl Copy> {}
+fn f_2021() -> impl for<'a> Tr<'a, Ty = impl Copy + use<>> {}
+fn f_2024() -> impl for<'a> Tr<'a, Ty = impl Copy + use<'a>> {}
+```
+
+### APIT
+
+APIT（Argument position impl Trait）创建的匿名泛型参数被认为在作用域内：
+
+```rust
+fn implicit(_: impl Sized) -> impl Sized {}
+fn explicit<_0: Sized>(_: _0) -> impl Sized + use<_0> {}
+```
+
+这两者不完全等价，因为无法对匿名泛型参数通过 `f::<T>` 语法来为其提供参数。
 
 ## 子类型化和型变
 
