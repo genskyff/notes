@@ -805,7 +805,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
   trait Foo {
       fn foo();
   }
-  
+
   // 错误，trait 含有关联函数
   fn bar(v: Box<dyn Foo>) {}
   ```
