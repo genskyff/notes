@@ -658,7 +658,7 @@ s.push_str("bar");
 - 在运行时向操作系统申请内存
 - 在处理完后释放内存的方法
 
-在有垃圾回收的语言中， GC 管理这部分内存，在没有 GC 的语言中，需要手动管理。提前释放和重复释放都会导致问题，这需要精确配对每一个申请和释放，特别是在多线程环境下，这种问题会更严重。
+在有垃圾回收的语言中， GC 管理这部分内存，在没有 GC 的语言中，需要手动管理。提前释放和重复释放都会导致问题，这需要精确配对每一个申请和释放，特别是在并发环境下，这种问题会更严重。
 
 所有权的策略为：**变量离开作用域后内存就自动释放**。
 
@@ -820,7 +820,7 @@ let ps = &mut s;
 ps.push_str("bar");
 ```
 
-**`mut` 变量可被引用为 `&` 或 `&mut`，非 `mut` 变量只能被引用为 `&`**。
+`mut` 变量可被引用为 `&` 或 `&mut`，非 `mut` 变量只能被引用为 `&`。
 
 ```rust
 let x = 1;
@@ -842,7 +842,7 @@ let rz = &mut z;
 *rz = 6;    // 改变的是引用的值
 ```
 
-若变量本身的类型是引用，则 `&` 和 `&mut` 是两种数据类型，**因此一个 `mut` 变量的类型不能在 `&` 和 `&mut` 之间切换**。
+若变量本身的类型是引用，则 `&` 和 `&mut` 是两种数据类型，因此一个 `mut` 变量的类型不能在 `&` 和 `&mut` 之间切换。
 
 ```rust
 let mut x = 1;
@@ -1139,8 +1139,8 @@ enum IpKind {
 // 隐式值，从 0 开始
 enum Number {
     Zero,
-    One,
-    Two
+    One = 10,
+    Two // 11
 }
 
 // 显式值
@@ -1152,7 +1152,7 @@ enum Color {
 
 fn main() {
     println!("Zero is {}", Number::Zero as i32);
-    println!("One is {}", Number::One as i32);
+    println!("Two is {}", Number::Two as i32);
 
     println!("Red are #{:06x}", Color::Red as i32);
     println!("Blue are #{:06x}", Color::Blue as i32);
@@ -1213,7 +1213,7 @@ fn main() {
 
 许多语言中，空值 `null` 代表没有值。当尝试像非空值那样使用空值，就会出现错误。
 
-为了避免这种情况，**Rust 没有空值**，但有一个可以表示存在或不存在概念的枚举。
+为了避免这种情况，**Rust 没有空值**，但有一个可以表示存在与否概念的枚举。
 
 ```rust
 enum Option<T> {
@@ -1231,6 +1231,10 @@ let absent_number: Option<i32> = None;
 ```
 
 若使用 `None` 而不是 `Some`，则需要显式标注类型，因为编译器只通过 `None` 无法进行类型推断。
+
+```rust
+let none = None::<i32>;
+```
 
 ### Option 方法
 
@@ -1493,8 +1497,8 @@ match VALUE {
 
 ```rust
 match x {
-    None => None,
     Some(i) => Some(i + 1),
+    None => None,
 }
 ```
 
@@ -1898,4 +1902,4 @@ if let a @ b @ Some(_) = value {
 }
 ```
 
-这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`，`a`、`b` 两个也都相当于 `value`。由于值是 Copy 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
+这里 `v` 就相当于是 `value`，`t` 就相当于是 `Option<T>` 中的 `T`，`a`、`b` 两个也都相当于 `value`。由于值是 `Copy` 的，因此即使模式的命名变量会造成绑定，但是依然可以使用值，否则就需要使用 `ref`。
