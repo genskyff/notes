@@ -11,6 +11,10 @@
 当和外部 FFI 进行交互时，如调用 C 库中名为 `match` 的函数。在 C 中 match 不是关键字，但在 Rust 中是关键字，因此需要使用以 `r#` 开头的原始标识符。
 
 ```rust
+struct S<'r#struct> {
+    r#struct: &'r#struct str,
+}
+
 fn r#fn() {
     let r#i32 = 10;
     println!("{}", r#i32);
@@ -481,11 +485,12 @@ let s3 = r###"foo\t\nbar"###;
 
 ### C 字符串
 
-从 Rust 1.77 开始，也支持 `c"foo"` 形式的 C 风格字符串，其以 `\0` 结束，实际上是 `&'static std::ffi::CStr` 类型。
+Rust 也支持 `c"foo"` 形式的 C 风格字符串，其以 `\0` 结束，实际上是 `&'static std::ffi::CStr` 类型。
 
 ```rust
 let s = c"foo"; // &'static CStr;
 assert_eq!(4, std::mem::size_of_val(s));
+assert_eq!(s, std::ffi::CStr::from_bytes_with_nul(b"foo\0").unwrap());
 ```
 
 原始字符串也可以和特定格式字符串组合：

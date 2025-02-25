@@ -43,7 +43,7 @@ rustdoc --crate-name mylib src/lib.rs
 ````rust
 /// Returns the sum of the two arguments.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// let result = mylib::add(1, 2);
@@ -128,7 +128,7 @@ cargo login <token>
 [package]
 name = "demo"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "A demo crate."
 license = "MIT"
 ```
@@ -496,7 +496,7 @@ pub fn add(x: i32, y: i32) -> i32 {
 }
 ````
 
-这里不需要显式写出 `main` 函数，是因为示例代码会被默认放在 `main` 中，但若需要返回一个 `Result<(), E>`，则需要显式写出。
+这里不需要显式写出 `main` 函数，是因为示例代码会被默认放在 `main` 中，但若需要返回一个 `Result<T, E>`，则需要显式写出。
 
 `use` 导入或 `main` 函数这类对示例代码实际上是多余的，可通过在文档注释的代码行前增加 `#`，从而在实际生成的文档中隐藏这些行，但在测试中依然会编译这些行。
 
