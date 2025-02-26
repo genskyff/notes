@@ -322,9 +322,9 @@ let list: Vec<Status> = (0..10).map(|i| Status::Value(i)).collect();
 
 ## 闭包原理
 
-闭包实际上是通过一个特殊的结构体实现的。每次声明都会产生一个匿名结构体类型，会包含所有捕获的变量，但这个类型无法被其它地方使用。该结构体对象实现了一个或多个 `Fn` trait，以便可以像函数一样使用它。当定义一个闭包时，编译器会根据闭包的代码和捕获的变量生成一个结构体类型，该结构体类型实现了对应的 `Fn` trait。这也是为什么 `FnMut` 闭包必须加上 `mut`，因为修改捕获的值相当于修改该结构体存储的变量。
+闭包实际上是通过一个特殊的结构体实现的。每次声明都会产生一个匿名结构体类型，会包含所有捕获的值，但无法在其它地方使用。该结构体对象实现了一个或多个 `Fn` trait，以便可以像函数一样使用它。当定义一个闭包时，编译器会根据闭包的代码和捕获的变量生成一个结构体类型，该结构体类型实现了对应的 `Fn` trait。这也是为什么 `FnMut` 闭包必须加上 `mut`，因为修改捕获的值相当于修改该结构体存储的值。
 
-如以下闭包示例：
+如以下闭包：
 
 ```rust
 fn f<F: FnOnce() -> String>(f: F) {
@@ -353,7 +353,7 @@ struct Closure<'a> {
 impl<'a> FnOnce<()> for Closure<'a> {
     type Output = String;
 
-    fn call_once(self) -> Output {
+    fn call_once(mut self) -> Self::Output {
         self.s += &*self.t;
         self.s
     }
@@ -363,7 +363,8 @@ impl<'a> FnOnce<()> for Closure<'a> {
 因此调用 `f` 相当于：
 
 ```rust
-f(Closure { s: s, t: &t });
+let mut c = Closure { s: s, t: &t };
+c.call_once();
 ```
 
 由于闭包可以捕获变量，因此闭包的大小与捕获的变量有关：
@@ -431,22 +432,19 @@ panic = "abort"
 panic!("Crash here!");
 ```
 
-### backtrace
+### Backtrace
 
-设置环境变量来设置 backtrace，从而在 panic 时输出详细信息。
+设置环境变量来设置 Backtrace，从而在 panic 时输出详细信息。
 
 ```shell
-# PowerShell
+# pwsh
 $env:RUST_BACKTRACE=1; cargo run
 
-# CMD
+# cmd
 set RUST_BACKTRACE=1 && cargo run
 
-# Bash
+# bash/zsh/fish
 RUST_BACKTRACE=1 cargo run
-
-# Fish
-env RUST_BACKTRACE=1 cargo run
 ```
 
 > 仅在 Debug 下有效。
@@ -475,7 +473,7 @@ let f = match std::fs::File::open("hello.txt") {
 
 ## 匹配错误
 
-大部分情况下并不是任何错误都将程序 panic，而是根据错误类型来进行不同的处理方式。
+大部分情况下并不是任何错误都直接 panic，而是根据错误类型来进行不同的处理方式。
 
 ```rust
 use std::fs::File;
