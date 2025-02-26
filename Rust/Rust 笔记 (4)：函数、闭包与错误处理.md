@@ -2,7 +2,7 @@
 
 ## 函数定义
 
-函数以 `fn` 定义，类型表示为 `fn(T, U, ..) -> R`，函数类型都实现了 `FnOnce`、`FnMut`、`Fn`、`Copy`、`Clone`、`Send`、`Sync` 和 `Sized`。
+`fn` 定义函数，类型表示为 `fn(T, U, ..) -> R`，函数类型都实现了 `FnOnce`、`FnMut`、`Fn`、`Copy`、`Clone`、`Send`、`Sync` 和 `Sized`。
 
 ```rust
 fn add(x: i32, y: i32) -> i32 {
@@ -26,7 +26,7 @@ impl S {
 对于 `extern` 块，可在最后一个参数处使用 `...` 来表示可变参数。
 
 ```rust
-extern "C" {
+unsafe extern "C" {
     fn foo(x: i32, ...);
 }
 ```
@@ -134,7 +134,7 @@ let c1 = |x: i32| -> i32 { x + 1 };
 let c2 = |x: i32| -> i32 { x + 1 };
 ```
 
-这两个闭包虽然签名相同，类型都表示为 `Fn(32) -> i32`，但实际上是不同的类型。
+这两个闭包虽然签名相同，类型都表示为 `Fn(i32) -> i32`，但实际上是不同的类型。
 
 ## 捕获方式
 
@@ -192,7 +192,7 @@ puts();
 
 这三种闭包 trait 的限制程度依次增大，因为一个 `FnOnce` 闭包还可以接受 `&mut T` 和 `&T`，而一个 `Fn` 闭包则只能接受 `&T`。编译器会在满足使用需求的前提下尽量以限制最多的方式捕获。此外，定义 `FnMut` 闭包必须加上 `mut`。
 
-所有闭包类型都实现了 `Sized`。此外，若闭包捕获值的类型实现了如下 trait，则闭包类型也会自动实现这些 trait：
+所有闭包类型都实现了 `Sized`。此外，若闭包捕获值的类型实现了以下 trait，则闭包类型也会自动实现这些 trait：
 
 - `Clone`、`Copy`、`Sync`、`Send`
 
@@ -211,12 +211,31 @@ println!("{s}");                    // 错误，s 已被移动
 assert!(equal_to_s(String::from("hello")));
 ```
 
-对于如元组、数组、结构体这类复合类型，始终是捕获整个值，而不是各个字段分开捕获。
+对于如数组，始终是捕获整个值，而不是各个元素分开捕获。
 
 ```rust
-let mut v = vec!["a".to_string(), "b".to_string()];
-let mut f = || v[0].push_str("!");
-println!("{v:?}");  // 错误，v 已被可变借用
+let mut v = vec!["hello".to_string(), "world".to_string()];
+let mut f = || v[0].push('!');
+println!("{:?}", v[1]);         // 错误, v 已被可变借用
+f();
+println!("{v:?}");
+```
+
+但对于如元组、结构体，则只捕获使用的字段。
+
+```rust
+let mut foo = Foo {
+    x: "hello".to_string(),
+    y: "world".to_string(),
+};
+let mut f = || foo.x.push('!'); // 仅捕获 foo.x
+println!("{:?}", foo.y);        // 可以使用 foo.y
+f();
+println!("{foo:?}");
+
+let mut v = ("hello".to_string(), "world".to_string());
+let mut f = || v.0.push('!');   // 仅捕获 v.0
+println!("{:?}", v.1);          // 可以使用 v.1
 f();
 println!("{v:?}");
 ```
