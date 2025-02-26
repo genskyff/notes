@@ -166,7 +166,7 @@ Rust 可以方便的与其它语言进行交互。使用 `extern` 关键字，�
 如调用 C 标准库中的 `abs` 函数：
 
 ```rust
-extern "C" {
+unsafe extern "C" {
     fn abs(input: i32) -> i32;
 }
 
@@ -189,7 +189,7 @@ fn main() {
 
 ```rust
 #[no_mangle]
-pub extern "C" fn call_rust_fn() {
+pub unsafe extern "C" fn call_rust_fn() {
     println!("Hello from Rust!");
 }
 ```
