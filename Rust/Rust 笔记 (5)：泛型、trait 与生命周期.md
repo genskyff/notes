@@ -183,7 +183,7 @@ fn main() {
 
 ## 泛型性能
 
-Rust 通过在编译时进行泛型代码的**单态化**来保证效率。单态化是一个通过填充编译时使用的具体类型，将通用代码转换为特定代码的过程。编译器会对每个实例编译成具体类型的代码，因此使用泛型没有运行时开销，但容易造成二进制膨胀。
+Rust 通过在编译时进行泛型代码的**单态化**来保证效率。单态化是一个通过填充编译时使用的具体类型，将通用代码转换为特定代码的过程。编译器会对每个实例编译成具体类型的代码，因此使用泛型没有运行时开销，但容易造成增加编译后的文件大小。
 
 如 `Option<T>` 的值有 `i32` 和 `f64` 两种，因此编译器会将 `Option<T>` 展开为 `Option_i32` 和 `Option_f64`，并将泛型定义替换为这两个具体定义。
 
@@ -230,7 +230,7 @@ struct Id<T> {
 }
 ```
 
-但由于 Rust 不允许有未使用的泛型参数，因此这样无法通过编译。
+由于 Rust 不允许有未使用的泛型参数，因此这样无法通过编译。
 
 在 `std::marker` 中有一个零大小的结构体类型 `PhantomData<T>`，用于那些需要用泛型来做类型检查但实际又用不到或无法使用的情况。
 
@@ -259,7 +259,7 @@ struct Foo<'a, T> {
 
 # 2 trait
 
-**特定多态**（Ad hoc polymorphism）指相同行为有多个不同实现，**子类型多态**（Subtype polymorphism）指子类型可被当成父类型使用。在 Rust 中，前者通过 trait 来支持、后者通过 trait 对象来支持。
+**特定多态**（Ad hoc polymorphism）指相同行为有多个不同实现，**子类型多态**（Subtype polymorphism）指子类型可被当成父类型使用。在 Rust 中，前者通过 trait 来支持，后者通过 trait 对象来支持。
 
 ## trait 定义
 
@@ -365,15 +365,9 @@ trait MyTrait {
         self.n  // 错误
     }
 }
-
-struct Foo {
-    n: i32
-}
-
-impl MyTrait for Foo {}
 ```
 
-但默认实现可以调用 trait 中的其它方法，哪怕这些方法没有默认实现，因此可以通过这种方式来间接访问 `self` 中的字段。
+默认实现可以调用 trait 中的其它方法，哪怕这些方法没有默认实现，因此可以通过这种方式来间接访问 `self` 中的字段。
 
 ```rust
 trait MyTrait {
@@ -711,7 +705,7 @@ fn main() {
 
 - 大小不固定：对于 `trait T`，类型 `A` 和类型 `B` 都可以实现它，因此 `trait T` 的对象大小无法确定
 - 使用 trait 对象时，总是使用引用的方式：
-  - 虽然 trait 对象没有固定大小，但其引用类型的大小固定，它由两个指针组成，因此占两个指针大小：一个指向具体类型的实例，另一个指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
+  - 虽然 trait 对象没有固定大小，但其引用类型的大小固定，由两个指针组成：一个指向具体类型的实例，另一个指向一个 `vtable`，其中保存了实例可以调用的实现于 trait 上的方法
   - trait 对象的引用方式有多种： `&dyn T`、`&mut dyn T`、`Box<dyn T>` 和 `Rc<dyn T>` 等
 
 ```rust
@@ -805,7 +799,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
   trait Foo {
       fn foo();
   }
-
+  
   // 错误，trait 含有关联函数
   fn bar(v: Box<dyn Foo>) {}
   ```
@@ -957,9 +951,9 @@ fn main() {
 
 用于比较和返回的是 `IntoIterator` 的关联类型 `Item`， 因此对 `T` 和 `T::Item` 都做出 trait 约束。
 
-### GATs
+### GAT
 
-关联类型只能实现一次，这在想指定多种关联类型时就很麻烦。而 GATs（Generic associated types，泛型关联类型）特性允许在 trait 的关联类型上使用泛型。
+关联类型只能实现一次，这在想指定多种关联类型时就很麻烦。而 GAT（Generic associated type，泛型关联类型）特性允许在 trait 的关联类型上使用泛型。
 
 ```rust
 use std::fmt::Debug;
@@ -988,11 +982,11 @@ fn main() {
 
 目前编译器对该特性的实现并不完善，存在以下限制：
 
-- 隐含 `'static` 约束：GATs 可能会导致编译器错误地要求某些类型比 `'static` 生命周期更长
-- 非对象安全：带有 GATs 的 trait 无法作为 trait 对象使用
-- 借用检查错误：GATs 可能会导致借用检查器对正确的代码检查出错
+- 隐含 `'static` 约束：GAT 可能会导致编译器错误地要求某些类型比 `'static` 生命周期更长
+- 非对象安全：带有 GAT 的 trait 无法作为 trait 对象使用
+- 借用检查错误：GAT 可能会导致借用检查器对正确的代码检查出错
 
-> 更多关于 GATs 的信息，可参考 [Rust Blog](https://blog.rust-lang.org/2022/10/28/gats-stabilization.html)。
+> 更多关于 GAT 的信息，可参考 [Rust Blog](https://blog.rust-lang.org/2022/10/28/gats-stabilization.html)。
 
 ### 默认泛型参数
 
