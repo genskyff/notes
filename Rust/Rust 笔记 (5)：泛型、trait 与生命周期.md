@@ -2435,7 +2435,6 @@ let b = temp() + temp();
 `&T` 是 `Copy` 的，而 `&mut T` 则不是。若严格按照借用规则，下面这段代码就不会通过编译。
 
 ```rust
-// 理论不通过，实际通过
 fn plus(v: &mut i32) {
     *v += 1;
 }
@@ -2444,7 +2443,7 @@ fn main() {
     let mut a = 1;
     let p = &mut a;
     plus(p);
-    plus(p);
+    plus(p); // 原本应该出错
     assert_eq!(3, *p);
 }
 ```
