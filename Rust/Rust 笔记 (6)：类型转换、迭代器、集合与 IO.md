@@ -2,7 +2,7 @@
 
 ## 类型自动强转
 
-由于要保证类型安全，Rust 中很少有隐式类型转换。类型自动强转唯一的隐式转换行为，只会在特定的位置发生，且有诸多限制。
+由于要保证类型安全，Rust 中很少有隐式类型转换。类型自动强转是唯一的隐式转换行为，只会在特定的位置发生，且有诸多限制。
 
 ### 自动强转点
 
@@ -50,19 +50,19 @@
 
   ```rust
   use std::ops::Deref;
-
+  
   struct Wrap {
       value: String,
   }
-
+  
   impl Deref for Wrap {
       type Target = String;
-
+  
       fn deref(&self) -> &Self::Target {
           &self.value
       }
   }
-
+  
   fn main() {
       let w = Wrap {
           value: "foo".to_string(),
