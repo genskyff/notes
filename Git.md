@@ -165,6 +165,12 @@ git add <file>
 git add <dir>
 ```
 
+`-p` 以交互式的形式把修改添加到暂存区：
+
+```shell
+git add -p [file]
+```
+
 `commit` 将暂存区中的文件提交到仓库，`-m` 用于指定提交信息：
 
 ```shell
