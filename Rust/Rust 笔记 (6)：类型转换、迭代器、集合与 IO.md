@@ -463,7 +463,7 @@ where T: AsMut<U>
 
 ### Borrow 和 BorrowMut
 
-`Borrow`、`BorrowMut` 与 `AsRef`、`AsMut` 定义基本相同，但要求 `T` 和 `U` 两者可以当作完全等同的对象来看待，即 `hash(T) == hash(U)`。如 `String` 实现了 `AsRef<str>`、`AsRef<[u8]>`、`AsRef<Path>`，但其中的三种类型的 Hash 值并不同，只有 `&str` 和 `String` 才能保证相同。
+`Borrow`、`BorrowMut` 与 `AsRef`、`AsMut` 定义基本相同，但要求 `T` 和 `U` 两者可以当作完全等同的对象来看待，即 `hash(T) == hash(U)`。如 `String` 实现了 `AsRef<str>`、`AsRef<[u8]>`、`AsRef<Path>`，但这三种类型的 Hash 值并不同，只有 `&str` 和 `String` 才能保证相同。
 
 要实现 `BorrowMut`，必须先实现 `Borrow`：
 
@@ -520,7 +520,7 @@ let v = vec![1, 2, 3, 4, 5];
 let v_iter = v.iter();  // 在调用消耗适配器的方法前没有任何效果
 ```
 
-迭代器可通过 for 来遍历：
+迭代器可通过 `for` 来遍历：
 
 ```rust
 for e in v_iter {
