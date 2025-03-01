@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat bind9-dnsutils build-essential clang-format clangd curl docker docker-compose fd-find fish git iptables less libunwind8 net-tools netcat-openbsd openssh-client openssh-server procps ripgrep socat sudo traceroute vim unzip wget
+apt install -y bat build-essential curl docker-compose docker.io duf fd-find fish git less mtr nftables openssh-client openssh-server ripgrep sd sudo unzip vim wget
 ```
 
 # 3 登录设置
@@ -178,88 +178,75 @@ echo "* soft nofile 51200
 
 # 5 安全性配置
 
-## iptables 配置
+## nftables 配置
 
-> 从 Debian 10 起，nftables 是使用 iptables 时的默认后端，具体可参考 [iptables - Debian Wiki](https://wiki.debian.org/iptables)。
-
-### 查看 iptables 配置
+### 查看 nftables 配置
 
 ```shell
-iptables -L
+nft list ruleset
 ```
 
-### 配置 iptables
+### 配置 nftables
 
-通常 Debian 服务器会默认内置 UFW 规则，控制更为细化。但也可以自定义配置，仅做参考：
+修改 `/etc/nftables.conf`：
 
 ```shell
-echo "*filter
+#!/usr/sbin/nft -f
 
-# 允许所有出
--A OUTPUT -j ACCEPT
+flush ruleset
 
-# 允许回环地址通信
--A INPUT -i lo -j ACCEPT
--A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
 
-# 允许已建立的连接访问
--A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+        # Established and related connections
+        ct state established,related accept
 
-# 允许 HTTP 和 HTTPS
--A INPUT -p tcp --dport 80 -j ACCEPT
--A INPUT -p tcp --dport 443 -j ACCEPT
+        # Invalid connection
+        ct state invalid drop
 
-# 允许 SSH
--A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+        # Loopback
+        iif lo accept
+        iif != lo ip daddr 127.0.0.0/8 drop
+        iif != lo ip6 daddr ::1 drop
 
-# 允许被 Ping
--A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+        # ICMP & IGMP
+        ip protocol icmp icmp type echo-request limit rate over 10/second burst 4 packets drop
+        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate over 10/second burst 4 packets drop
 
-# 记录拒绝的调用
--A INPUT -m limit --limit 5/min -j LOG --log-prefix \"iptables denied: \" --log-level 7
+        ip protocol icmp icmp type { destination-unreachable, router-solicitation, router-advertisement, time-exceeded, parameter-problem, echo-request } accept
+        ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, ind-neighbor-solicit, ind-neighbor-advert, mld2-listener-report, echo-request } accept
+        ip protocol igmp accept
 
-# 丢弃规则以外访问
--A INPUT -j DROP
--A FORWARD -j DROP
+        # SSH
+        tcp dport ssh ct state new limit rate 15/minute accept
 
-COMMIT" > /etc/iptables.rules
+        # HTTP & HTTPS
+        tcp dport { http, https } accept
+        
+        # Log denied
+        limit rate 5/minute log prefix "nftables denied: " level warn
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+
+        # Docker
+        iifname "docker0" accept
+        oifname "docker0" accept
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}
 ```
 
-使规则立即生效：
+### 使配置生效
+
+激活并重启服务：
 
 ```shell
-iptables-restore < /etc/iptables.rules
-```
-
-使规则开机生效：
-
-```shell
-echo '#!/usr/bin/env bash
-/sbin/iptables-restore < /etc/iptables.rules' > /etc/network/if-pre-up.d/iptables && chmod +x /etc/network/if-pre-up.d/iptables
-```
-
-# 6 其它常用操作
-
-测试硬盘及网络性能：
-
-```shell
-curl -Lso- bench.sh | bash
-```
-
-查看硬盘分区及各分区使用量：
-
-```shell
-fdisk -l && df -h
-```
-
-查看所有组：
-
-```shell
-cat /etc/group
-```
-
-查看所有用户：
-
-```shell
-cut -d: -f1 /etc/passwd
+systemctl enable nftables
+systemctl retart nftables
 ```
