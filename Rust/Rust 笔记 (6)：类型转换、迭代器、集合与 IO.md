@@ -50,19 +50,19 @@
 
   ```rust
   use std::ops::Deref;
-  
+
   struct Wrap {
       value: String,
   }
-  
+
   impl Deref for Wrap {
       type Target = String;
-  
+
       fn deref(&self) -> &Self::Target {
           &self.value
       }
   }
-  
+
   fn main() {
       let w = Wrap {
           value: "foo".to_string(),

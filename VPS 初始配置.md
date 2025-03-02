@@ -223,7 +223,7 @@ table inet filter {
 
         # HTTP & HTTPS
         tcp dport { http, https } accept
-        
+
         # Log denied
         limit rate 5/minute log prefix "nftables denied: " level warn
     }
