@@ -28,13 +28,13 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat build-essential clang-format clangd curl docker-compose docker.io duf fd-find fish git iptables less libunwind8 mtr net-tools netcat-openbsd openssh-client openssh-server procps ripgrep sd socat sudo unzip vim wget
+apt install -y bat build-essential curl docker-compose docker.io duf fd-find fish git less mtr nftables openssh-client openssh-server ripgrep sd sudo unzip vim wget
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bind bottom choose clang curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less libunwind lsd mtr neovim net-tools onefetch openbsd-netcat openssh ripgrep sd socat starship sudo tokei unzip wget xmake zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bottom choose curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less lsd mtr openssh ripgrep sd starship sudo tokei unzip wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
