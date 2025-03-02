@@ -78,9 +78,11 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ## 安装包
 
 ```powershell
-scoop bucket add extras
+scoop install git
 scoop update
-scoop install 7zip bat delta fastfetch fzf git gsudo lazydocker lazygit less llvm lsd mingw-winlibs-ucrt mise nilesoft-shell onefetch pandoc ripgrep starship tlrc tokei wireshark xmake zoxide
+scoop bucket add extras
+scoop bucket add versions
+scoop install 7zip bat delta deno fastfetch fzf gsudo lazydocker lazygit less llvm localsend lsd mingw-winlibs-ucrt mise msys2 nilesoft-shell nu pandoc potplayer qbittorrent-enhanced qq-nt ripgrep snipaste starship tlrc tokei typora wechat xmake zoxide
 ```
 
 # 4 配置 PowerShell
@@ -257,7 +259,6 @@ Set-Alias -Name open -Value Open-Folder -Force
 Set-Alias -Name which -Value Which-Command -Force
 
 Set-Alias -Name ff -Value fastfetch -Force
-Set-Alias -Name of -Value onefetch -Force
 Set-Alias -Name lg -Value lazygit -Force
 Set-Alias -Name lad -Value lazydocker -Force
 Set-Alias -Name sudo -Value gsudo -Force
@@ -280,6 +281,7 @@ Set-Alias -Name gsu -Value Git-Submodule-Update -Force
 Set-Alias -Name gb -Value Git-Branch -Force
 Set-Alias -Name gl -Value Git-Log -Force
 Set-Alias -Name grl -Value Git-Reflog -Force
+
 ```
 
 使配置生效：
