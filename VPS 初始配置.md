@@ -200,48 +200,51 @@ table inet filter {
         type filter hook input priority filter
         policy drop
 
-        ct state invalid drop comment "early drop of invalid connections"
-        ct state { established, related } accept comment "allow tracked connections"
+        ct state invalid drop
+        ct state { established, related } accept
 
-        iif lo accept comment "allow from loopback"
-        iif != lo ip daddr 127.0.0.0/8 drop comment "drop traffic from 127/8 not on loopback"
-        iif != lo ip6 daddr ::1 drop comment "drop traffic from ::1 not on loopback"
+        iif lo accept
+        iif != lo ip daddr 127.0.0.0/8 drop
+        iif != lo ip6 daddr ::1 drop
 
-        tcp dport ssh ct state new limit rate 15/minute accept comment "allow sshd"
+        tcp dport ssh ct state new limit rate 15/minute accept
         tcp dport ssh ct state new log prefix "ssh exceeded: " level warn drop
 
-        tcp dport { http, https } accept comment "allow httpd"
+        tcp dport { http, https } accept
 
         ip protocol icmp icmp type { destination-unreachable, router-solicitation, router-advertisement, time-exceeded, parameter-problem } accept
-        ip protocol icmp icmp type echo-request limit rate 10/second burst 4 packets accept comment "allow limited ping"
-        ip protocol icmp icmp type echo-request limit rate over 10/second burst 4 packets drop comment "drop ping flood"
+        ip protocol icmp icmp type echo-request limit rate 10/second burst 4 packets accept
+        ip protocol icmp icmp type echo-request limit rate over 10/second burst 4 packets drop
 
         ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, ind-neighbor-solicit, ind-neighbor-advert, mld2-listener-report } accept
-        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept comment "allow limited ping6"
-        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate over 10/second burst 4 packets drop comment "drop ping6 flood"
+        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept
+        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate over 10/second burst 4 packets drop
 
         pkttype host limit rate 5/second accept
         pkttype host log prefix "nftables denied: " level warn reject with icmpx type admin-prohibited
-    }
-    chain forward {
-        type filter hook forward priority filter
-        policy drop
-
-        iifname "docker0" accept comment "allow traffic from docker0"
-        oifname "docker0" accept comment "allow traffic to docker0"
     }
     chain output {
         type filter hook output priority filter
         policy accept
     }
+    chain forward {
+        type filter hook forward priority filter
+        policy drop
+
+        ct state invalid drop
+        ct state { established, related } accept
+
+        iifname "docker0" accept
+        oifname "docker0" accept
+    }
 }
+
 ```
 
 ### 使配置生效
 
-激活并重启服务：
+激活并启动服务：
 
 ```shell
-systemctl enable nftables
-systemctl retart nftables
+systemctl enable --now nftables
 ```
