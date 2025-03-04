@@ -171,9 +171,7 @@ net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && sysctl -p
 
 ```shell
 echo "* soft nofile 51200
-* hard nofile 51200
-* soft as 2097152
-* hard as 2097152" >> /etc/security/limits.conf && ulimit -n 51200 && ulimit -v 2097152
+* hard nofile 51200" >> /etc/security/limits.conf && ulimit -n 51200
 ```
 
 # 5 安全性配置
