@@ -944,11 +944,11 @@ fn main() {
 
   ```rust
   let (tx, rx) = mpsc::channel();
-  
+
   thread::spawn(move || {
       tx.send(1).unwrap();
   });
-  
+
   loop {
       if let Ok(v) = rx.try_recv() {
           println!("{v}");
