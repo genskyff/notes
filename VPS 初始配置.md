@@ -226,7 +226,7 @@ table inet filter {
 
         tcp dport { http, https } accept
 
-        tcp dport ssh ct state new limit rate 15/minute accept
+        tcp dport ssh ct state new limit rate 10/minute accept
         tcp dport ssh ct state new log prefix "[nftables] ssh denied: " level warn drop
 
         ip protocol icmp icmp type { destination-unreachable, router-solicitation,
