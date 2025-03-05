@@ -243,7 +243,6 @@ table inet filter {
         ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept
         ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate over 10/second burst 4 packets drop
 
-        pkttype host limit rate 5/second accept
         pkttype host log prefix "[nftables] host denied: " level warn drop
     }
 
