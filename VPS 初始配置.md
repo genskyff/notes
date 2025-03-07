@@ -193,27 +193,21 @@ nft list ruleset
 
 flush ruleset
 
-define wan_if = eth0
-
 table inet filter {
    set ct_limit_v4 {
         type ipv4_addr
-        flags dynamic,timeout
         timeout 10m
     }
 
     set ct_limit_v6 {
         type ipv6_addr
-        flags dynamic,timeout
         timeout 10m
     }
 
     chain input {
-        type filter hook input priority filter
-        policy drop
+        type filter hook input priority filter; policy drop;
 
         ct state { established, related } accept
-        ct state invalid drop
 
         iif lo accept
         iif != lo ip daddr 127.0.0.0/8 drop
@@ -223,57 +217,28 @@ table inet filter {
         ct state new add @ct_limit_v6 { ip6 saddr limit rate over 25/second } drop
 
         tcp dport { http, https } accept
-
         tcp dport ssh ct state new limit rate 10/minute accept
-        tcp dport ssh ct state new log prefix "[nftables] ssh denied: " level warn drop
 
-        ip protocol icmp icmp type { destination-unreachable, router-solicitation,
-                                    router-advertisement, time-exceeded,
-                                    parameter-problem } accept
-        ip protocol icmp icmp type echo-request limit rate 10/second burst 4 packets accept
-        ip protocol icmp icmp type echo-request limit rate over 10/second burst 4 packets drop
+        meta nfproto ipv4 icmp type echo-request limit rate 10/second burst 4 packets accept
+        meta nfproto ipv4 icmp type { echo-reply, destination-unreachable, time-exceeded, parameter-problem } accept
 
-        ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, packet-too-big,
-                                        time-exceeded, parameter-problem,
-                                        mld-listener-query, mld-listener-report,
-                                        mld-listener-reduction, nd-router-solicit,
-                                        nd-router-advert, nd-neighbor-solicit,
-                                        nd-neighbor-advert, ind-neighbor-solicit,
-                                        ind-neighbor-advert, mld2-listener-report } accept
-        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept
-        ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate over 10/second burst 4 packets drop
+        meta nfproto ipv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept
+        meta nfproto ipv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-reply, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, 148, 149 } accept
 
         pkttype host log prefix "[nftables] host denied: " level warn drop
     }
 
-    chain output {
-        type filter hook output priority filter
-        policy accept
-    }
-
     chain forward {
-        type filter hook forward priority filter
-        policy drop
+        type filter hook forward priority filter; policy drop;
 
         ct state { established, related } accept
-        ct state invalid drop
 
-        iifname "docker0" oifname $wan_if accept
-        iifname $wan_if oifname "docker0" ct state new accept
-    }
-}
-
-table inet nat {
-    chain prerouting {
-        type nat hook prerouting priority dstnat
-        policy accept
+        iifname "docker0" ct state new accept
+        oifname "docker0" ct state new accept
     }
 
-    chain postrouting {
-        type nat hook postrouting priority srcnat
-        policy accept
-
-        oifname $wan_if masquerade
+    chain output {
+        type filter hook output priority filter; policy accept;
     }
 }
 ```

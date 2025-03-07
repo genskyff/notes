@@ -79,7 +79,7 @@ xray uuid
 
 ## 配置模板
 
-官方的仓库包含了大量的配置模板：
+官方仓库包含了大量的配置模板：
 
 - [XTLS/Xray-examples](https://github.com/XTLS/Xray-examples)
 
@@ -118,7 +118,7 @@ acme.sh --info -d <domain>
 
 ## 配置 Nginx
 
-有些配置方案会使用 Nginx / Caddy 这种 Web 服务器实现反向代理。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用它来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
+有些配置方案会使用 Nginx / Caddy 这种 Web 服务器实现反向代理。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
 
 ### 安装 Nginx
 
