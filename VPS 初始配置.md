@@ -112,7 +112,7 @@ cat ~/.ssh/id_ed25519.pub > ~/.ssh/authorized_keys
 修改 `~/.ssh` 目录和 `~/.ssh/authorized_keys` 文件的权限：
 
 ```shell
-chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh
+chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
 ```
 
 在配置文件中找到以下几行，把前面的注释 `#` 去掉（如果有），并修改为以下参数：
