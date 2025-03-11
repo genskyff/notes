@@ -531,7 +531,7 @@ fn main() {
 
 # 2 并发
 
-**并发**代表程序的不同部分可以相互独立的执行，而**并行**代表程序的不同部分同时执行。并行实际上是并发的一种实现形式。当只有一个 CPU 核心时，通过轮流切换来实现并发。当有多个 CPU 核心时，通过并行来实现并发。通常使用并发来表示轮流执行，并行来表示同时执行。而当任务数大于 CPU 核心数时，并行和并发都同时存在，即**并行一定是并发，并发只有在多核 CPU 上才能并行**。
+**并发**代表程序的不同部分可以相互独立的执行，而**并行**代表程序的不同部分可以同时执行。并行实际上是并发的一种实现形式。当只有一个 CPU 核心时，通过上下文切换来实现并发；当有多个 CPU 核心时，通过并行来实现并发。通常使用并发来表示轮流执行，并行来表示同时执行。而当任务数大于 CPU 核心数时，并行和并发都同时存在，即**并行一定是并发，并发只有在多核 CPU 上才能并行**。
 
 > 在 Rust 中统一使用并发来指代这两者。
 
@@ -541,8 +541,8 @@ fn main() {
 
 程序执行的任务通常有两类：
 
+- **计算密集型**：需要大量的计算，如图像处理、复杂运算等
 - **IO 密集型**：有大量的 IO 操作，如文件读写、网络请求等
-- **CPU 密集型**：需要大量的计算，如图像处理、复杂运算等
 
 通常对 CPU 密集型任务使用多线程会有显著的性能提升，但也会导致以下问题：
 
@@ -551,7 +551,7 @@ fn main() {
 
 ### 线程模型
 
-不同语言实现线程方式不同。操作系统通常会提供创建线程的 API，这种调用系统 API 创建线程的模型被称为 **1:1** 模型，即一个 OS 线程对应一个程序线程。而 **M:N** 模型被称为**协程**，即程序内部实现的 M 个线程会映射到 N 个 OS 线程中。
+不同语言实现线程方式不同。操作系统通常会提供创建线程的 API，这种调用系统 API 创建线程的模型称为 **1:1** 模型，即一个 OS 线程对应一个程序线程。而 **M:N** 模型称为**协程**，即程序内部实现的 M 个线程会映射到 N 个 OS 线程中。
 
 > 为了较小的运行时和性能，Rust 标准库只提供了 1:1 线程实现，一些第三方库，如 [Tokio](https://github.com/tokio-rs/tokio) 则提供了 M:N 线程实现。
 
@@ -606,7 +606,7 @@ h.join().unwrap();
 
 若不使用 `move`，`println!` 以引用的方式使用值，因此自动推断为借用 `v`，但主线程可能使该值无效，因此报错。
 
-要从线程中返回一个值，可以通过闭包中返回一个值。该值可以通过 `join` 返回的 `Result` 中获取：
+要从线程中返回一个值，可以通过闭包返回一个值。该值可以通过 `join` 返回的 `Result` 中获取：
 
 ```rust
 let n = thread::spawn(|| 10).join().unwrap();
@@ -615,7 +615,7 @@ assert_eq!(10, n);
 
 ### 线程 Builder
 
-`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名称等。`thread::Builder` 返回一个 `Result`，这表示线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生线程的情况下会直接 panic。
+`thread::spawn` 实际上是 `thread::Builder::new().spawn().unwrap()` 的简写。`thread::Builder` 允许在产生线程之前为新线程做一些配置，如配置栈大小和线程名称等。`thread::Builder` 返回一个 `Result`，这表示新线程可能产生失败，如内存不足等。但 `thread::spawn` 在无法产生线程的情况下会直接 panic。
 
 ```rust
 thread::Builder::new()
@@ -669,20 +669,20 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
-static mut COUNT: u32 = 0;
+static COUNT: Mutex<i32> = Mutex::new(0);
 
 fn main() {
     let v = Mutex::new(VecDeque::new());
 
     thread::scope(|s| {
         // 消费线程
-        s.spawn(|| loop {
-            unsafe {
-                COUNT += 1;
-            }
-            let item = v.lock().unwrap().pop_back();
-            if let Some(item) = item {
-                println!("{item}");
+        s.spawn(|| {
+            loop {
+                *COUNT.lock().unwrap() += 1;
+                let item = v.lock().unwrap().pop_back();
+                if let Some(item) = item {
+                    println!("{item}");
+                }
             }
         });
 
@@ -691,9 +691,8 @@ fn main() {
             v.lock().unwrap().push_front(i);
             thread::sleep(Duration::from_secs(1));
         }
-        unsafe {
-            println!("COUNT: {COUNT}");
-        }
+
+        println!("COUNT: {}", *COUNT.lock().unwrap());
     });
 }
 ```
@@ -704,26 +703,25 @@ fn main() {
 
 ```rust
 thread::scope(|s| {
-    let h = s.spawn(|| loop {
-        unsafe {
-            COUNT += 1;
-        }
-        let item = v.lock().unwrap().pop_back();
-        if let Some(item) = item {
-            println!("{item}");
-        } else {
-            thread::park(); // 阻塞
+    let h = s.spawn(|| {
+        loop {
+            *COUNT.lock().unwrap() += 1;
+            let item = v.lock().unwrap().pop_back();
+            if let Some(item) = item {
+                println!("{item}");
+            } else {
+                thread::park(); // 阻塞
+            }
         }
     });
 
     for i in 0..5 {
         v.lock().unwrap().push_front(i);
-        h.thread().unpark(); // 唤醒
+        h.thread().unpark();    // 唤醒
         thread::sleep(Duration::from_secs(1));
     }
-    unsafe {
-        println!("COUNT: {COUNT}");
-    }
+
+    println!("COUNT: {}", *COUNT.lock().unwrap());
 });
 ```
 
@@ -944,11 +942,11 @@ fn main() {
 
   ```rust
   let (tx, rx) = mpsc::channel();
-
+  
   thread::spawn(move || {
       tx.send(1).unwrap();
   });
-
+  
   loop {
       if let Ok(v) = rx.try_recv() {
           println!("{v}");
