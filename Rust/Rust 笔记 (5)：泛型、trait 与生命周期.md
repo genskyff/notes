@@ -799,7 +799,7 @@ fn get_person(swtich: bool) -> Box<dyn Person> {
   trait Foo {
       fn foo();
   }
-
+  
   // 错误，trait 含有关联函数
   fn bar(v: Box<dyn Foo>) {}
   ```
@@ -2128,7 +2128,7 @@ fn implicit<T, const C: usize>() -> impl Sized {}
 fn explicit<T, const C: usize>() -> impl Sized + use<T, C> {}
 ```
 
-对于生命周期参数，在 2021 及更早版本中，若 `use` 不存在，当生命周期参数在显式出现在约束中时，才会被捕获，但 2024 开始，所有作用域内的生命周期参数都会被捕获。
+对于生命周期参数，在 2021 及更早版本中，若 `use` 不存在，当生命周期参数在显式出现在约束中时，才会被捕获，但 2024 版开始，所有作用域内的生命周期参数都会被捕获。
 
 ```rust
 fn implicit(_: &()) -> impl Sized {}

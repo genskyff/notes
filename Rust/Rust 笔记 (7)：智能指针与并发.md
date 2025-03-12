@@ -1126,15 +1126,29 @@ fn main() {
 list.lock().unwrap().push(1);
 ```
 
-在判断锁状态时，通常涉及 `match`、`if let` 和 `while let` 语句，但这里有一个陷阱：
+在判断锁状态时，通常涉及 `match`、`if let` 和 `while let` 语句，但这里有一个**陷阱**：
 
 ```rust
 if let Some(item) = list.lock().unwrap().pop() {
     do_something(item);
+} // 2024 版在此处 drop
+else {
+    do_other(item);
+} // 2021 版在此处 drop
+```
+
+对于这类语句，在 2021 及更早版本中，`Guard` 虽然没有绑定到某个变量上，但 `Guard` 这个临时变量的生命周期会延长到整个 `if let` 语句后才结束，这表示在处理 `item` 时不必要地持有锁，延误了锁释放的时机。但从 2024 版开始，`if let` 的临时生命周期缩短为在 `else` 之前就丢弃。
+
+对 2021 版的情况，可以通过将操作移动到单独的 `let` 语句来避免：
+
+```rust
+let item = list.lock().unwrap().pop();
+if let Some(item) = item {
+    do_something(item);
 }
 ```
 
-对于这类语句，`Guard` 虽然没有绑定到某个变量上，但这个临时的 `Guard` 直到完整的 `if let` 语句结束后才能被丢弃，这表示在处理 `item` 时不必要地持有锁，延误了锁释放的时机。
+
 
 对于 `if` 语句，由于在进入块之前就已经丢弃了，因此不会出现上述情况：
 
@@ -1145,15 +1159,6 @@ if list.lock().unwrap().pop() == Some(1) {
 ```
 
 通常 `if` 语句的条件总是一个布尔值，并不借用任何东西，因此没有必要将临时的生命周期延长到语句结尾，而对于 `if let` 语句则不一定。
-
-对于 `if let` 的情况，可以通过将操作移动到单独的 `let` 语句来避免：
-
-```rust
-let item = list.lock().unwrap().pop();
-if let Some(item) = item {
-    do_something(item);
-}
-```
 
 ### Condvar
 
