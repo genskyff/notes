@@ -62,8 +62,8 @@ git config --show-origin <key>
 
 ```shell
 # 用户信息
-git config --global user.name <name>
 git config --global user.email <email>
+git config --global user.name <name>
 
 # 凭证管理 - Windows
 git config --global credential.helper manager
