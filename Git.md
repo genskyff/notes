@@ -32,9 +32,8 @@ apt install -y git
   - Linux： `/etc/gitconfig`
 
 - `--global`：仅对当前用户适用的配置
-
   - Windows、Linux：`~/.gitconfig`
-
+  
 - `--local`：**默认选项**，仅对当前 Git 仓库适用的配置
   - Windows、Linux：工作区中的 `.git/config`
 
@@ -45,6 +44,9 @@ apt install -y git
 ```shell
 # 查看所有配置
 git config -l
+
+# 查看 local 配置
+git config -l --local
 
 # 查看指定配置
 git config <key>
@@ -161,6 +163,7 @@ git init
 ```shell
 # 跟踪或添加文件
 git add <file>
+
 # 递归地跟踪或添加目录下的所有文件
 git add <dir>
 ```
@@ -358,7 +361,7 @@ git rm --cached <file>
 `clean` 从工作区将未跟踪文件删除，需要使用 `-f`
 
 ```shell
-git clean -f <path>
+git clean -f [path]
 ```
 
 ## 移动文件
@@ -477,7 +480,7 @@ git show <commit>:<file>
 
 # 4 分支管理
 
-每次提交，Git 都把它们串成一条时间线，这条时间线就是一个分支。当只有一条分支时，默认为`main` 分支。`HEAD` 不是指向提交，而是指向 `main`，而 `main` 才指向提交，因此 `HEAD` 指向的是当前分支，可以将当前分支的别名看作 `HEAD`。
+每次提交，Git 都把它们串成一条时间线，这条时间线就是一个分支。当只有一条分支时，默认为 `main` 分支。`HEAD` 不是指向提交，而是指向 `main`，而 `main` 才指向提交，因此 `HEAD` 指向的是当前分支，可以将当前分支的别名看作 `HEAD`。
 
 ## 查看
 
