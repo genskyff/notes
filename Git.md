@@ -908,6 +908,64 @@ git stash drop [stash id]
 git stash clear
 ```
 
+## 工作树
+
+`stash` 虽然可以提供临时的上下文切换，在不同的分支上工作，但并不提供并行工作能力。当确实需要在两个分支上同时工作，或者不想使用 `stash` 来保存修改然后频繁的切换上下文时，可以使用 `worktree`。
+
+`worktree` 可以让一个仓库同时拥有多个工作树，每个工作树都可以检出不同的分支或提交。默认情况下，所有仓库都拥有一个工作树，即当前仓库。
+
+### 基本使用
+
+```shell
+# 查看当前所有工作树
+git worktree list
+
+# 添加工作树
+git worktree add <path> <branch>
+
+# 删除工作树
+git worktree remove <path>
+```
+
+### 清理工作树
+
+当并不是通过 `worktree remove` 而是直接手动删除时，此时工作树实际上已经没有了，那么可以通过 `worktree prune` 来清理。
+
+```shell
+git worktree prune
+```
+
+### 锁定工作树
+
+`worktree lock` 用于锁定一个工作树，防止被 `worktree remove` 或 `worktree prune` 意外删除。用于表示该工作树用于特定目的，不应该被干扰，但依然可以检出分支、应用提交等操作。
+
+```shell
+git worktree lock [--reason <string>] <path>
+```
+
+锁定后可通过 `worktree unlock` 来解锁：
+
+```shell
+git worktree unlock <path>
+```
+
+### 工作树与直接复制文件夹的区别
+
+共享 Git 数据库
+
+-   所有工作树共享同一个 `.git` 目录和对象数据库，不会复制所有 Git 历史
+-   复制文件夹会复制所有 `.git` 数据，占用大量额外空间
+
+自动追踪引用
+
+-   Git 会自动追踪所有工作树中的分支状态，防止在多个位置检出同一个分支
+-   手动复制文件夹后，Git 不知道有多个副本，可能导致冲突
+
+简化操作
+
+-   创建工作树时会自动检出指定分支，无需额外设置
+-   完成后可以用一个命令清理，包括相关引用
+
 ## 应用指定提交
 
 `cherry-pick` 一个是在实际开发中十分有用的命令。可以从一个分支中挑选一个或多个提交，并将这些提交应用到当前所在的分支，而合并通常会把两个分支的所有不同之处都合并到一起。
