@@ -1,10 +1,5 @@
 # 1 异步
 
-根据计算机处理任务的类型，主要分为：
-
-- 计算密集型（Compute bound）：主要占用大量用于计算的运行时间，如科学计算、代码编译等
-- I/O 密集型（I/O bound）：主要占用对数据读取的时间，如硬盘读写、网络传输等
-
 操作系统的中断机制提供了程序级别的并发，但对程序内部更细粒度的控制则无法做到。特别是对于 I/O 密集型任务，处理器会花大量时间来等待读写操作，这类任务会**阻塞**（Blocking）当前线程。
 
 虽然可以通过把这类任务放到新线程中去执行避免阻塞当前线程，但操作系统提供的线程数是有限的，线程的创建、同步也会造成不小的开销，当这类任务变多时，管理也会变得异常困难。
@@ -150,8 +145,75 @@ pub enum Either<A, B> {
 }
 ```
 
-当一个结束后，另一个也会立即结束，即使任务还没结束。
+当一个完成后，另一个不管什么状态都会立即结束。
 
 ### join
+
+与用 `thread::spawn` 创建一个线程执行任务类似，`tokio` 提供了异步版本的 `spawn`，但最大的不同是无需产生新线程来执行。
+
+```rust
+tokio::spawn(async_count("A", 10));
+tokio::spawn(async_count("B", 5)).await.unwrap();
+```
+
+同样的，当主线程结束时，异步任务也会停止。同时 `spawn` 也并返回一个异步版本的 `JoinHandle`，但不使用 `join` 而是 `.await` 来阻塞任务直到完成。
+
+```rust
+let h = tokio::spawn(async_count("A", 10));
+tokio::spawn(async_count("B", 5)).await.unwrap();
+h.await.unwrap();
+```
+
+`futures` crate 提供了一个 `join` 函数来同时阻塞两个 future：
+
+```rust
+use futures::future;
+
+let f1 = async_count("A", 10);
+let f2 = async_count("B", 5);
+future::join(f1, f2).await;
+```
+
+和线程不同，这里会输出完全相同的顺序，因为 `future::join` 是**公平的**，它以相同的频率检查每个 future 并交替执行。对于线程来说，操作系统的调度机制决定了线程的执行顺序和时间。虽然异步运行时在底层使用线程作为并发管理的一部分，但提供不同的 API 来选择是否需要公平性。
+
+### 消息传递
+
+在 future 之间共享数据也与线程类似，通过异步信道来进行消息传递。
+
+```rust
+use tokio::sync::mpsc;
+
+let (tx, mut rx) = mpsc::unbounded_channel();
+tx.send("Hello from the async channel!").unwrap();
+let msg = rx.recv().await.unwrap();
+println!("Received: {msg}");
+```
+
+`tokio::sync::mpsc` 是类似于线程的多生产者、单消费者信道 API 的异步版本。与基于线程的版本的区别为使用  `mut rx`，且 `recv` 方法产生一个需要 await 的 future 而不是直接返回值。
+
+`std::mpsc::channel` 中的同步 `Receiver::recv` 方法阻塞执行直到接收一个消息，而异步版本则不会阻塞。不同于阻塞，它将控制权交还给运行时，直到接收到一个消息或信道的发送端关闭。而 `send` 由于不会阻塞因此不需要 `await`。
+
+多个消息的发送与接受可通过 `for` 与 `while let` 来完成：
+
+```rust
+let (tx, mut rx) = mpsc::unbounded_channel();
+let vals = vec![1, 2, 3, 4, 5];
+
+for val in vals {
+    tx.send(val).unwrap();
+    tokio::time::sleep(Duration::from_millis(200)).await;
+}
+
+while let Some(val) = rx.recv().await {
+    println!("Received: {val}");
+}
+```
+
+但这里有两个问题：
+
+-   输出不是间隔 200 毫秒而是一瞬间完成
+-   `while let` 永远不会结束
+
+
 
 # 2 宏
