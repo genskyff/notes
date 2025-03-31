@@ -211,8 +211,38 @@ while let Some(val) = rx.recv().await {
 
 但这里有两个问题：
 
--   输出不是间隔 200 毫秒而是一瞬间完成
--   `while let` 永远不会结束
+1.  输出不是间隔 200 毫秒而是等待后一瞬间完成
+2.  `while let` 会一直阻塞
+
+第一个问题是因为这里只有一个异步代码块，而异步代码块是异步运行时中最小的并发单位，同一个异步代码块中的代码是线性地执行的，所以这里并不存在并发，所有的 `tx.send` 与 `sleep` 调用都是依次进行的，只有在此之后 `while let` 循环才开始执行 `recv` 调用上的 `await`，而这时 `tx` 已经全部发送完毕，因此会在一瞬间输出所有结果。
+
+第二个问题是因为信道只会在发送端或接收端被丢弃时才会关闭，而 `tx` 的生命周期直到结束都存在，`while let` 只有在 `tx` 关闭后才能收到 `None` 从而结束，因此永远阻塞。
+
+可以通过修改为两个 `async` 块来解决：
+
+```rust
+let (tx, mut rx) = mpsc::unbounded_channel();
+let vals = vec![1, 2, 3, 4, 5];
+
+let f1 = async move { // move 使 tx 在异步块结束时被丢弃
+    for val in vals {
+        tx.send(val).unwrap();
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+};
+
+let f2 = async {
+    while let Some(val) = rx.recv().await {
+        println!("Received: {val}");
+    }
+};
+
+future::join(f1, f2).await;
+```
+
+注意这里需要使用 `move` 将 `tx` 移动到 `async` 块中，这样在异步块结束时自动被丢弃，否则就是以借用的方式，在异步块结束后依然存在，从而导致 `while let` 一直阻塞。
+
+## 处理任意数量的 futures
 
 
 
