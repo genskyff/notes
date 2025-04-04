@@ -135,7 +135,7 @@ rustc <file> --cfg <name>[="value"]
 # 编译时配置代码生成器选项
 rustc <file> -C <opt>[=value]
 
-# 编译时优化，等同于 -C opt-level=2
+# 编译时优化，等同于 -C opt-level=3
 rustc <file> -O
 
 # 编译时生成调试信息，等同于 -C debuginfo=2
