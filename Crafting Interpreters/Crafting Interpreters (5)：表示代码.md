@@ -177,13 +177,15 @@ Lox 中的表达式，如：
 expression -> literal
               | unary
               | binary
-              | group;
+              | group | condition | comma;
 literal    -> NUMBER | STRING | "true" | "false" | "nil";
-unary      -> ("!" | "-") expression;
+unary      -> ("!" | "+" | "-") expression;
 binary     -> expression operator expression;
-operator   -> "+" | "-" | "*" | "/" | "%"
+operator   -> "+" | "-" | "*" | "/" | "%" | "^"
               | "==" | "!=" | "<" | "<=" | ">" | ">="
-group      -> "(" expression ")"
+group      -> "(" expression ","? ")"
+condition  -> expression ? expression : expression
+comma -> expression ("," expression)*
 ```
 
 > 目前这个语法是有歧义的，之后会修改。
