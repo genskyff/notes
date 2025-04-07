@@ -59,5 +59,5 @@ yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin mise-b
 
 ```shell
 yay -S --needed --noconfirm reflector
-reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --verbose --latest 5 -c <country> --sort rate --save /etc/pacman.d/mirrorlist
 ```
