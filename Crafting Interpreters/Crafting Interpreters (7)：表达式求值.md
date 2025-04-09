@@ -134,7 +134,7 @@ when TokenType::PLUS
   end
 ```
 
-同样，对 `==` 操作也可能有多种语义。如 IEEE 754 规定了 `NaN == NaN` 为 `false`，或对于有类型的语言而言，`i32` 和 `i64` 不能直接比较，以及有些语言中，比较操作是通过在内部调用类似 `eq` 方法实现的，而有些类型的值比如 `nil` 没有这个方法，就会造成运行时错误。这些情况都需要进行特殊处理，这里由于借用了 Ruby 的逻辑，因此不需要做特殊处理。
+同样，对 `==` 操作也可能有多种语义。如 IEEE 754 规定了 `NaN == NaN` 为 `false`，或对于强类型的语言而言，`u32` 和 `i64` 不能直接比较，以及有些语言中，比较操作是通过在内部调用类似 `eq` 方法实现的，而某些类型的值如 `nil` 没有这个方法，就会造成运行时错误。这些情况都需要进行特殊处理，这里由于借用了 Ruby 自身的逻辑，因此不需要做特殊处理。
 
 ### 7.2.5 条件表达式
 
@@ -170,4 +170,50 @@ end
 ```
 
 ## 7.3 运行时错误
+
+在扫描和语法分析阶段，会检查词法和语法错误，并在解析时抛出。在执行语法树的过程中，也可能出现错误，如对一个字符串做减法，这虽然没有语法错误，但是并没有对这种操作进行定义，只会在执行语法树时动态地抛出，这称为**运行时错误**（Runtime error）。
+
+目前的解释器发生这种错误时，利用 Ruby 本身的异常处理机制，会抛出错误和堆栈信息，然后退出程序。但实际用户并不需要这些信息，应该对用户隐藏这些底层细节，并抛出更加友好的错误信息，同时可能在 REPL 中执行时，应该还能够继续输入，而不是直接退出程序。
+
+### 7.3.1 检测运行时错误
+
+在递归遍历语法树时，出现错误后，会跳出所有的调用层，但不使用 Ruby 自己的异常机制，而是定义一个专用错误类 `LoxRuntimeError`。
+
+```ruby
+class LoxRuntimeError < LoxError
+  def initialize(token, message = "")
+    super(message)
+    @token = token
+  end
+
+  protected
+
+  def format_error
+    raise NotImplementedError, "#{self.class.to_s.highlight}##{__method__.to_s.highlight} must be implemented."
+  end
+end
+```
+
+在对语法树每个表达式节点进行计算前，先进行类型检查：
+
+```ruby
+class AstInterpreter < ExpressionVisitor
+  def visit_unary(unary)
+    right = evaluate(unary.right)
+
+    case unary.operator.type
+    # ...
+    when TokenType::MINUS
+      check_number_operand(unary.operator, right)
+      -right
+    end
+  end
+
+  private
+
+  def check_number_operand(operator, operand)
+    raise LoxRuntimeError.new(operator, "Operand must be a number.") unless operand.is_a?(Numeric)
+  end
+end
+```
 
