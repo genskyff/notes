@@ -204,16 +204,92 @@ class AstInterpreter < ExpressionVisitor
     case unary.operator.type
     # ...
     when TokenType::MINUS
-      check_number_operand(unary.operator, right)
+      check_number_operands(unary.operator, right)
       -right
     end
   end
 
   private
 
-  def check_number_operand(operator, operand)
-    raise LoxRuntimeError.new(operator, "Operand must be a number.") unless operand.is_a?(Numeric)
+  def check_number_operands(operator, *operands)
+    operands.all? do |operand|
+      raise LoxRuntimeError.new(operator, "Operands must be numbers.") unless operand.is_a?(Numeric)
+
+      true
+    end
   end
 end
 ```
+
+同样的，对二元计算表达式也添加检查。其中 `+` 由于还被用作字符串连接， 因此做特殊处理。
+
+```ruby
+class AstInterpreter < ExpressionVisitor
+  def visit_binary(binary)
+    left = evaluate(binary.left)
+    right = evaluate(binary.right)
+
+    case binary.operator.type
+    when TokenType::PLUS
+      begin
+        left + right
+      rescue TypeError
+        raise LoxRuntimeError.new(binary.operator, "Operands must be two numbers or two strings.")
+      end
+    when TokenType::MINUS
+      check_number_operands(binary.operator, left, right)
+      left - right
+    when TokenType::STAR
+      check_number_operands(binary.operator, left, right)
+      left * right
+    when TokenType::SLASH
+      check_number_operands(binary.operator, left, right)
+      left / right
+    when TokenType::PERCENT
+      check_number_operands(binary.operator, left, right)
+      left % right
+    when TokenType::CARET
+      check_number_operands(binary.operator, left, right)
+      left**right
+    when TokenType::EQUAL_EQUAL
+      left == right
+    when TokenType::BANG_EQUAL
+      left != right
+    when TokenType::GREATER
+      check_number_operands(binary.operator, left, right)
+      left > right
+    when TokenType::GREATER_EQUAL
+      check_number_operands(binary.operator, left, right)
+      left >= right
+    when TokenType::LESS
+      check_number_operands(binary.operator, left, right)
+      left < right
+    when TokenType::LESS_EQUAL
+      check_number_operands(binary.operator, left, right)
+      left <= right
+    end
+  end
+end
+```
+
+这样就可以对检查运行时错误，并抛出需要的错误，而不是 Ruby 内部的运行时错误。接下来需要将解释器类连接到驱动 Lox 程序的主类中。
+
+## 7.4 连接解释器
+
+`visit` 方法是 `AstInterpreter` 的核心，但还需要封装一层，以方便与其它部分对接。
+
+```ruby
+class AstInterpreter < ExpressionVisitor
+  def interpret(expression)
+    value = evaluate(expression)
+    puts value.inspect
+  rescue LoxRuntimeError => e
+    puts e.message
+  end
+end
+```
+
+`interpret` 方法接收一个表达式树然后计算值，并打印出值的字符串表示。由于使用了 Ruby 的 `inspect` 方法，因此不需要额外增加一个 `stringify` 方法。
+
+### 7.4.1 报告运行时错误
 
