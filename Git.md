@@ -1005,7 +1005,7 @@ git cherry-pick <range>
 打包仓库：
 
 ```shell
-git bundle create <bundle> [<branch> | --all]
+git bundle create <bundle> <branch>
 ```
 
 打包最近 n 个提交：
