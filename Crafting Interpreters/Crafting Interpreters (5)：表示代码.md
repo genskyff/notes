@@ -229,8 +229,8 @@ end
 class Lox::AstGenerator
   def initialize(output_path:, basename:, productions:)
     @output_path = output_path
-    @basename = basename.downcase
-    @productions = productions.map(&:downcase)
+    @basename = Lox::Utils.snake_name(basename)
+    @productions = productions
   end
 
   def make
@@ -242,11 +242,11 @@ class Lox::AstGenerator
       file.puts "# !! Do not edit it directly !!"
       file.puts
       file.puts "module Lox::Ast"
-      file.puts "  class #{@basename.capitalize}"
+      file.puts "  class #{Lox::Utils.pascal_name(@basename)}"
       file.puts "  end"
 
       @productions.each do |production|
-        head, body = production.split(":").map(&:strip)
+        head, body = production.split(":").map(&:strip).map { Lox::Utils.snake_name(it) }
         names = body.split(",").map(&:strip)
         make_production(file, head, names)
       end
@@ -259,7 +259,7 @@ class Lox::AstGenerator
 
   def make_production(file, head, names)
     file.puts
-    file.puts "  class #{head.capitalize} < #{@basename.capitalize}"
+    file.puts "  class #{Lox::Utils.pascal_name(head)} < #{Lox::Utils.pascal_name(@basename)}"
     file.puts "    attr_reader #{names.map { |name| ":#{name}" }.join(", ")}, :location"
     file.puts
     file.puts "    def initialize(#{names.map { "#{it}:" }.join(", ")}, location: nil)"
@@ -281,13 +281,13 @@ require_relative "../lib/lox"
 root_path = File.expand_path("..", File.dirname(__FILE__))
 output_path = File.join(root_path, "lib", "lox", "ast")
 
-Lox::AstGenerator.new(output_path:, basename: "Expr", productions: [
-                        "Literal : value",
-                        "Unary   : op, right",
-                        "Binary  : op, left, right",
-                        "Group   : expr",
-                        "Cond    : expr, then_branch, else_branch",
-                        "Comma   : exprs"
+Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
+                        "literal : value",
+                        "unary   : op, right",
+                        "binary  : op, left, right",
+                        "group   : expr",
+                        "cond    : expr, then_branch, else_branch",
+                        "comma   : exprs"
                       ]).make
 ```
 
@@ -596,7 +596,7 @@ class Lox::AstGenerator
       file.puts "# !! Do not edit it directly !!"
       file.puts
       file.puts "module Lox::Ast"
-      file.puts "  class #{@basename.capitalize}"
+      file.puts "  class #{Lox::Utils.pascal_name(@basename)}"
       file.puts "    def accept(visitor)"
       file.puts "      raise NotImplementedError,"
       file.puts "            \"\#{self.class.to_s.highlight}#\#{__method__.to_s.highlight} must be implemented\""
@@ -604,7 +604,7 @@ class Lox::AstGenerator
       file.puts "  end"
 
       @productions.each do |production|
-        head, body = production.split(":").map(&:strip)
+        head, body = production.split(":").map(&:strip).map { Lox::Utils.snake_name(it) }
         names = body.split(",").map(&:strip)
         make_production(file, head, names)
       end
@@ -624,7 +624,7 @@ class Lox::AstGenerator
 
   def make_production(file, head, names)
     file.puts
-    file.puts "  class #{head.capitalize} < #{@basename.capitalize}"
+    file.puts "  class #{Lox::Utils.pascal_name(head)} < #{Lox::Utils.pascal_name(@basename)}"
     file.puts "    attr_reader #{names.map { |name| ":#{name}" }.join(", ")}, :location"
     file.puts
     file.puts "    def initialize(#{names.map { "#{it}:" }.join(", ")}, location: nil)"
@@ -643,11 +643,11 @@ class Lox::AstGenerator
   def make_visitor(file)
     file.puts
     file.puts "  # noinspection RubyUnusedLocalVariable"
-    file.puts "  class #{@basename.capitalize}Visitor"
+    file.puts "  class #{Lox::Utils.pascal_name(@basename)}Visitor"
 
     @productions.each_with_index do |production, i|
       file.puts if i.positive?
-      head, = production.split(":").map(&:strip)
+      head, = production.split(":").map(&:strip).map { Lox::Utils.snake_name(it) }
       file.puts "    def visit_#{head}(#{head})"
       file.puts "      raise NotImplementedError,"
       file.puts "            \"\#{self.class.to_s.highlight}#\#{__method__.to_s.highlight} must be implemented\""
