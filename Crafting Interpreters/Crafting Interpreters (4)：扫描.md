@@ -51,7 +51,7 @@ class Lox::Entry
     end
 
     @src_map = Lox::SourceMap.new(src:, line_from:).freeze
-    run
+    run(repl: true)
   rescue Lox::Error
     handle_run_src_or_prompt_error
   rescue StandardError => e
@@ -93,7 +93,7 @@ class Lox::Entry
       end
 
       @src_map = Lox::SourceMap.new(src:, line_from: line - 1).freeze
-      run
+      run(repl: true)
 
       has_error = @error_collector.error?
     rescue Lox::Error
@@ -128,7 +128,7 @@ class Lox::Entry
 
   private
 
-  def run
+  def run(repl: false)
     tokens = Lox::Scanner.new(src_map: @src_map, error_collector: @error_collector).scan
     pp tokens
     raise Lox::Error::ScannerError if @error_collector.error?
@@ -143,6 +143,7 @@ class Lox::Entry
     error_count = @error_collector.errors.count
     @error_collector.report
     warn "#{"error".red}: failed to run #{file} with #{error_count.to_s.highlight} error#{error_count > 1 ? "s" : ""}"
+    warn "\n"
     exit 65
   end
 
@@ -314,6 +315,10 @@ class Lox::ErrorCollector
     @errors << error
   end
 
+  def pop
+    @errors.pop
+  end
+
   def clear
     @errors.clear
   end
@@ -367,12 +372,13 @@ class Lox::Error < StandardError
     info << "#{gap}#{"-->".blue} #{@context.location.file}:#{start_line}:#{start_column}"
     info << gap_with_bar
 
+    part_width = Unicode::DisplayWidth.of(part)
     start_line_prefix_width = Unicode::DisplayWidth.of(@context.start_line_prefix)
     end_line_prefix_width = Unicode::DisplayWidth.of(@context.end_line_prefix)
 
     if ctx.size <= 1
       info << ("#{start_line} | ".blue + ctx.last.chomp)
-      info << ("#{"#{gap_with_bar} #{" " * start_line_prefix_width}"}#{part_mark(part.length)}")
+      info << ("#{"#{gap_with_bar} #{" " * start_line_prefix_width}"}#{part_mark(part_width)}")
     elsif ctx.size <= MAX_CTX_LINES
       info << ("#{start_line.to_s.rjust(gap_len)} |   ".blue + ctx.first.chomp)
       info << ("#{gap_with_bar}  #{"_".red * (start_line_prefix_width + 1)}#{"^".red}")
