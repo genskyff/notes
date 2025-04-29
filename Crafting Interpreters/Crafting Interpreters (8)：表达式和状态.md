@@ -141,7 +141,7 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
   end
 
   def visit_print_stmt(print_stmt)
-    puts evaluate_expr(print_stmt.expr).inspect
+    puts evaluate_expr(print_stmt.expr)
   end
 
   private
