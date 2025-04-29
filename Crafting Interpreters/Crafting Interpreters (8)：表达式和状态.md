@@ -23,7 +23,7 @@ exprStmt  -> expr ";";
 printStmt -> "print" expr ";";
 ```
 
-现在程序顶层由 `program` 开始，一个程序由 0 条或多条语句，或最后一条是一个表达式，并含有一个 `EOF` 结束标记。强制性的添加结束标记可以确保解析器能够消费所有输入内容，而不会忽略结尾处的错误、未消耗的标记。
+现在程序顶层由 `program` 开始，一个程序由 0 条或多条语句，结尾可以有一个表达式组成，并含有一个 `EOF` 结束标记。强制性的添加结束标记可以确保解析器能够消费所有输入内容，而不会忽略结尾处的错误、未消耗的标记。
 
 ### 8.1.1 Statement 语法树
 
@@ -106,17 +106,20 @@ class Lox::Parser
 
   # exprStmt -> expr ";"
   def expr_stmt
+    from = previous
     expr = expression
-    add_error("expect `(` before expression", ast) if match_next?(Lox::TokenType::RIGHT_PAREN)
-    consume(Lox::TokenType::SEMICOLON, "expect `;` after expression", expr, previous, Lox::Error::NotStatementError)
-    Lox::Ast::ExprStmt.new(location: location(expr), expr:)
+    add_error("expect `(` before expression", expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
+    consume(Lox::TokenType::SEMICOLON, "expression statement must end with `;`", from, previous, Lox::Error::NotStatementError)
+    Lox::Ast::ExprStmt.new(expr:, location: location(from))
   end
 
   # printStmt -> "print" expr ";"
   def print_stmt
+    from = previous
     expr = expression
-    consume(Lox::TokenType::SEMICOLON, "expect `;` after expression", expr)
-    Lox::Ast::PrintStmt.new(location: location(expr), expr:)
+    add_error("expect `(` before expression", expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
+    consume(Lox::TokenType::SEMICOLON, "print statement must end with `;`", from)
+    Lox::Ast::PrintStmt.new(expr:, location: location(from))
   end
 end
 ```
