@@ -13,11 +13,11 @@ expr    -> literal | unary | binary | group | cond | comma;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
-op      -> "+" | "-" | "*" | "/" | "%" | "^"
-           | "==" | "!=" | "<" | "<=" | ">" | ">="
-group   -> "(" expr ","? ")"
-cond    -> expr ? expr : expr
-comma   -> expr ("," expr)*
+op      -> "+" | "-" | "*" | "/" | "%" | "^";
+           | "==" | "!=" | "<" | "<=" | ">" | ">=";
+group   -> "(" expr ","? ")";
+cond    -> expr ? expr : expr;
+comma   -> expr ("," expr)*;
 ```
 
 而对于如下字符串：
@@ -96,13 +96,13 @@ primary
 一元表达式以一元操作符开头，后跟操作数。因为一元操作符可以嵌套，如 `!!expr`，因此可以用递归来解决，而每条规则都需要匹配该优先级或更高优先级的表达式，因此还需要使其与 `primary` 匹配：
 
 ```
-unary -> ("!" | "+" | "-") unary | power
+unary -> ("!" | "+" | "-") unary | power;
 ```
 
 然后是二元表达式，先从乘除法开始：
 
 ```
-factor -> factor ("*" | "/" | "%") unary | unary
+factor -> factor ("*" | "/" | "%") unary | unary;
 ```
 
 但这会导致左递归，使匹配陷入死循环。
@@ -141,9 +141,9 @@ $$
 因此 `factor` 也可以转换，其中左递归的 `factor` 就是 $A$，`("*" | "/") unary` 就是 $\alpha$，`unary` 就是 $\beta$：
 
 ```
-factor -> factor ("*" | "/" | "%") unary | unary
+factor -> factor ("*" | "/" | "%") unary | unary;
 ↓
-factor -> unary (("*" | "/" | "%") unary)*
+factor -> unary (("*" | "/" | "%") unary)*;
 ```
 
 一般地，对于左递归产生式：
@@ -207,16 +207,16 @@ $$
 对于上述表达式文法，可以做如下转换：
 
 ```
-expression -> comma
-comma -> condition ("," condition)*
-condition -> equality "?" condition ":" condition | equality
-equality -> comparison (("==" | "!=") comparison)*
-comparison -> term (( ">" | ">=" | "<" | "<=" ) term)*
-term -> factor (("+" | "-") factor)*
-factor -> unary (("*" | "/" | "%") unary)*
-unary -> ("!" | "+" | "-") unary | power
-power -> primary ("^" power)?
-primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil"
+expression -> comma;
+comma -> condition ("," condition)*;
+condition -> equality "?" condition ":" condition | equality;
+equality -> comparison (("==" | "!=") comparison)*;
+comparison -> term (( ">" | ">=" | "<" | "<=" ) term)*;
+term -> factor (("+" | "-") factor)*;
+factor -> unary (("*" | "/" | "%") unary)*;
+unary -> ("!" | "+" | "-") unary | power;
+power -> primary ("^" power)?;
+primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil";
 ```
 
 这个语法虽然更复杂，但消除了歧义，可以被解析器正常解析。
