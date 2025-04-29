@@ -295,7 +295,7 @@ class Lox::Parser
       exprs << condition
     end
 
-    exprs.count == 1 ? exprs.first : Lox::Ast::Comma.new(location: location(exprs.first), exprs:)
+    exprs.count == 1 ? exprs.first : Lox::Ast::Comma.new(exprs:, location: location(exprs.first))
   end
 end
 ```
@@ -386,7 +386,7 @@ class Lox::Parser
       then_branch = condition
       consume(Lox::TokenType::COLON, "expect `:` after condition", expr)
       else_branch = condition
-      expr = Lox::Ast::Cond.new(location: location(expr), expr:, then_branch:, else_branch:)
+      expr = Lox::Ast::Cond.new(expr:, then_branch:, else_branch:, location: location(expr))
     end
 
     expr
@@ -407,7 +407,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::EQUAL_EQUAL, Lox::TokenType::BANG_EQUAL)
       op = previous
       right = comparison
-      expr = Lox::Ast::Binary.new(location: location(expr), op:, left: expr, right:)
+      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr), )
     end
 
     expr
@@ -430,7 +430,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::GREATER, Lox::TokenType::GREATER_EQUAL, Lox::TokenType::LESS, Lox::TokenType::LESS_EQUAL)
       op = previous
       right = term
-      expr = Lox::Ast::Binary.new(location: location(expr), op:, left: expr, right:)
+      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
     end
 
     expr
@@ -443,7 +443,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::PLUS, Lox::TokenType::MINUS)
       op = previous
       right = factor
-      expr = Lox::Ast::Binary.new(location: location(expr), op:, left: expr, right:)
+      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
     end
 
     expr
@@ -456,7 +456,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::STAR, Lox::TokenType::SLASH, Lox::TokenType::PERCENT)
       op = previous
       right = unary
-      expr = Lox::Ast::Binary.new(location: location(expr), op:, left: expr, right:)
+      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
     end
 
     expr
@@ -475,7 +475,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::BANG, Lox::TokenType::PLUS, Lox::TokenType::MINUS)
       op = previous
       right = unary
-      Lox::Ast::Unary.new(location:, op:, right:)
+      Lox::Ast::Unary.new(op:, right:, location:)
     else
       power
     end
@@ -498,7 +498,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::CARET)
       op = previous
       right = power
-      expr = Lox::Ast::Binary.new(location: location(expr), op:, left: expr, right:)
+      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
     end
 
     expr
@@ -521,12 +521,14 @@ class Lox::Parser
       expr = expression
       advance if peek.type == Lox::TokenType::COMMA
       consume(Lox::TokenType::RIGHT_PAREN, "expect `)` after expression", from)
-      Lox::Ast::Group.new(location: location(from), expr:)
+      Lox::Ast::Group.new(expr:, location: location(from))
     elsif match_next?(Lox::TokenType::NUMBER, Lox::TokenType::STRING)
-      Lox::Ast::Literal.new(location:, value: previous.literal)
+      Lox::Ast::Literal.new(value: previous.literal, location:)
     elsif match_next?(Lox::Keyword.key("true"), Lox::Keyword.key("false"), Lox::Keyword.key("nil"))
       value_map = { "true" => true, "false" => false, "nil" => nil }
-      Lox::Ast::Literal.new(location:, value: value_map[previous.lexeme])
+      Lox::Ast::Literal.new(value: value_map[previous.lexeme], location:)
+    else
+      add_error("expect expression", from, peek, Lox::Error::NotExpressionError)
     end
   end
 end
