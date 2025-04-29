@@ -174,10 +174,7 @@ Lox 中的表达式，如：
 除了与精确词素相匹配的终止符会加引号外，还对表示单一词素的终止符进行**大写化**，这些词素的文本表示方式可能会有所不同。`NUMBER` 是任何数字字面量，`STRING` 是任何字符串字面量，对 `IDENTIFIER` 也进行同样的处理。这些符号使用生成式语法可以表达为：
 
 ```
-expr    -> literal
-           | unary
-           | binary
-           | group | cond | comma;
+expr    -> literal | unary | binary | group | cond | comma;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
@@ -662,12 +659,12 @@ end
 
 ## 5.4 一个（不是很）漂亮的打印
 
-当需要调试解析器和解释器时，通常需要查看解析后的语法树并确保其与期望的是结构一致。因此可以利用访问者模式，新增一个继承于 `ExprVisitor` 的 `AstPrinter`，在给定语法树的情况下，生成一个显示树的嵌套结构的字符串表示。其接收一个名称和一组子表达式作为参数，然后包装在圆括号中，通过递归在每个子表达式上调用 `accept` 并传递自身，这样可以打印整棵树。
+当需要调试解析器和解释器时，通常需要查看解析后的语法树并确保其与期望的是结构一致。因此可以利用访问者模式，新增一个继承于 `ExprVisitor` 的 `ExprPrinter`，在给定语法树的情况下，生成一个显示树的嵌套结构的字符串表示。其接收一个名称和一组子表达式作为参数，然后包装在圆括号中，通过递归在每个子表达式上调用 `accept` 并传递自身，这样可以打印整棵树。
 
-定义一个 `AstPrinter`：
+定义一个 `ExprPrinter`：
 
 ```ruby
-class Lox::Visitor::AstPrinter < Lox::Ast::ExprVisitor
+class Lox::Visitor::ExprPrinter < Lox::Ast::ExprVisitor
   def visit_literal(literal)
     literal.value.inspect
   end
@@ -698,7 +695,6 @@ class Lox::Visitor::AstPrinter < Lox::Ast::ExprVisitor
     "(#{name} #{exprs.map { |expr| expr.accept(self) }.join(" ")})"
   end
 end
-
 ```
 
 如给定一个语法树，如：
@@ -724,7 +720,7 @@ expr = Lox::Ast::Binary.new(
   )
 )
 
-puts expr.accept(Lox::Visitor::AstPrinter.new)
+puts expr.accept(Lox::Visitor::ExprPrinter.new)
 ```
 
 输出结果为：

@@ -9,10 +9,7 @@
 如下面 Lox 的表达式语法：
 
 ```
-expr   -> literal
-          | unary
-          | binary
-          | group | cond | comma;
+expr    -> literal | unary | binary | group | cond | comma;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
@@ -567,10 +564,11 @@ end
 
 ### 6.3.2 进入恐慌模式
 
-定义 `ParserError` 类：
+添加错误类：
 
 ```ruby
 class Lox::Error::ParserError < Lox::Error; end
+class Lox::Error::NotExpressionError < Lox::Error::ParserError; end
 ```
 
 在 `condition` 和 `primary` 中，有一行调用 `consume` 来检查需要的 Token 是否匹配，否则抛出错误，实现如下：
@@ -583,17 +581,17 @@ class Lox::Parser
     !at_end? && peek.type == type
   end
 
-  def consume(type, message, from = previous, to = previous)
-    check?(type) ? advance : add_error(message, from, to)
+  def consume(type, message, from = previous, to = previous, error_type = Lox::Error::ParserError)
+    check?(type) ? advance : add_error(message, from, to, error_type)
   end
 
   def error_context(from, to)
     Lox::Context.new(@src_map, location(from, to))
   end
 
-  def add_error(message, from = previous, to = previous)
-    @error_collector.add(Lox::Error::ParserError.new(message, error_context(from, to)))
-    raise Lox::Error::ParserError
+  def add_error(message, from = previous, to = previous, error_type = Lox::Error::ParserError)
+    @error_collector.add(error_type.new(message, error_context(from, to)))
+    raise error_type
   end
 end
 ```
@@ -613,13 +611,10 @@ class Lox::Parser
   private
 
   def sync
-    advance
-
     until at_end?
-      return if previous.type == Lox::TokenType::SEMICOLON
-
       case peek.type
-      when Lox::Keyword.key("var"), Lox::Keyword.key("if"), Lox::Keyword.key("while"),
+      when Lox::TokenType::SEMICOLON,
+        Lox::Keyword.key("var"), Lox::Keyword.key("if"), Lox::Keyword.key("while"),
         Lox::Keyword.key("for"), Lox::Keyword.key("fun"), Lox::Keyword.key("return"),
         Lox::Keyword.key("class"), Lox::BuiltIn.key("print"), Lox::BuiltIn.key("read")
         return
@@ -646,7 +641,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::LEFT_PAREN)
     # ...
     else
-      add_error("expect expression", from, peek)
+      add_error("expect expression", from, peek, Lox::Error::NotExpressionError)
     end
   end
 end
