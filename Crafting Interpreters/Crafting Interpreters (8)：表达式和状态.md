@@ -253,18 +253,12 @@ primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil" 
 
 ```ruby
 Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
-                        "literal : value",
-                        "unary   : op, right",
-                        "binary  : left, op, right",
-                        "group   : expr",
-                        "cond    : expr, then_branch, else_branch",
-                        "comma   : exprs",
+                        # ...
                         "var     : ident"
                       ]).make
 
 Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
-                        "exprStmt  : expr",
-                        "printStmt : expr",
+                        # ...
                         "varStmt   : ident, expr"
                       ]).make
 ```
@@ -339,5 +333,181 @@ end
 其本质是一个名称到值的映射的集合，通常用哈希表来实现。通过创建一个单独的 `Env` 类来实现：
 
 ```ruby
+class Lox::Env
+  def initialize
+    @vars = {}
+  end
+
+  def define(name, value)
+    @vars[name] = value
+  end
+
+  def value(var)
+    name = var.ident.lexeme
+    raise Lox::Error::NotDefineError unless @vars.key?(name)
+
+    @vars[name]
+  end
+end
+```
+
+通过 Ruby 的 Hash 来保存变量，变量名作为键。`define` 用于创建一个变量或者覆盖已有的变量。`value` 获取变量的值，当变量不存在时，抛出一个错误。
+
+添加 `NotDefineError`：
+
+```ruby
+class Lox::Error::NotDefineError < Lox::Error::InterpreterError; end
+```
+
+可以不允许覆盖已有变量，或在使用不存在的变量时返回一个 `nil`，这取决于语言设计时的考量。
+
+当抛出错误时，可以视为语法错误，也可以是运行时错误。若是前者，那么可能不允许使用相互递归的程序：
+
+```javascript
+fun isOdd(n) {
+  if (n == 0) return false;
+  return isEven(n - 1);
+}
+
+fun isEven(n) {
+  if (n == 0) return true;
+  return isOdd(n - 1);
+}
+```
+
+当解析 `isOdd` 时， `isEven` 被调用的时候还没有被声明，即使交换顺序也会导致相同的虚无。
+
+因此视为语法错误这类**静态错误**会使递归声明过于困难，因此视为运行时错误，在一个变量被定义之前可以**引用**，但不能**求值**。
+
+### 8.3.1 解释全局变量
+
+每一个 Lox 实例都会创建一个全局变量环境，这样只要在实例运行期间，所有的代码都能共享。
+
+更新 `Entry`，把 `@env` 传递到每个 `Interpreter` 实例中：
+
+```ruby
+class Lox::Entry
+  def initialize
+    @error_collector = Lox::ErrorCollector.new
+    @env = Lox::Env.new
+  end
+
+  private
+
+  def run(repl: false)
+    # ...
+    Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:stmts], env: @env).interpret if ast[:stmts].any?
+    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:expr], env: @env).interpret
+    # ...
+  end
+```
+
+更新 `Interpreter`：
+
+```ruby
+class Lox::Interpreter
+  def initialize(src_map:, error_collector:, ast:, env:)
+    # ...
+    @env = env
+  end
+
+  def interpret
+    if @ast.is_a?(Lox::Ast::Expr)
+      @ast.accept(Lox::Visitor::ExprInterpreter.new(@src_map, @env))
+    else
+      @ast&.each do |stmt|
+        stmt.accept(Lox::Visitor::StmtInterpreter.new(@src_map, @env))
+      end
+      nil
+    end
+  rescue Lox::Error::InterpreterError => e
+    # ...
+  end
+end
+```
+
+在 `StmtInterpreter` 中添加对 `var_stmt` 的访问者，同时需要接受环境：
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  def initialize(src_map, env)
+    @src_map = src_map
+    @env = env
+    @expr_interpreter = Lox::Visitor::ExprInterpreter.new(src_map, @env)
+  end
+
+  def visit_var_stmt(var_stmt)
+    name = var_stmt.ident.lexeme
+    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : nil
+    @env.define(name, value)
+    nil
+  end
+end
+```
+
+同样地，在 `ExprInterpreter` 中添加 `var` 的访问者：
+
+```ruby
+class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+  def initialize(src_map, env)
+    @src_map = src_map
+    @env = env
+  end
+
+  def visit_var(var)
+    @env.value(var)
+  rescue Lox::Error::NotDefineError
+    error("undefined variable `#{var.ident.lexeme}`", var)
+  end
+end
+```
+
+## 8.4 赋值
+
+在有些函数式语言中，由于不变性，通常只允许变量定义，而不允许赋值。因为更改变量的值实际上是一种副作用。但 Lox 是一门命令式语言，没有那么严格。因此除了支持变量定义外，还支持赋值。
+
+### 8.4.1 赋值语法
+
+与 C 类似，赋值是一个优先级最低的表达式，而不是语句，更新表达式的产生式：
+
+```
+expression -> assign;
+assign -> IDENTIFIER "=" assign | comma;
+```
+
+更新 `bin/gen_ast`，添加 `Assign` 节点：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
+                        # ...
+                        "assign  : ident, expr"
+                      ]).make
+```
+
+更新 `Parser#expression`：
+
+```ruby 
+class Lox::Parser
+  private
+
+  # expression -> assign
+  def expression
+    assign
+  end
+end
+```
+
+对于赋值表达式的需要特殊处理，因为单个标记前瞻的递归下降解析器只有在解析完左侧的标记并遇到 `=` 后才知道这是一个赋值表达式。虽然算术运算的解析也是这样的，先计算左侧才能得知下一个是 `+`。但是两者有一个根本的区别：赋值表达式的左侧不是可以求值的表达式，而是一种伪表达式，计算出的结果是一个可以被复制的对象，即**左值**和**右值**的区别，左值计算得到一个存储位置，右值可以保存在该位置上。
+
+```
+a = value
+```
+
+这里不会对 `a` 进行求值，而是要知道 `a` 指向的是什么变量，这样就能知道右侧的表达式要在哪保存。
+
+因此语法树对左值的处理，不会像常规表达式那样计算，而且解析器直到遇到 `=` 才能得知正在解析一个左值。在一个复杂的左值中，可能在很多个标记之后才能识别，因此无法提前得知要前瞻多少个标记。
+
+```
+a().b().c.d = value
 ```
 
