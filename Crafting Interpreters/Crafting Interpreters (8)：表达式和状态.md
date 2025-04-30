@@ -304,7 +304,12 @@ class Lox::Parser
   # var_decl -> "var" IDENTIFIER ("=" expression)? ";"
   def var_decl
     from = previous
-    consume(Lox::TokenType::IDENTIFIER, "expect identifier", from)
+    advance
+    if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
+      add_error("expected identifier, found keyword or built-in", previous, previous)
+    elsif previous.type != Lox::TokenType::IDENTIFIER
+      add_error("expect identifier", previous, previous)
+    end
     ident = previous
     expr = expression if match_next?(Lox::TokenType::EQUAL)
     consume(Lox::TokenType::SEMICOLON, "expect `;` after variable declaration", from)
