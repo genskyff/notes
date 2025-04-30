@@ -178,11 +178,11 @@ expr    -> literal | unary | binary | group | cond | comma;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
-op      -> "+" | "-" | "*" | "/" | "%" | "^"
-           | "==" | "!=" | "<" | "<=" | ">" | ">="
-group   -> "(" expr ","? ")"
-cond    -> expr ? expr : expr
-comma   -> expr ("," expr)*
+op      -> "+" | "-" | "*" | "/" | "%" | "^";
+           | "==" | "!=" | "<" | "<=" | ">" | ">=";
+group   -> "(" expr ","? ")";
+cond    -> expr ? expr : expr;
+comma   -> expr ("," expr)*;
 ```
 
 > 目前这个语法是有歧义的，之后会修改。
