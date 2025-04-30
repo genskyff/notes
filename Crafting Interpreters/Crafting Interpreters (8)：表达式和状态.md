@@ -511,3 +511,67 @@ a = value
 a().b().c.d = value
 ```
 
+Lox 的解析器只会前瞻一个标记，因此使用一种小技巧来解决：
+
+```ruby
+class Lox::Parser
+  private
+
+  # assign -> IDENTIFIER "=" assign | comma
+  def assign
+    expr = comma
+
+    if match_next?(Lox::TokenType::EQUAL)
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        expr = Lox::Ast::Assign.new(ident:, expr: right, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    end
+
+    expr
+  end
+
+end
+```
+
+既然不确定是否是一个赋值运算，就先当成表达式来解析，因此先解析 `comma`（`IDENTIFIER` 的解析也包含在其中），然后看后面是否是一个 `=`。如果是， 则前面 `comma` 解析得到的结果就应该是一个 `Var` 节点，那么就继续解析右边的表达式即可，否则报错。
+
+目前只有简单变量是有效的赋值目标，后续会添加属性字段。
+
+### 8.4.2 赋值语义
+
+现在有了一个新的 `Assign` 节点，同样添加一个访问者方法，更新 `ExprInterpreter`：
+
+```ruby
+class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+  def visit_assign(assign)
+    value = evaluate(assign.expr)
+    @env.assign(assign.ident, value)
+    value
+  rescue Lox::Error::NotDefineError
+    error("undefined variable `#{assign.ident.lexeme}`", assign.ident)
+  end
+end
+```
+
+在 `Env` 中添加 `assign` 方法：
+
+```ruby
+class Lox::Env
+  def assign(ident, value)
+    name = ident.lexeme
+    raise Lox::Error::NotDefineError unless @vars.key?(name)
+
+    @vars[name] = value
+  end
+end
+```
+
+赋值与定义的区别在于，赋值不允许创建新变量，把值赋给不存在的变量会抛出运行时错误。
+
+## 8.5 作用域
+
