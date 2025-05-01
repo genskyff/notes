@@ -344,22 +344,28 @@ class Lox::Env
 
   def value(var)
     name = var.ident.lexeme
-    raise Lox::Error::NotDefineError unless @vars.key?(name)
 
-    @vars[name]
+    if @vars.key?(name)
+      return @vars[name] unless @vars[name] == :not_init
+
+      raise Lox::Error::UninitizedError
+    end
+
+    raise Lox::Error::UndefinedError
   end
 end
 ```
 
-通过 Ruby 的 Hash 来保存变量，变量名作为键。`define` 用于创建一个变量或者覆盖已有的变量。`value` 获取变量的值，当变量不存在时，抛出一个错误。
+通过 Ruby 的 Hash 来保存变量，变量名作为键。`define` 用于创建一个变量或者覆盖已有的变量。`value` 获取变量的值，当变量不存在或未初始化时，抛出一个错误。
 
-添加 `NotDefineError`：
+添加错误类型：
 
 ```ruby
-class Lox::Error::NotDefineError < Lox::Error::InterpreterError; end
+class Lox::Error::UndefinedError < Lox::Error::InterpreterError; end
+class Lox::Error::UninitizedError < Lox::Error::InterpreterError; end
 ```
 
-可以不允许覆盖已有变量，或在使用不存在的变量时返回一个 `nil`，这取决于语言设计时的考量。
+可以不允许覆盖已有变量，或在使用不存在的变量时返回一个 `nil`，亦或者在使用未初始化的变量时抛出一个错误，这取决于语言设计时的考量。
 
 当抛出错误时，可以视为语法错误，也可以是运行时错误。若是前者，那么可能不允许使用相互递归的程序：
 
@@ -438,7 +444,7 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
 
   def visit_var_stmt(var_stmt)
     name = var_stmt.ident.lexeme
-    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : nil
+    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : :not_init
     @env.define(name, value)
     nil
   end
@@ -456,8 +462,10 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
 
   def visit_var(var)
     @env.value(var)
-  rescue Lox::Error::NotDefineError
+  rescue Lox::Error::UndefinedError
     error("undefined variable `#{var.ident.lexeme}`", var)
+  rescue Lox::Error::UninitizedError
+    error("variable `#{var.ident.lexeme}` is not initialized", var)
   end
 end
 ```
@@ -552,7 +560,7 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
     value = evaluate(assign.expr)
     @env.assign(assign.ident, value)
     value
-  rescue Lox::Error::NotDefineError
+  rescue Lox::Error::UndefinedError
     error("undefined variable `#{assign.ident.lexeme}`", assign.ident)
   end
 end
@@ -564,7 +572,7 @@ end
 class Lox::Env
   def assign(ident, value)
     name = ident.lexeme
-    raise Lox::Error::NotDefineError unless @vars.key?(name)
+    raise Lox::Error::UndefinedError unless @vars.key?(name)
 
     @vars[name] = value
   end
@@ -666,10 +674,15 @@ class Lox::Env
   def value(var)
     name = var.ident.lexeme
 
-    return @vars[name] if @vars.key?(name)
+    if @vars.key?(name)
+      return @vars[name] unless @vars[name] == :not_init
+
+      raise Lox::Error::UninitizedError
+    end
+
     return @enclosing&.value(var) if @enclosing
 
-    raise Lox::Error::NotDefineError
+    raise Lox::Error::UndefinedError
   end
 end
 ```
@@ -684,10 +697,131 @@ class Lox::Env
     return @vars[name] = value if @vars.key?(name)
     return @enclosing&.assign(ident, value) if @enclosing
 
-    raise Lox::Error::NotDefineError
+    raise Lox::Error::UndefinedError
   end
 end
 ```
 
 ### 8.5.2 块语法和语义
+
+已经完成了环境的嵌套，然后添加块，更新 `stmt` 的产生式：
+
+```
+stmt -> exprStmt | printStmt | blockStmt | ";";
+blockStmt -> "{" decl* "}";
+```
+
+块是一种语句，由 `{}` 组成，其中可以包含任意语句，包括声明语句。
+
+更新 `bin/gen_ast`，`BlockStmt` 节点包含一个语句数组：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+                        # ...
+                        "blockStmt : stmts"
+                      ]).make
+```
+
+更新 `Parser` 添加解析块的部分：
+
+```ruby
+class Lox::Parser
+  private
+
+  # statement -> expr_stmt | print_stmt | block_stmt | ";"
+  def statement
+    from = peek
+    if match_next?(Lox::BuiltIn.key("print"))
+      print_stmt
+    elsif match_next?(Lox::TokenType::SEMICOLON)
+      nil
+    elsif match_next?(Lox::TokenType::LEFT_BRACE)
+      block_stmt
+    else
+      expr_stmt
+    end
+  end
+
+  # block_stmt -> "{" declaration* "}"
+  def block_stmt
+    from = previous
+    stmts = []
+
+    while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
+      stmt = declaration
+      stmts << stmt unless stmt.nil?
+    end
+
+    consume(Lox::TokenType::RIGHT_BRACE, "block must be end with `}`", from)
+    Lox::Ast::BlockStmt.new(stmts:, location: location(from))
+  end
+end
+```
+
+`block_stmt` 其实与 `program` 是类似的，因为都是解析 `declaration`。
+
+修改 `program` 来对块进行错误处理：
+
+```ruby
+class Lox::Parser
+  private
+
+  def program
+    stmt_list = []
+    until at_end?
+      begin
+        add_error("block must be start with `{`") if match_next?(Lox::TokenType::RIGHT_BRACE)
+        # ...
+      rescue Lox::Error::NotStatementError
+        # ...
+      end
+    end
+    # ...
+  end
+end
+```
+
+然后添加对块的访问者：
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  def initialize(src_map, env)
+    @src_map = src_map
+    @env = env
+    @expr_interpreter = Lox::Visitor::ExprInterpreter.new(src_map, @env)
+  end
+
+  def visit_block_stmt(block_stmt)
+    block_env = Lox::Env.new(@env)
+    execute_block(block_stmt.stmts, block_env)
+    nil
+  end
+  
+  private
+
+  def execute_stmt(stmt)
+    stmt.accept(self)
+  end
+
+  def execute_block(stmts, block_env)
+    pre_env = @env
+    @env = block_env
+    @expr_interpreter.env = block_env
+    stmts.each { execute_stmt(it) }
+  ensure
+    @env = pre_env
+    @expr_interpreter.env = pre_env
+  end
+end
+```
+
+每一个块都会创建一个新的环境，并把链接上层环境。每个块都会在给定上下文中执行语句，因此会先将当前环境指定为 `block_env`，并在执行结束后恢复之前的环境，并通过 `ensure` 来确保即使发生了异常也能恢复。
+
+由于在最开始初始化时 `@expr_interpreter` 保存的是当前环境，并不是 `block_env`，因此还需要修改 `@expr_interpreter` 的 `env`，对 `ExprInterpreter` 增加一个访问器即可。
+
+```ruby
+class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+  attr_accessor :env
+end
+```
 
