@@ -571,7 +571,123 @@ class Lox::Env
 end
 ```
 
-赋值与定义的区别在于，赋值不允许创建新变量，把值赋给不存在的变量会抛出运行时错误。
+赋值与声明的区别在于，赋值不允许创建新变量，把值赋给不存在的变量会抛出运行时错误。
 
 ## 8.5 作用域
+
+**作用域**（Scope）定义了名称的有效范围。多个作用域允许同一个名称在不同上下文指向不同内容。
+
+**词法作用域**（Lexical scope），也称**静态作用域**（Static scope）是一种作用域定义方式。程序本身的文本位置就已经决定了作用域的范围。Lox 也是静态作用域的，变量只在作用域内有效。
+
+```javascript
+{
+  var a = "first";
+  print a; // "first".
+}
+
+{
+  var a = "second";
+  print a; // "second".
+}
+```
+
+在两个块中声明了同名变量，但指向的值不同。
+
+**动态作用域**（Dynamic scope）中，作用域是在运行时确定的，Lox 虽然没有动态作用域变量，但对象上的方法和字段是动态作用域的。
+
+```javascript
+class Foo {
+  run() {
+    print "from Foo";
+  }
+}
+
+class Bar {
+  run() {
+    print "from Bar";
+  }
+}
+
+fun f(obj) {
+  obj.run();
+}
+```
+
+当 `f` 调用 `obj.run` 时，无法静态的知道调用的是 `Foo` 还是 `Bar`，亦或者两者都不是，这取决于实际传递的是什么。
+
+作用域是概念，而环境就是实现它的机制。解释器在执行时，影响作用域的语法树节点会改变环境的上下文。在 Lox 中，环境是由**块**（Block）控制的，称为**块作用域**（Block scope）。
+
+```javascript
+{
+  var a = "in block";
+}
+print a; // error
+```
+
+### 8.5.1 嵌套和遮蔽
+
+当访问块中的每个语句时，跟踪所有变量，执行完块中最后一条一句时，删除环境中的所有变量，但要注意，只能删除该块所属的环境，不然其它作用域的环境会被干扰。
+
+当局部变量与外部作用域的变量有相同名称时，内部变量会遮蔽外部变量，块内部无法获取外部同名变量的值。
+
+基于这种机制，除了全局作用域能被所有代码访问到以外，每个局部作用域都应该有一个新的环境。当代码块结束时，该环境将被丢弃，并恢复前一个环境。同时，块中没有被遮蔽的外部变量也应该能通过外部环境被正常访问。
+
+```javascript
+var global = "outside";
+{
+  var local = "inside";
+  print global + local;
+}
+```
+
+`global` 在外部环境中，`local` 在内部环境中，两者都应该能被正常访问。
+
+可以通过将环境链接起来实现。这类似树，每个环境都持有对外部环境的引用。当寻找一个变量时，从最内层的环境开始向上遍历直到找到该变量。
+
+![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/8.%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%92%8C%E7%8A%B6%E6%80%81/chaining.png)
+
+更新 `Env`，添加对外部环境的引用：
+
+```ruby
+class Lox::Env
+  def initialize(enclosing = nil)
+    @vars = {}
+    @enclosing = enclosing
+  end
+end
+```
+
+全局环境没有外部环境，默认为 `nil`。
+
+修改 `value` 函数，使其能够递归查找：
+
+```ruby
+class Lox::Env
+  def value(var)
+    name = var.ident.lexeme
+
+    return @vars[name] if @vars.key?(name)
+    return @enclosing&.value(var) if @enclosing
+
+    raise Lox::Error::NotDefineError
+  end
+end
+```
+
+赋值也是如此：
+
+```ruby
+class Lox::Env
+  def assign(ident, value)
+    name = ident.lexeme
+
+    return @vars[name] = value if @vars.key?(name)
+    return @enclosing&.assign(ident, value) if @enclosing
+
+    raise Lox::Error::NotDefineError
+  end
+end
+```
+
+### 8.5.2 块语法和语义
 
