@@ -615,7 +615,7 @@ class Lox::Parser
   def sync
     until at_end?
       case peek.type
-      when Lox::TokenType::SEMICOLON,
+      when Lox::TokenType::SEMICOLON, Lox::TokenType::LEFT_BRACE,
         Lox::Keyword.key("var"), Lox::Keyword.key("if"), Lox::Keyword.key("while"),
         Lox::Keyword.key("for"), Lox::Keyword.key("fun"), Lox::Keyword.key("return"),
         Lox::Keyword.key("class"), Lox::BuiltIn.key("print"), Lox::BuiltIn.key("read")
