@@ -346,9 +346,9 @@ class Lox::Env
     name = var.ident.lexeme
 
     if @vars.key?(name)
-      return @vars[name] unless @vars[name] == :not_init
+      return @vars[name] unless @vars[name] == :uninit
 
-      raise Lox::Error::UninitizedError
+      raise Lox::Error::UninitializedError
     end
 
     raise Lox::Error::UndefinedError
@@ -362,7 +362,7 @@ end
 
 ```ruby
 class Lox::Error::UndefinedError < Lox::Error::InterpreterError; end
-class Lox::Error::UninitizedError < Lox::Error::InterpreterError; end
+class Lox::Error::UninitializedError < Lox::Error::InterpreterError; end
 ```
 
 可以不允许覆盖已有变量，或在使用不存在的变量时返回一个 `nil`，亦或者在使用未初始化的变量时抛出一个错误，这取决于语言设计时的考量。
@@ -444,7 +444,7 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
 
   def visit_var_stmt(var_stmt)
     name = var_stmt.ident.lexeme
-    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : :not_init
+    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : :uninit
     @env.define(name, value)
     nil
   end
@@ -464,7 +464,7 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
     @env.value(var)
   rescue Lox::Error::UndefinedError
     error("undefined variable `#{var.ident.lexeme}`", var)
-  rescue Lox::Error::UninitizedError
+  rescue Lox::Error::UninitializedError
     error("variable `#{var.ident.lexeme}` is not initialized", var)
   end
 end
@@ -675,9 +675,9 @@ class Lox::Env
     name = var.ident.lexeme
 
     if @vars.key?(name)
-      return @vars[name] unless @vars[name] == :not_init
+      return @vars[name] unless @vars[name] == :uninit
 
-      raise Lox::Error::UninitizedError
+      raise Lox::Error::UninitializedError
     end
 
     return @enclosing&.value(var) if @enclosing
