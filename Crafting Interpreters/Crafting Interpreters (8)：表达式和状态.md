@@ -18,7 +18,7 @@ Lox 是一个动态的、命令式的语言，因此程序由一组语句构成�
 
 ```
 prog   -> stmt* expr? EOF;
-stmt -> exprStmt | printStmt | ";";
+stmt -> ";" | exprStmt | printStmt;
 exprStmt  -> expr ";";
 printStmt -> "print" expr ";";
 ```
@@ -93,12 +93,12 @@ end
 class Lox::Parser
   private
 
-  # statement -> expr_stmt | print_stmt | ";"
+  # statement -> ";" | expr_stmt | print_stmt
   def statement
-    if match_next?(Lox::BuiltIn.key("print"))
-      print_stmt
-    elsif match_next?(Lox::TokenType::SEMICOLON)
+    if match_next?(Lox::TokenType::SEMICOLON)
       nil
+    elsif match_next?(Lox::BuiltIn.key("print"))
+      print_stmt
     else
       expr_stmt
     end
@@ -707,7 +707,7 @@ end
 已经完成了环境的嵌套，然后添加块，更新 `stmt` 的产生式：
 
 ```
-stmt -> exprStmt | printStmt | blockStmt | ";";
+stmt -> ";" | exprStmt | printStmt | blockStmt;
 blockStmt -> "{" decl* "}";
 ```
 
@@ -728,13 +728,12 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::Parser
   private
 
-  # statement -> expr_stmt | print_stmt | block_stmt | ";"
+  # statement -> ";" | expr_stmt | print_stmt | block_stmt
   def statement
-    from = peek
-    if match_next?(Lox::BuiltIn.key("print"))
-      print_stmt
-    elsif match_next?(Lox::TokenType::SEMICOLON)
+    if match_next?(Lox::TokenType::SEMICOLON)
       nil
+    elsif match_next?(Lox::BuiltIn.key("print"))
+      print_stmt
     elsif match_next?(Lox::TokenType::LEFT_BRACE)
       block_stmt
     else
@@ -794,13 +793,13 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
   def visit_block_stmt(block_stmt)
     block_env = Lox::Env.new(@env)
     execute_block(block_stmt.stmts, block_env)
-    nil
   end
   
   private
 
   def execute_stmt(stmt)
     stmt.accept(self)
+    nil
   end
 
   def execute_block(stmts, block_env)
@@ -808,6 +807,7 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
     @env = block_env
     @expr_interpreter.env = block_env
     stmts.each { execute_stmt(it) }
+    nil
   ensure
     @env = pre_env
     @expr_interpreter.env = pre_env
