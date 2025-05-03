@@ -584,6 +584,178 @@ end
 
 赋值与声明的区别在于，赋值不允许创建新变量，把值赋给不存在的变量会抛出运行时错误。
 
+### 8.4.3 赋值语法糖
+
+类似这种表达式：
+
+```
+a = a + b
+a = a - b
+a = a * b
+a = a / b
+a = a % b
+a = a ^ b
+```
+
+这种写法十分繁琐，可以增加如下语法糖：
+
+```
+a += b
+a -= b
+a *= b
+a /= b
+a %= b
+a ^= b
+```
+
+这不会增加语法树节点，而是利用现有的功能实现。
+
+更新 `TokenType`：
+
+```ruby
+class Lox::TokenType
+  define :PLUS_EQUAL # +=
+  define :MINUS_EQUAL # -=
+  define :STAR_EQUAL # *=
+  define :SLASH_EQUAL # /=
+  define :PERCENT_EQUAL # %=
+  define :CARET_EQUAL # ^=
+end
+```
+
+更新 `Scanner`：
+
+```ruby
+class Lox::Scanner
+  private
+
+  def tokenize
+    # ...
+    when "+" then add_token(match_next?("=") ? Lox::TokenType::PLUS_EQUAL : Lox::TokenType::PLUS)
+    when "-" then add_token(match_next?("=") ? Lox::TokenType::MINUS_EQUAL : Lox::TokenType::MINUS)
+    when "*" then add_token(match_next?("=") ? Lox::TokenType::STAR_EQUAL : Lox::TokenType::STAR)
+    when "/"
+      if match_next?("/")
+        skip_line_comment
+      elsif match_next?("*")
+        skip_block_comment
+      elsif match_next?("=")
+        add_token(Lox::TokenType::SLASH_EQUAL)
+      else
+        add_token(Lox::TokenType::SLASH)
+      end
+    when "%" then add_token(match_next?("=") ? Lox::TokenType::PERCENT_EQUAL : Lox::TokenType::PERCENT)
+    when "^" then add_token(match_next?("=") ? Lox::TokenType::CARET_EQUAL : Lox::TokenType::CARET)
+    # ...
+  end
+end
+```
+
+更新 `Parser`：
+
+```ruby
+class Lox::Parser
+  private
+
+  # assign -> IDENTIFIER "=" assign
+  #           | IDENTIFIER "+=" assign
+  #           | IDENTIFIER "-=" assign
+  #           | IDENTIFIER "*=" assign
+  #           | IDENTIFIER "/=" assign
+  #           | IDENTIFIER "%=" assign
+  #           | IDENTIFIER "^=" assign
+  #           | comma
+  def assign
+    expr = comma
+
+    if match_next?(Lox::TokenType::EQUAL) # =
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        expr = Lox::Ast::Assign.new(ident:, expr: right, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::PLUS_EQUAL) # +=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::PLUS)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::MINUS_EQUAL) # -=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::MINUS)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::STAR_EQUAL) # *=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::STAR)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::SLASH_EQUAL) # /=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::SLASH)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::PERCENT_EQUAL) # %=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::PERCENT)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    elsif match_next?(Lox::TokenType::CARET_EQUAL) # ^=
+      right = assign
+
+      if expr.is_a?(Lox::Ast::Var)
+        ident = expr.ident
+        left = Lox::Ast::Var.new(ident:)
+        op = Lox::Token.new(type: Lox::TokenType::CARET)
+        binary = Lox::Ast::Binary.new(left:, op:, right:)
+        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
+      else
+        add_error("invalid assignment target", expr, expr)
+      end
+    end
+
+    expr
+  end
+end
+```
+
 ## 8.5 作用域
 
 **作用域**（Scope）定义了名称的有效范围。多个作用域允许同一个名称在不同上下文指向不同内容。
