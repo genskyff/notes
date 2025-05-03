@@ -36,19 +36,12 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt | ifStmt
+  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt
   def statement
-    if match_next?(Lox::TokenType::SEMICOLON)
-      nil
-    elsif match_next?(Lox::BuiltIn.key("print"))
-      print_stmt
-    elsif match_next?(Lox::TokenType::LEFT_BRACE)
-      block_stmt
+    # ...
     elsif match_next?(Lox::Keyword.key("if"))
       if_stmt
-    else
-      expr_stmt
-    end
+    # ...
   end
 
   # if_stmt -> "if" "(" expression ")" statement ("else" statement)?
@@ -213,3 +206,56 @@ print nil or "yes"; // "yes"
 
 ## 9.4 while 循环
 
+`while` 循环和 `if` 结构上是类似的，只不过没有 `else` 分支，更新生成式：
+
+```
+stmt -> ";" | exprStmt | printStmt | blockStmt | ifStmt | whileStmt;
+whileStmt -> "while" "(" expr ")" stmt;
+```
+
+更新 `bin/gen_ast` 生成 `while` 的语法节点：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+                        # ...
+                        "whileStmt : expr, body",
+                      ]).make
+```
+
+更新 `Parser`，几乎和 `if` 一样的解析步骤：
+
+```ruby
+class Lox::Parser
+  private
+
+  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt
+  def statement
+    # ...
+    elsif match_next?(Lox::Keyword.key("while"))
+      while_stmt
+    #...
+  end
+
+  # while_stmt -> "while" "(" expression ")" statement
+  def while_stmt
+    from = previous
+    consume(Lox::TokenType::LEFT_PAREN, "expect `(` after if-statement")
+    expr = expression
+    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` before if-statement", from)
+    body = statement
+    Lox::Ast::WhileStmt.new(expr:, body:, location: location(from))
+  end
+end
+```
+
+然后添加对 `while` 的访问者：
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  def visit_while_stmt(while_stmt)
+    execute_stmt(while_stmt.body) while evaluate_expr(while_stmt.expr)
+  end
+end
+```
+
+现在 Lox 就已经基本实现了图灵完备。

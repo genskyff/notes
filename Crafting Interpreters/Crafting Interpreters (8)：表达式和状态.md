@@ -8,9 +8,9 @@
 
 首先扩展 Lox 的语法以支持语句，有三种语句：
 
+-   **空语句**：一个空的 `;` 构成一个空语句，即什么也不做。
 -   **表达式语句**：将表达式放在需要语句的位置，并在后面加上一个`;`，这主要是为了计算含有副作用表达式。
 -   `print` **语句**：计算一个表达式，并将结果展示给用户。通常应该在标准库中完成而不是在语言中内置，但需要在开发早期就能看到结果，因此暂时内置在语言中。
--   **空语句**：一个空的 `;` 构成一个空语句，即什么也不做。
 
 Lox 是一个动态的、命令式的语言，因此程序由一组语句构成，并可选的在最后有一个表达式。
 
@@ -730,15 +730,10 @@ class Lox::Parser
 
   # statement -> ";" | expr_stmt | print_stmt | block_stmt
   def statement
-    if match_next?(Lox::TokenType::SEMICOLON)
-      nil
-    elsif match_next?(Lox::BuiltIn.key("print"))
-      print_stmt
+    # ...
     elsif match_next?(Lox::TokenType::LEFT_BRACE)
       block_stmt
-    else
-      expr_stmt
-    end
+    # ...
   end
 
   # block_stmt -> "{" declaration* "}"
