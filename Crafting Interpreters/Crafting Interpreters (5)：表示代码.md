@@ -244,7 +244,7 @@ class Lox::AstGenerator
 
       @productions.each do |production|
         head, body = production.split(":").map(&:strip).map { Lox::Utils.snake_name(it) }
-        names = body.split(",").map(&:strip)
+        names = body&.split(",")&.map(&:strip) || []
         make_production(file, head, names)
       end
 
@@ -255,11 +255,12 @@ class Lox::AstGenerator
   private
 
   def make_production(file, head, names)
+    comma = names.empty? ? "" : ", "
     file.puts
     file.puts "  class #{Lox::Utils.pascal_name(head)} < #{Lox::Utils.pascal_name(@basename)}"
-    file.puts "    attr_reader #{names.map { |name| ":#{name}" }.join(", ")}, :location"
+    file.puts "    attr_reader #{names.map { ":#{it}" }.join(", ")}#{comma}:location"
     file.puts
-    file.puts "    def initialize(#{names.map { "#{it}:" }.join(", ")}, location: nil)"
+    file.puts "    def initialize(#{names.map { "#{it}:" }.join(", ")}#{comma}location: nil)"
     names.each do |name|
       file.puts "      @#{name} = #{name}"
     end
