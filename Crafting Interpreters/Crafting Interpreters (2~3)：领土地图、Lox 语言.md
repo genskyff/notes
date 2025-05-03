@@ -231,7 +231,21 @@ cond ? a : b
 Lox 的操作符都与 C 有着相同优先级，同时还可以使用 `()` 来分组。
 
 ```javascript
-var avg = (min + max) / 2
+var avg = (min + max) / 2;
+```
+
+### 3.4.5 赋值
+
+可以通过 `=` 来赋值，以及语法糖：
+
+```
+a = b
+a += b
+a -= b
+a *= b
+a /= b
+a %= b
+a ^= b
 ```
 
 ## 3.5 语句
@@ -261,11 +275,11 @@ print "hello";
 
 ## 3.6 变量
 
-使用 `var` 声明变量，如果没有初始化，则默认为 `nil`：
+使用 `var` 声明变量，声明时可以不初始化，但使用前必须初始化：
 
 ```javascript
 var init_var = 123;
-var uninit_var; // nil
+var uninit_var;
 ```
 
 一旦声明完成，则可以通过变量名对其进行访问：
@@ -291,10 +305,12 @@ while (i < 10) {
     i = i + 1;
 }
 
-for (var a = 1; a < 10; a = a + 1) {
+for (var a = 1; a < 10; a += 1) {
     print a;
 }
 ```
+
+`break` 跳出循环；`next` 立即开始下次循环，若为 `for` 语句，则会执行增量式后再开始下次循环。
 
 ## 3.7 函数
 
