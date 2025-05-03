@@ -494,6 +494,8 @@ module Lox
     define :ELSE, "else"
     define :WHILE, "while"
     define :FOR, "for"
+    define :BREAK, "break"
+    define :NEXT, "next"
     define :FUN, "fun"
     define :RETURN, "return"
     define :CLASS, "class"
