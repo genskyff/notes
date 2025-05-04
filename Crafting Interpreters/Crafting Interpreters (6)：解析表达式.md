@@ -475,7 +475,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::BANG, Lox::TokenType::PLUS, Lox::TokenType::MINUS)
       op = previous
       right = unary
-      Lox::Ast::Unary.new(op:, right:, location:)
+      Lox::Ast::Unary.new(op:, right:, location: location(op))
     else
       power
     end
