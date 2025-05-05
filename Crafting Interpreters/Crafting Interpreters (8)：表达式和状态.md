@@ -239,10 +239,11 @@ decl -> varDecl | stmt;
 然后对 `varDecl` 进行定义：
 
 ```
-varDecl -> "var" IDENTIFIER ("=" expr)? ";";
+varDecl -> "var" singleVar (", singleVar)* ";";
+singleVar -> IDENTIFIER ("=" expr)?;
 ```
 
-变量声明以 `var` 关键字开头，然后是一个标识符作为名称，可选的有一个初始化表达式，以 `;` 结尾。
+变量声明以 `var` 关键字开头，然后是一个标识符作为名称，可选的有一个初始化表达式，这部分可以有多个，最后以 `;` 结尾。
 
 为了访问变量，需要对表达式中的 `primary` 生成式进行修改：
 
@@ -281,7 +282,11 @@ class Lox::Parser
       begin
         save_current = @current
         stmt = declaration
-        stmt_list << stmt unless stmt.nil?
+        if stmt.is_a?(Array)
+          stmt_list.concat(stmt)
+        else
+          stmt_list << stmt
+        end
       rescue Lox::Error::NotStatementError
         # ...
       end
@@ -298,8 +303,18 @@ class Lox::Parser
     end
   end
 
-  # var_decl -> "var" IDENTIFIER ("=" expression)? ";"
+  # var_decl -> "var" single_var (", single_var)* ";"
   def var_decl
+    from = previous
+    vars = []
+    vars << single_var
+    vars << single_var while match_next?(Lox::TokenType::COMMA)
+    consume(Lox::TokenType::SEMICOLON, "expect `;` after variable declaration", from)
+    vars
+  end
+
+  # single_var -> IDENTIFIER ("=" expression)?
+  def single_var
     from = previous
     advance
     if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
@@ -309,7 +324,6 @@ class Lox::Parser
     end
     ident = previous
     expr = expression if match_next?(Lox::TokenType::EQUAL)
-    consume(Lox::TokenType::SEMICOLON, "expect `;` after variable declaration", from)
     Lox::Ast::VarStmt.new(ident:, expr:, location: location(from))
   end
 
@@ -323,6 +337,39 @@ class Lox::Parser
     else
       # ...
     end
+  end
+end
+```
+
+由于 `var_decl` 返回的是一个数组，因此在 `program` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
+
+多个变量声明之间用逗号分隔，但还有逗号表达式，为了避免混淆，增加一个变量声明的上下文变量，然后只在非变量声明的上下文中进行逗号表达式的解析。
+
+```ruby
+class Lox::Parser
+  def initialize(src_map:, error_collector:, tokens:)
+    # ...
+    @var_decl_ctx = false
+  end
+
+  private
+
+  def var_decl
+    @var_decl_ctx = true
+    # ...
+  ensure
+    @var_decl_ctx = false
+  end
+
+  def comma
+    # ...
+    unless @var_decl_ctx
+      while match_next?(Lox::TokenType::COMMA)
+        # ...
+        exprs << condition
+      end
+    end
+    # ...
   end
 end
 ```
@@ -915,12 +962,7 @@ class Lox::Parser
   def block_stmt
     from = previous
     stmts = []
-
-    while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
-      stmt = declaration
-      stmts << stmt unless stmt.nil?
-    end
-
+    stmts << declaration while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
     consume(Lox::TokenType::RIGHT_BRACE, "block must be end with `}`", from)
     Lox::Ast::BlockStmt.new(stmts:, location: location(from))
   end

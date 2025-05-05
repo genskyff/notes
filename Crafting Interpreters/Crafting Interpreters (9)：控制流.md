@@ -345,12 +345,12 @@ class Lox::Parser
     from_body = peek
     body = Lox::Ast::BlockStmt.new(stmts: [body, inc], location: location(from_body))
     while_part = Lox::Ast::WhileStmt.new(expr: cond, body:, location: location(from_body))
-    Lox::Ast::BlockStmt.new(stmts: [init, while_part], location: location(from_body))
+    Lox::Ast::BlockStmt.new(stmts: [init, while_part].flatten, location: location(from_body))
   end
 end
 ```
 
-依次对初始化、条件、增量进行解析，分别创建语法树节点，最后再和 `body` 连接起来，这样就利用现有的节点，而无需创建新的语法树节点，以及对 `StmtInterpreter` 做修改。
+依次对初始化、条件、增量进行解析，分别创建语法树节点，最后再和 `body` 连接起来，这样就利用现有的节点，而无需创建新的语法树节点，以及对 `StmtInterpreter` 做修改。同时 `init` 可能含有多条初始化语句构成的数组，因此需要进行 `flatten`。
 
 ## 9.6 break 和 next
 
