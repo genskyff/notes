@@ -88,6 +88,8 @@ end
 
 ```ruby
 class Lox::Parser
+  MAX_ARGS = 255
+
   private
 
   def call
@@ -97,7 +99,7 @@ class Lox::Parser
       unless peek.type == Lox::TokenType::RIGHT_PAREN
         args << expression
         while match_next?(Lox::TokenType::COMMA)
-          add_error("cannot have more than 255 arguments", args.first, args.last) if args.size > 255
+          add_error("cannot have more than #{MAX_ARGS} arguments", args.first, args.last) if args.size > MAX_ARGS
           args << expression
         end
       end
@@ -300,4 +302,87 @@ end
 ```
 
 ## 10.3 函数声明
+
+现在就可以添加函数声明的产生式了：
+
+```
+decl -> varDecl | funDecl | stmt;
+funDecl -> "fun" func;
+func -> IDENTIFIER "(" params? ")" blockStmt;
+params -> IDENTIFIER ("," IDENTIFIER)*;
+```
+
+一个函数声明以 `fun` 开头，然后引入了 `func` 来描述后面的部分：一个标识符，一对括号，括号中有 0 个或多个参数。在后面定义类中的方法时，可以复用 `func`。
+
+更新 `bin/gen_ast`，添加函数声明节点：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+                        # ...
+                        "varStmt   : ident, expr",
+                        "funStmt   : ident, params, body",
+                        # ...
+                      ]).make
+```
+
+函数声明节点由标识符、参数和函数体构成。
+
+更新 `Parser`，添加函数声明解析：
+
+```ruby
+class Lox::Parser
+  private
+
+  # declaration -> var_decl | fun_decl | statement
+  def declaration
+    if match_next?(Lox::Keyword.key("var"))
+      var_decl
+    elsif match_next?(Lox::Keyword.key("fun"))
+      fun_decl
+    else
+      statement
+    end
+  end
+
+  # fun_decl -> "fun" func
+  def fun_decl
+    func
+  end
+
+  # func -> IDENTIFIER "(" params? ")" block_stmt
+  def func
+    from = previous
+    advance
+    if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
+      add_error("expected identifier, found keyword or built-in", previous, previous)
+    elsif previous.type != Lox::TokenType::IDENTIFIER
+      add_error("expect identifier", previous, previous)
+    end
+    ident = previous
+    consume(Lox::TokenType::LEFT_PAREN, "expect `(` after identifier")
+    params_from = previous
+    param_list = params
+    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` after parameters", params_from)
+    consume(Lox::TokenType::LEFT_BRACE, "expect `{` before function body")
+    Lox::Ast::FunStmt.new(ident:, params: param_list, body: block_stmt, location: location(from))
+  end
+
+  # params -> IDENTIFIER ("," IDENTIFIER)*
+  def params
+    params_list = []
+    unless peek.type == Lox::TokenType::RIGHT_PAREN
+      params_list << consume(Lox::TokenType::IDENTIFIER, "expect identifier", peek)
+      while match_next?(Lox::TokenType::COMMA)
+        add_error("cannot have more than #{MAX_ARGS} parameters", params_list.first, params_list.last) if params_list.size > MAX_ARGS
+        params_list << consume(Lox::TokenType::IDENTIFIER, "expect identifier", peek)
+      end
+    end
+    params_list
+  end
+end
+```
+
+注意在调用 `block_stmt` 前，需要先消费 `{`，因为 `block_stmt` 假定前面已经出现过该符号。
+
+## 10.4 函数对象
 
