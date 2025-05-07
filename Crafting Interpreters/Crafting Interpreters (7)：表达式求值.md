@@ -157,22 +157,6 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
 end
 ```
 
-### 7.2.6 逗号表达式
-
-逗号表达式中的每个子表达式都需要计算，但最后只需要保留最后一个表达式的值。
-
-```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_comma(comma)
-    last = nil
-    comma.exprs.each do |expr|
-      last = evaluate(expr)
-    end
-    last
-  end
-end
-```
-
 ## 7.3 运行时错误
 
 在扫描和语法分析阶段，会检查词法和语法错误，并在解析时抛出。在执行语法树的过程中，也可能出现错误，如对一个字符串做减法，这虽然没有语法错误，但是并没有对这种操作进行定义，只会在执行语法树时动态地抛出，这称为**运行时错误**（Runtime error）。

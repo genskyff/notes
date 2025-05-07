@@ -182,7 +182,7 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
     # ...
     if callee.is_a?(Lox::Callable)
       error("expected #{callee.arity} arguments but got #{args.size}", call) if callee.arity != args.size
-      callee.call(self, args)
+      callee.call(Lox::Visitor::StmtInterpreter.new(@src_map, @env), args)
     else
       error("can only call functions and classes", call)
     end
@@ -385,4 +385,70 @@ end
 注意在调用 `block_stmt` 前，需要先消费 `{`，因为 `block_stmt` 假定前面已经出现过该符号。
 
 ## 10.4 函数对象
+
+现在能够定义函数了，但是在调用函数之前，需要考虑一个函数对象如何表示。在调用一个函数时，需要跟踪形参，以便将形参与实参进行绑定。
+
+对于一个可以被调用的对象，其继承了 `Callable`，原生函数 `NativeFunction` 就是如此，而自定义的函数也应该这样，可以定义一个 `UserFunction` 类来继承。
+
+```ruby
+class Lox::UserFunction < Lox::Callable
+  def initialize(decl)
+    super(decl.params.size)
+    @decl = decl
+  end
+
+  def call(interpreter, args)
+    env = Lox::Env.new(interpreter.env)
+    @decl.params.each_with_index do |param, i|
+      env.define(param.lexeme, args[i])
+    end
+
+    interpreter.execute_block(@decl.body, env)
+  end
+
+  def to_s
+    "<fn #{@decl.ident.lexeme}>"
+  end
+end
+```
+
+一个用户定义的函数接受一个 `FunStmt` 对象。首先获得实参数量，因为在实际调用时需要验证是否与形参相符。
+
+然后定义 `call` 方法，这部分是最重要的，因为参数是函数的核心，且参数只能在函数中使用，其它地方是无法看到的。这表示每个函数都有自己的环境，并在其中存储这些变量，且该环境必须动态创建，这样在递归调用时就不会影响调用者的环境，即使是同一个函数。
+
+通过创建一个新的环境，并链接到当前环境，然后遍历形参和实参列表，并把参数绑定进这个动态创建的环境中。
+
+如类似这样的代码：
+
+```
+fun add(a, b, c) {
+    print a + b + c;
+}
+
+add(1, 2, 3);
+```
+
+在调用 `add` 时，解释器会创建一个新的环境，并将这三个参数绑定进去。
+
+![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/10.%E5%87%BD%E6%95%B0/binding.png)
+
+通过最后通过 `interpreter.execute_block` 来指定函数体，并把这个动态创建的 `env` 传进去，块执行完毕后会返回一个 `nil`。
+
+最后定义 `to_s` 方法，这样在直接执行函数名而不进行调用时，就会打印出函数名。
+
+### 10.4.1 解释函数声明
+
+现在就可以解释函数声明了，添加对函数声明的访问者，用于创建一个 `UserFunction`，并把该函数保存在定义时的环境中，这样名称就能被找到。
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  attr_accessor :env
+
+  def visit_fun_stmt(fun_stmt)
+    user_function = Lox::UserFunction.new(fun_stmt)
+    @env.define(fun_stmt.ident.lexeme, user_function)
+    nil
+  end
+end
+```
 
