@@ -452,3 +452,120 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
 end
 ```
 
+## 10.5 return 语句
+
+可以将参数传递到函数中，自然也可以将值从函数中返回。在基于表达式的语言中，函数会隐式地返回函数体中最后一个表达式的值，但在 Lox 中，函数体由语句构成，虽然也可以说隐式地返回 `nil`，但能够返回有意义的值会使函数功能更强大。
+
+返回语句是一个 `return` 语句，并可选的有一个表达式，添加生成式：
+
+```
+stmt -> ... | returnStmt;
+returnStmt -> "return" expr? ";";
+```
+
+返回值是可选的，用以支持从不返回值的函数中提前返回，这时相当于返回了 `nil`。
+
+更新 `bin/gen_ast`，添加 `return` 节点：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+                        # ...
+                        "returnStmt : expr",
+                        # ...
+                      ]).make
+```
+
+更新 `Parser`：
+
+```ruby
+class Lox::Parser
+  private
+
+  # statement -> ... | return_stmt
+  def statement
+    # ...
+    elsif match_next?(Lox::Keyword.key("return"))
+      return_stmt
+    else
+    # ...
+  end
+
+  # return_stmt -> "return" expression? ";"
+  def return_stmt
+    from = previous
+    expr = expression if peek.type != Lox::TokenType::SEMICOLON
+    consume(Lox::TokenType::SEMICOLON, "return statement must end with `;`", from)
+    add_error("return statement must be inside a function", from) if @fun_depth.zero?
+    Lox::Ast::ReturnStmt.new(expr:, location: location(from))
+  end
+end
+```
+
+在消耗 `return` 关键字后，由于表达式是可选的，而判断是否为一个表达式比较困难，因此先查看是否为分号，如果不是，则认为是一个表达式。
+
+同时，`return` 关键字只能在函数声明上下文中使用，因此添加一个表示函数上下文的变量：
+
+```ruby
+class Lox::Parser
+  def initialize(src_map:, error_collector:, tokens:)
+    # ...
+    @fun_depth = 0
+  end
+
+  private
+
+  def fun_decl
+    @fun_depth += 1
+    func
+  ensure
+    @fun_depth -= 1
+  end
+end
+```
+
+### 10.5.1 从函数调用中返回
+
+解释 `return` 需要注意，`return` 可以出现在函数中的任意位置，甚至嵌套在其他语句中，而解释器需要跳出当前所在上下文，即跳出到调用者的位置。对于这种需要层层跳出的情况，和在循环中使用 `break` 类似，通过异常来处理。
+
+添加一个错误类：
+
+```ruby
+class Lox::Error::ReturnError < Lox::Error::InterpreterError
+  attr_reader :value
+
+  def initialize(value = nil)
+    super
+    @value = value
+  end
+end
+```
+
+然后添加对 `return` 语句的访问者：
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  def visit_return_stmt(return_stmt)
+    value = return_stmt.expr ? evaluate_expr(return_stmt.expr) : nil
+    raise Lox::Error::ReturnError, value
+  end
+end
+```
+
+如果有返回值，则对其求值，否则返回一个 `nil`，然后把这个值封装进错误类中，由上层捕获。
+
+然后修改函数调用处的逻辑：
+
+```ruby
+class Lox::UserFunction < Lox::Callable
+  def call(interpreter, args)
+    # ...
+  rescue Lox::Error::ReturnError => e
+    e.value
+  end
+end
+```
+
+这样在调用时若遇到了返回，则会捕获并从中取出返回值，否则隐式返回 `nil`。
+
+## 10.6 局部函数和闭包
+
