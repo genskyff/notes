@@ -174,7 +174,7 @@ Lox 中的表达式，如：
 除了与精确词素相匹配的终止符会加引号外，还对表示单一词素的终止符进行**大写化**，这些词素的文本表示方式可能会有所不同。`NUMBER` 是任何数字字面量，`STRING` 是任何字符串字面量，对 `IDENTIFIER` 也进行同样的处理。这些符号使用生成式语法可以表达为：
 
 ```
-expr    -> literal | unary | binary | group | cond | comma;
+expr    -> literal | unary | binary | group | cond;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
@@ -182,7 +182,6 @@ op      -> "+" | "-" | "*" | "/" | "%" | "^";
            | "==" | "!=" | "<" | "<=" | ">" | ">=";
 group   -> "(" expr ","? ")";
 cond    -> expr ? expr : expr;
-comma   -> expr ("," expr)*;
 ```
 
 > 目前这个语法是有歧义的，之后会修改。
@@ -285,7 +284,6 @@ Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
                         "binary  : op, left, right",
                         "group   : expr",
                         "cond    : expr, then_branch, else_branch",
-                        "comma   : exprs"
                       ]).make
 ```
 
@@ -686,10 +684,6 @@ class Lox::Visitor::ExprPrinter < Lox::Ast::ExprVisitor
     parenthesize("?:", cond.expr, cond.then_branch, cond.else_branch)
   end
 
-  def visit_comma(comma)
-    parenthesize(",", *comma.exprs)
-  end
-
   private
 
   def parenthesize(name, *exprs)
@@ -714,9 +708,7 @@ expr = Lox::Ast::Binary.new(
     expr: Lox::Ast::Cond.new(
       expr: Lox::Ast::Literal.new(value: 12),
       then_branch: Lox::Ast::Literal.new(value: 34),
-      else_branch: Lox::Ast::Comma.new(
-                         exprs: [Lox::Ast::Literal.new(value: 56),
-                                 Lox::Ast::Literal.new(value: 78)])
+      else_branch: Lox::Ast::Literal.new(value: 56)
     )
   )
 )
@@ -727,6 +719,5 @@ puts expr.accept(Lox::Visitor::ExprPrinter.new)
 输出结果为：
 
 ```
-(* (- 123) (group (?: 12 34 (, 56 78))))
+(* (- 123) (group (?: 12 34 56)))
 ```
-

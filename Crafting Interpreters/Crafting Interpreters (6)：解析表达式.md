@@ -9,7 +9,7 @@
 如下面 Lox 的表达式语法：
 
 ```
-expr    -> literal | unary | binary | group | cond | comma;
+expr    -> literal | unary | binary | group | cond;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
@@ -17,7 +17,6 @@ op      -> "+" | "-" | "*" | "/" | "%" | "^";
            | "==" | "!=" | "<" | "<=" | ">" | ">=";
 group   -> "(" expr ","? ")";
 cond    -> expr ? expr : expr;
-comma   -> expr ("," expr)*;
 ```
 
 而对于如下字符串：
@@ -80,7 +79,6 @@ NUMBER op expr
 
 ```
 expression
-comma
 conditon
 equality
 comparison
@@ -207,8 +205,7 @@ $$
 对于上述表达式文法，可以做如下转换：
 
 ```
-expression -> comma;
-comma -> condition ("," condition)*;
+expression -> condition ("," condition)*;
 condition -> equality "?" condition ":" condition | equality;
 equality -> comparison (("==" | "!=") comparison)*;
 comparison -> term (( ">" | ">=" | "<" | "<=" ) term)*;
@@ -272,35 +269,36 @@ end
 class Lox::Parser
   private
 
-  # expression -> comma
+  # expression -> condition
   def expression
-    comma
+    condition
   end
 end
 ```
 
-`comma` 优先级最低，首先解析：
+`condition` 优先级最低，首先解析：
 
 ```ruby
 class Lox::Parser
   private
 
-  # comma -> condition ("," condition)* ","?
-  def comma
-    exprs = [condition]
+  # condition -> equality "?" condition ":" condition | equality
+  def condition
+    expr = equality
 
-    while match_next?(Lox::TokenType::COMMA)
-      break if peek.type == Lox::TokenType::RIGHT_PAREN
-
-      exprs << condition
+    if match_next?(Lox::TokenType::QMARK)
+      then_branch = condition
+      consume(Lox::TokenType::COLON, "expect `:` after condition", expr)
+      else_branch = condition
+      expr = Lox::Ast::Cond.new(expr:, then_branch:, else_branch:, location: location(expr))
     end
 
-    exprs.count == 1 ? exprs.first : Lox::Ast::Comma.new(exprs:, location: location(exprs.first))
+    expr
   end
 end
 ```
 
-先通过解析 `comma` 得到 `exprs`，然后判断终止条件，定义一个 `match_next?` 来匹配。
+先通过解析 `condition` 得到 `exprs`，然后判断终止条件，定义一个 `match_next?` 来匹配。
 
 ```ruby
 class Lox::Parser
@@ -358,7 +356,7 @@ end
 
 `at_end?` 检查 Token 是否结束，`peek` 返回还未消费的当前 Token，`previous` 会返回最后一个被消费的Token。
 
-生成 `Comma` 节点时，还需要传入位置信息，定义一个 `location` 来获取指定的位置信息：
+生成 `Condtion` 节点时，还需要传入位置信息，定义一个 `location` 来获取指定的位置信息：
 
 ```ruby
 class Lox::Parser
@@ -368,28 +366,6 @@ class Lox::Parser
     start_offset = from.location.offset[:start]
     end_offset = to.location.offset[:end]
     Lox::Location.new(src_map: @src_map, start_offset:, end_offset:)
-  end
-end
-```
-
-然后是 `condition`：
-
-```ruby
-class Lox::Parser
-  private
-
-  # condition -> equality "?" condition ":" condition | equality
-  def condition
-    expr = equality
-
-    if match_next?(Lox::TokenType::QMARK)
-      then_branch = condition
-      consume(Lox::TokenType::COLON, "expect `:` after condition", expr)
-      else_branch = condition
-      expr = Lox::Ast::Cond.new(expr:, then_branch:, else_branch:, location: location(expr))
-    end
-
-    expr
   end
 end
 ```

@@ -343,37 +343,6 @@ end
 
 由于 `var_decl` 返回的是一个数组，因此在 `program` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
 
-多个变量声明之间用逗号分隔，但还有逗号表达式，为了避免混淆，增加一个变量声明的上下文变量，然后只在非变量声明的上下文中进行逗号表达式的解析。
-
-```ruby
-class Lox::Parser
-  def initialize(src_map:, error_collector:, tokens:)
-    # ...
-    @var_decl_ctx = false
-  end
-
-  private
-
-  def var_decl
-    @var_decl_ctx = true
-    # ...
-  ensure
-    @var_decl_ctx = false
-  end
-
-  def comma
-    # ...
-    unless @var_decl_ctx
-      while match_next?(Lox::TokenType::COMMA)
-        # ...
-        exprs << condition
-      end
-    end
-    # ...
-  end
-end
-```
-
 ## 8.3 环境
 
 变量与值的绑定关系需要保存在一个数据结构中，称为**环境**（Environment）。
@@ -530,7 +499,7 @@ end
 
 ```
 expression -> assign;
-assign -> IDENTIFIER "=" assign | comma;
+assign -> IDENTIFIER "=" assign | condition;
 ```
 
 更新 `bin/gen_ast`，添加 `Assign` 节点：
@@ -544,7 +513,7 @@ Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
 
 更新 `Parser#expression`：
 
-```ruby 
+```ruby
 class Lox::Parser
   private
 
@@ -575,9 +544,9 @@ Lox 的解析器只会前瞻一个标记，因此使用一种小技巧来解决�
 class Lox::Parser
   private
 
-  # assign -> IDENTIFIER "=" assign | comma
+  # assign -> IDENTIFIER "=" assign | condition
   def assign
-    expr = comma
+    expr = condition
 
     if match_next?(Lox::TokenType::EQUAL)
       right = assign
@@ -596,7 +565,7 @@ class Lox::Parser
 end
 ```
 
-既然不确定是否是一个赋值运算，就先当成表达式来解析，因此先解析 `comma`（`IDENTIFIER` 的解析也包含在其中），然后看后面是否是一个 `=`。如果是， 则前面 `comma` 解析得到的结果就应该是一个 `Var` 节点，那么就继续解析右边的表达式即可，否则报错。
+既然不确定是否是一个赋值运算，就先当成表达式来解析，因此先解析 `condition`（`IDENTIFIER` 的解析也包含在其中），然后看后面是否是一个 `=`。如果是， 则前面 `condition` 解析得到的结果就应该是一个 `Var` 节点，那么就继续解析右边的表达式即可，否则报错。
 
 目前只有简单变量是有效的赋值目标，后续会添加属性字段。
 
@@ -711,9 +680,9 @@ class Lox::Parser
   #           | IDENTIFIER "/=" assign
   #           | IDENTIFIER "%=" assign
   #           | IDENTIFIER "^=" assign
-  #           | comma
+  #           | condition
   def assign
-    expr = comma
+    expr = condition
 
     if match_next?(Lox::TokenType::EQUAL) # =
       right = assign
@@ -1004,25 +973,25 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
 
   def visit_block_stmt(block_stmt)
     block_env = Lox::Env.new(@env)
-    execute_block(block_stmt.stmts, block_env)
+    execute_block(block_stmt, block_env)
   end
-  
+
+  def execute_block(block, block_env)
+    pre_env = @env
+    @env = block_env
+    @expr_interpreter.env = block_env
+    block.stmts.each { execute_stmt(it) }
+    nil
+  ensure
+    @env = pre_env
+    @expr_interpreter.env = pre_env
+  end
+
   private
 
   def execute_stmt(stmt)
     stmt.accept(self)
     nil
-  end
-
-  def execute_block(stmts, block_env)
-    pre_env = @env
-    @env = block_env
-    @expr_interpreter.env = block_env
-    stmts.each { execute_stmt(it) }
-    nil
-  ensure
-    @env = pre_env
-    @expr_interpreter.env = pre_env
   end
 end
 ```
