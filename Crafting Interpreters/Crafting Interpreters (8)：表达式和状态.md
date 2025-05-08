@@ -63,12 +63,12 @@ class Lox::Parser
 
   # program -> statement* expression? EOF
   def program
-    stmt_list = []
+    stmts = []
     until at_end?
       begin
         save_current = @current
         stmt = statement
-        stmt_list << stmt unless stmt.nil?
+        stmts << stmt unless stmt.nil?
       rescue Lox::Error::NotStatementError
         @current = save_current
         @error_collector.pop
@@ -76,10 +76,10 @@ class Lox::Parser
       end
     end
 
-    final_expr = expression unless at_end?
+    expr = expression unless at_end?
     add_error("expect EOF", peek, peek, Lox::Error::ParserError) unless at_end?
 
-    { stmts: stmt_list, expr: final_expr }
+    { stmts:, expr: }
   end
 end
 ```
@@ -277,15 +277,15 @@ class Lox::Parser
 
   # program -> declaration* expression? EOF
   def program
-    stmt_list = []
+    stmts = []
     until at_end?
       begin
         save_current = @current
         stmt = declaration
         if stmt.is_a?(Array)
-          stmt_list.concat(stmt)
+          stmts.concat(stmt)
         else
-          stmt_list << stmt
+          stmts << stmt
         end
       rescue Lox::Error::NotStatementError
         # ...
@@ -327,6 +327,20 @@ class Lox::Parser
     Lox::Ast::VarStmt.new(ident:, expr:, location: location(from))
   end
 
+  def block_stmt
+    from = previous
+    stmts = []
+    while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
+      stmt = declaration
+      if stmt.is_a?(Array)
+        stmts.concat(stmt)
+      else
+        stmts << stmt
+      end
+    end
+    # ...
+  end
+
   # primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER
   def primary
     from = peek
@@ -341,7 +355,7 @@ class Lox::Parser
 end
 ```
 
-由于 `var_decl` 返回的是一个数组，因此在 `program` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
+由于 `var_decl` 返回的是一个数组，因此在 `program` 和 `block_stmt` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
 
 ## 8.3 环境
 
@@ -947,7 +961,7 @@ class Lox::Parser
   private
 
   def program
-    stmt_list = []
+    stmts = []
     until at_end?
       begin
         add_error("block must be start with `{`") if match_next?(Lox::TokenType::RIGHT_BRACE)
