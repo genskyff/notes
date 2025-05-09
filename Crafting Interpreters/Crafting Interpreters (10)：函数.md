@@ -569,3 +569,24 @@ end
 
 ## 10.6 局部函数和闭包
 
+每当调用一个函数时，`UserFunction` 的 `call` 方法都会创建一个新的环境，并把环境链接到调用者的环境上，这样若一个变量不在函数的作用域中定义，那么就会到更上一层的作用域去查找。
+
+可以在函数内部嵌套定义一个局部函数，并把函数当作值返回：
+
+```
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
+
+  return count;
+}
+
+var counter = makeCounter();
+counter(); // "1"
+counter(); // "2"
+```
+
+这里 `makeCounter` 返回一个函数，绑定到 `counter` 变量上。而 `count` 使用了 `i`，即使返回时定义 `i` 的函数已经退出。
