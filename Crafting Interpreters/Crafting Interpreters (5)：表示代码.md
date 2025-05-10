@@ -4,7 +4,7 @@
 
 代码的表示形式应该易于解析器生成，和易于解释器使用。如 `1 + 2 * 3 - 4` 这样的表达式，具有运算优先级。可以使用树来表达这种具有优先级顺序的结构，叶子节点是数字，内部节点是运算符，每一个操作数都对应一个分支。要计算一个节点，需要先计算其子树的值，这相当于后序遍历。
 
-![img](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202405071552798.png)
+![AST Tree](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233844245.png)
 
 若给出一个算术表达式，可以很容易构造这样的树，根据这棵树也可以进行计算。因此从直观上看，代码的一种可行的表示方式是一颗与语法结构（运算符嵌套）相匹配的树。
 
@@ -94,7 +94,7 @@ cooked "eggs" "with" breakfast "on the side"
 
 现在所有非终止符都被展开了，最后仅包含终止符。
 
-![img](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202405071656599.png)
+![CFG](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233921915.png)
 
 每当遇到具有多个结果的规则时，都只是随意选择了一个。正是这种灵活性允许用少量的语法规则来编码出组合性更强的字符串集。一个规则可以直接或间接地引用自身，这种递归的性质使得上下文无关语法能够描述嵌套的结构，这是正则语法做不到的。
 
@@ -694,7 +694,7 @@ end
 
 如给定一个语法树，如：
 
-![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/5.%E8%A1%A8%E7%A4%BA%E4%BB%A3%E7%A0%81/expression.png)
+![Expr](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233942761.png)
 
 ```ruby
 require_relative "../lib/lox"

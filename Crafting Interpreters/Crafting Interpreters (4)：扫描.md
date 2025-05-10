@@ -422,7 +422,7 @@ var language = "lox";
 
 上面代码中，其词素就应该为：
 
-![img](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202404302306344.png)
+![Lexeme](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510234018587.png)
 
 词素只是源代码的原始字符串，在将字符序列分组为词素的过程中，还会有一些其它的信息，如标记类型、所处代码行数等额外信息，把词素和这些其它信息组合在一起，就是一个**标记**（Token，词法单元）。
 
