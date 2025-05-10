@@ -206,7 +206,7 @@ end
 
 衡量一个程序的性能其中一点就是时间，这需要进行基准测试，而要测量 Lox 代码的性能，就需要一个能计算时间的功能。通常的做法是在程序的一个部分前后插入两行获取当前时间的函数，最后计算两者的间隔就能计算出执行时间。但这需要访问系统底层时钟，这可以通过添加一个原生的报时函数来解决。
 
-`unix_stamp` 是一个原生函数，返回当前 unix 时间戳，两次连续调用可以计算出时间间隔，该函数定义在全局作用域内，这样整个解释器都可以访问该函数。
+`unixstamp` 是一个原生函数，返回当前 unix 时间戳，两次连续调用可以计算出时间间隔，该函数定义在全局作用域内，这样整个解释器都可以访问该函数。
 
 新增一个 `Global` 类，用于定义全局生效的项：
 
@@ -222,7 +222,7 @@ class Lox::Global
   private
 
   def define_native_functions
-    @env.define("unix_stamp", Lox::NativeFunction.new do |_interpreter, _args|
+    @env.define("unixstamp", Lox::NativeFunction.new do |_interpreter, _args|
       Time.now.to_f
     end)
   end
@@ -656,3 +656,108 @@ end
 这样就创建了一个环境链，从函数体开始，经过被声明的环境，然后再到上层环境，环境链接如图所示。
 
 ![Closure env](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233553608.png)
+
+## 10.7 Lambda 表达式
+
+Lox 的函数声明是一个语句，创建一个函数并绑定到一个名称上。但在函数式的代码中，创建函数不一定需要绑定到名称，而是当作值赋给一个变量、当作参数或立即执行。这其实就是**匿名函数**或 **Lambda 表达式**。
+
+Lox 中的 Lambda 表达式语法和函数基本一致，除了没有标识符，其生成式为：
+
+```
+primary -> ... | lambdaFun;
+lambdaFun -> "fun" "(" params? ")" blockStmt;
+```
+
+更新 `bin/gen_ast`，添加 Lambda 表达式节点：
+
+```ruby
+Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
+                        # ...
+                        "lambdaFun : params, body"
+                      ]).make
+```
+
+更新 `Parser`，解析 Lambda 表达式：
+
+```ruby
+class Parser
+  private
+
+  # primary -> ...
+  #            | lambda_fun
+  def primary
+    # ...
+    if match_next?(Lox::TokenType::LEFT_PAREN)
+      # ...
+    elsif match_next?(Lox::Keyword.key("fun"))
+      begin
+        @fun_depth += 1
+        lambda_fun
+      ensure
+        @fun_depth -= 1
+      end
+    else
+      # ...
+    end
+  end
+
+  # lambda_fun -> "fun" "(" params? ")" block_stmt
+  def lambda_fun
+    from = previous
+    consume(Lox::TokenType::LEFT_PAREN, "expect `(` in lambda function")
+    param_list = params
+    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` after parameters")
+    consume(Lox::TokenType::LEFT_BRACE, "expect `{` before function body")
+    Lox::Ast::LambdaFun.new(params: param_list, body: block_stmt, location: location(from))
+  end
+end
+```
+
+由于 `fun` 在非明确的表达式上下文中，会先被当作函数声明来解析，因此在函数声明解析中，若没有遇到标识符就会报错，需要修改此处的逻辑，使其在没有标识符时，当作表达式来解析：
+
+```ruby
+class Parser
+  private
+
+  def declaration
+    if match_next?(Lox::Keyword.key("var"))
+      var_decl
+    elsif peek.type == Lox::Keyword.key("fun") && @tokens[@current + 1].type != Lox::TokenType::LEFT_PAREN
+      advance
+      fun_decl
+    else
+      statement
+    end
+  end
+
+  def func
+    from = previous
+    advance
+    add_error("expected identifier, found keyword or built-in", previous, previous) if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
+    # ...
+  end
+end
+```
+
+这里前瞻了两个 Token 来判断到底是声明还是 Lambda 表达式，然后函数声明不会再报标识符错误了，因此去掉。
+
+由于 Lambda 表达式也是一个 `Callable`，因此需要修改 `UserFunction` 的 `to_s` 方法，使其打印出不一样的字符串表示。
+
+```ruby
+class Lox::UserFunction < Lox::Callable
+  def to_s
+    @decl.respond_to?(:ident) ? "<fn #{@decl.ident.lexeme}>" : "<lambda fn>"
+  end
+end
+```
+
+最后添加对 Lambda 表达式的访问者：
+
+```ruby
+class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+  def visit_lambda_fun(lambda_fun)
+    Lox::UserFunction.new(lambda_fun, @env)
+  end
+end
+```
+
