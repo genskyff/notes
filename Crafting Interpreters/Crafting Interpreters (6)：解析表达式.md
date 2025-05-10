@@ -69,7 +69,7 @@ NUMBER op expr
 
 两次都使用最左推导，但最终得到的结果在四则运算下是错的。该语法具有歧义，因为可以将该表达式看作是 `(6 / 3) - 1` 或 `6 / (3 - 1)`。
 
-![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/6.%E8%A7%A3%E6%9E%90%E8%A1%A8%E8%BE%BE%E5%BC%8F/syntax-trees.png)
+![Syntax trees](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233810078.png)
 
 **优先级**决定了在一个包含不同运算符的混合表达式中，哪个运算符先被执行。优先级较高的运算符在优先级较低的运算符之前计算，因此优先级较高的运算符被称为**更严格的绑定**，如 `*` 的优先级比 `+` 高。
 

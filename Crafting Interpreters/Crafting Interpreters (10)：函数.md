@@ -430,11 +430,28 @@ add(1, 2, 3);
 
 在调用 `add` 时，解释器会创建一个新的环境，并将这三个参数绑定进去。
 
-![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/10.%E5%87%BD%E6%95%B0/binding.png)
+![Binding](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233611212.png)
 
 通过最后通过 `interpreter.execute_block` 来指定函数体，并把这个动态创建的 `env` 传进去，块执行完毕后会返回一个 `nil`。
 
-最后定义 `to_s` 方法，这样在直接执行函数名而不进行调用时，就会打印出函数名。
+最后定义 `to_s` 方法，这样在直接执行函数名而不进行调用时，就会打印出函数名。修改 REPL 模式下的输出，不然会直接把函数的 AST 给打印出来。
+
+```ruby
+class Lox::Entry
+  private
+
+  def run(repl: false)
+    # ...
+    return unless repl
+
+    if result.is_a?(Lox::Callable)
+      puts "#{"=>".blue} #{result}"
+    else
+      puts "#{"=>".blue} #{result.inspect}"
+    end
+  end
+end
+```
 
 ### 10.4.1 解释函数声明
 
@@ -590,3 +607,52 @@ counter(); // "2"
 ```
 
 这里 `makeCounter` 返回一个函数，绑定到 `counter` 变量上。而 `count` 使用了 `i`，即使返回时定义 `i` 的函数已经退出。
+
+但目前 Lox 执行这段程序会报错，因为函数的环境已经被丢弃， 而 `i` 此时时未定义的。当调用 `counter` 时，此时的环境链接如下图所示。
+
+![Global env](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233604584.png)
+
+此时 `count` 的父环境就是全局环境，而不是 定义 `makeCounter` 中的环境。而当在 `makeCounter` 中声明 `count` 时，此时的环境链接如下图所示。
+
+![Body env](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233600206.png)
+
+因此，在函数声明的地方是可以看到 `i` 的，但从函数返回后就看不到了，因为解释器不会保留 `count` 的外部环境，所以需要靠函数本身来保存。一个能够保存或捕获外部环境的函数称为**闭包**（Closure），因为其封闭并保留了函数声明的外部变量。
+
+更新 `UserFunction`，为函数对象添加一个闭包：
+
+```ruby
+class Lox::UserFunction < Lox::Callable
+  def initialize(decl, clo)
+    super(decl.params.size)
+    @decl = decl
+    @clo = clo
+  end
+end
+```
+
+在创建函数时，捕获当前环境并保存。这是函数声明时的环境，不是调用时的环境，因为作用域是静态的词法作用域。
+
+```ruby
+class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+  def visit_fun_stmt(fun_stmt)
+    user_function = Lox::UserFunction.new(fun_stmt, @env)
+    # ...
+  end
+end
+```
+
+然后当调用函数时，使用该环境作为上层环境：
+
+```ruby
+class Lox::UserFunction < Lox::Callable
+  def call(interpreter, args)
+    env = Lox::Env.new(@clo)
+    # ...
+  end
+end
+
+```
+
+这样就创建了一个环境链，从函数体开始，经过被声明的环境，然后再到上层环境，环境链接如图所示。
+
+![Closure env](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233553608.png)

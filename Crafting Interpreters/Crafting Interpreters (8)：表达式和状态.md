@@ -361,7 +361,7 @@ end
 
 变量与值的绑定关系需要保存在一个数据结构中，称为**环境**（Environment）。
 
-![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/8.%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%92%8C%E7%8A%B6%E6%80%81/environment-0971366.png)
+![Env](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233644638.png)
 
 其本质是一个名称到值的映射的集合，通常用哈希表来实现。通过创建一个单独的 `Env` 类来实现：
 
@@ -857,7 +857,7 @@ var global = "outside";
 
 可以通过将环境链接起来实现。这类似树，每个环境都持有对外部环境的引用。当寻找一个变量时，从最内层的环境开始向上遍历直到找到该变量。
 
-![img](https://raw.githubusercontent.com/GuoYaxiang/craftinginterpreters_zh/main/content/8.%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%92%8C%E7%8A%B6%E6%80%81/chaining.png)
+![Env chaining](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250510233705115.png)
 
 更新 `Env`，添加对外部环境的引用：
 
