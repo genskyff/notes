@@ -2116,6 +2116,14 @@ fn test<'a>(x: &'a ()) -> impl Sized + 'static {
 fn capture<'a>(x: &'a ()) -> impl Sized + use<> {}
 ```
 
+在 trait 中也可以使用该特性：
+
+```rust
+trait Foo {
+    fn bar<'a>(&'a self) -> impl Sized + use<Self>;
+}
+```
+
 ### use 行为
 
 编译器会根据 Rust 版本来确定使用的规则。
