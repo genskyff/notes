@@ -2,22 +2,45 @@
 
 任何编译器或解释器的第一步就是扫描。扫描器接受字符串，并将其分组成一系列标识，即词法单元序列，这些有意义的单词和标点构成了语言的语法。
 
-> - 原文使用 Java 实现，这里改为使用 Ruby 实现
-> - 为了简略，代码只展示核心部分
+> 为了简略，代码只展示核心部分
 
 ## 4.1 解释器框架
 
-`exe/lox`：执行入口，可以读取文件执行，或使用交互式的方式执行。
+`exe/lox`：Lox 的 CLI 程序，接受命令行参数执行，这里使用了 `thor` 包来解析命令行参数。
 
 ```ruby
-require_relative "../lib/lox"
+require_relative '../lib/lox'
 
-if ARGV.length > 1
-  warn "Usage: ruby exe/lox [file]"
-elsif ARGV.length == 1
-  Lox::Entry.new.run_file(ARGV[0])
-else
-  Lox::Entry.new.run_prompt
+class Cli < Thor
+  default_command :repl
+
+  desc 'eval <SRC>', 'Evaluate source code'
+  option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
+  option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
+  def eval(src)
+    Lox::Entry.new(options).run_eval(src)
+  end
+
+  desc 'repl [OPTIONS]', 'Start an interactive REPL (default)'
+  option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
+  option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
+  def repl
+    Lox::Entry.new(options).run_repl
+  end
+
+  map run: :exec
+  desc 'run [OPTIONS] <FILE>', 'Run source file'
+  option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
+  option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
+  def exec(file)
+    Lox::Entry.new(options).run_file(file)
+  end
+
+begin
+  Cli.start(ARGV)
+rescue Thor::Error => e
+  warn "#{'error'.red}: #{e.message}"
+  exit 1
 end
 ```
 
@@ -29,41 +52,31 @@ module Lox; end
 
 `lib/lox`：所有的 `Lox` 模块中的具体定义都在该目录下实现。
 
-`Entry` 类：执行入口，用于生成一个新的 `Lox` 实例。其中 `run_src` 用于执行给定的字符串。`run_prompt` 用于交互式的执行，暂时未考虑到多行输入的情况。`run_file` 用于读文件执行。`run` 用于统一开始执行流程。
+`Entry` 类：执行入口，用于生成一个新的 `Lox` 实例。其中 `run_eval` 用于执行给定的字符串。`run_repl` 用于交互式的执行，暂时未考虑到多行输入的情况。`run_file` 用于读文件执行。`run` 用于统一开始执行流程。
 
 ```ruby
 class Lox::Entry
-  def initialize
+  def initialize(options = {})
+    @options = options
     @error_collector = Lox::ErrorCollector.new
+    @env = Lox::Env.new(Lox::Global.new.env)
   end
 
-  def run_src(src)
-    line_from = 1
-
-    if src[..1] == "#!"
-      eol = Lox::Utils.detect_eol(src)
-      return unless eol
-
-      idx = src.index(eol)
-      return unless idx
-
-      line_from += 1
-    end
-
-    @src_map = Lox::SourceMap.new(src:, line_from:).freeze
-    run(repl: true)
+  def run_eval(src)
+    @src_map = make_src_map(src:)
+    run
   rescue Lox::Error
-    handle_run_src_or_prompt_error
+    handle_run_eval_or_prompt_error
   rescue StandardError => e
     handle_exception(e)
   end
 
-  def run_prompt
+  def run_repl
     line = 1
     has_error = false
 
-    puts "Welcome to Lox REPL!".yellow
-    puts "Type #{":h".blue} for more information."
+    puts 'Welcome to Lox REPL!'.yellow
+    puts "Type #{':h'.blue} for more information."
 
     Readline.completion_append_character = nil
     Readline.completion_proc = proc do |input|
@@ -87,8 +100,8 @@ class Lox::Entry
       Readline::HISTORY.push(src) unless src == Readline::HISTORY.last
 
       if %w[:h :help].include?(src)
-        puts "Type #{":q".blue} or #{":quit".blue} to quit the REPL."
-        puts "Type #{":h".blue} or #{":help".blue} to display this help message."
+        puts "Type #{':q'.blue} or #{':quit'.blue} to quit the REPL."
+        puts "Type #{':h'.blue} or #{':help'.blue} to display this help message."
         next
       end
 
@@ -98,17 +111,54 @@ class Lox::Entry
       has_error = @error_collector.error?
     rescue Lox::Error
       has_error = true
-      handle_run_src_or_prompt_error
+      handle_run_eval_or_prompt_error
     end
   rescue StandardError => e
     handle_exception(e)
   end
 
-  def run_file(file)
+  def run_file(file, ast_only: false)
     src = Lox::Utils.read_file_without_bom(file)
-    line_from = 1
+    @src_map = make_src_map(file:, src:)
+    run(ast_only:)
+  rescue Lox::Error
+    handle_run_file_error(file)
+  rescue StandardError => e
+    handle_exception(e)
+  end
 
-    if src[..1] == "#!"
+  private
+
+  def run(repl: false, ast_only: false)
+    return if @src_map.nil?
+
+    tokens = Lox::Scanner.new(src_map: @src_map, error_collector: @error_collector).scan
+    raise Lox::Error::ScannerError if @error_collector.error?
+
+    Lox::Utils.print_tokens(src_map: @src_map, tokens:) if @options[:token] && !ast_only
+
+    ast = Lox::Parser.new(src_map: @src_map, error_collector: @error_collector, tokens:).parse
+    raise Lox::Error::ParserError if @error_collector.error?
+
+    pp ast if @options[:ast] && !ast_only
+    return ast if ast_only
+
+    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:, env: @env).interpret
+    raise Lox::Error::InterpError if @error_collector.error?
+
+    return unless repl
+
+    if result.is_a?(Lox::Callable)
+      puts "#{'=>'.blue} #{result}"
+    else
+      puts "#{'=>'.blue} #{result.inspect}"
+    end
+  end
+
+  def make_src_map(file: nil, src: '', line_from: 1)
+    return if src.strip.empty?
+
+    if src[..1] == '#!'
       eol = Lox::Utils.detect_eol(src)
       return unless eol
 
@@ -118,23 +168,10 @@ class Lox::Entry
       line_from += 1
     end
 
-    @src_map = Lox::SourceMap.new(file:, src:, line_from:)
-    run
-  rescue Lox::Error
-    handle_run_file_error(file)
-  rescue StandardError => e
-    handle_exception(e)
+    Lox::SourceMap.new(file:, src:, line_from:).freeze
   end
 
-  private
-
-  def run(repl: false)
-    tokens = Lox::Scanner.new(src_map: @src_map, error_collector: @error_collector).scan
-    pp tokens
-    raise Lox::Error::ScannerError if @error_collector.error?
-  end
-
-  def handle_run_src_or_prompt_error
+  def handle_run_eval_or_prompt_error
     @error_collector.report
     @error_collector.clear
   end
@@ -142,14 +179,14 @@ class Lox::Entry
   def handle_run_file_error(file)
     error_count = @error_collector.errors.count
     @error_collector.report
-    warn "#{"error".red}: failed to run #{file} with #{error_count.to_s.highlight} error#{error_count > 1 ? "s" : ""}"
+    warn "#{'error'.red}: failed to run #{file.to_s.underline} with #{error_count.to_s.highlight.underline} error#{error_count > 1 ? 's' : ''}"
     warn "\n"
     exit 65
   end
 
   def handle_exception(exception)
-    warn "#{"error".red}: #{exception.message.highlight}"
-    warn "#{"backtrace".yellow}:"
+    warn "#{'error'.red}: #{exception.message.highlight}"
+    warn "#{'backtrace'.yellow}:"
     warn exception.backtrace.map { "  #{it}" }.join("\n")
     exit(-1)
   end
@@ -166,7 +203,7 @@ end
 class Lox::SourceMap
   attr_reader :file, :src, :line_from, :eol, :line_start_offsets, :line_end_offsets
 
-  def initialize(file: nil, src: "", line_from: 1)
+  def initialize(file: nil, src: '', line_from: 1)
     @file = file.freeze
     @src = src.freeze
     @line_from = line_from
@@ -263,7 +300,7 @@ end
 class Lox::Context
   attr_reader :location
 
-  def initialize(src_map, location)
+  def initialize(src_map:, location:)
     @src_map = src_map
     @location = location
   end
@@ -294,7 +331,6 @@ class Lox::Context
     @src_map.line_range_to_src(start_line..end_line)
   end
 end
-
 ```
 
 创建用于错误收集的 `ErrorCollector` 类：
@@ -344,7 +380,7 @@ class Lox::Error < StandardError
 
   MAX_CTX_LINES = 5
 
-  def initialize(message = "", context = {})
+  def initialize(message = '', context = {})
     super(message)
     @message = message
     @context = context
@@ -364,12 +400,13 @@ class Lox::Error < StandardError
     start_column = @context.location.column[:start]
 
     gap_len = [start_line, end_line].max.to_s.length
-    gap_len = [gap_len, "...".length].max if ctx.size > MAX_CTX_LINES
-    gap = " " * gap_len
+    gap_len = [gap_len, '...'.length].max if ctx.size > MAX_CTX_LINES
+    gap = ' ' * gap_len
     gap_with_bar = "#{gap} |".blue
 
-    info = ["#{"error".red}: #{@message.highlight}"]
-    info << "#{gap}#{"-->".blue} #{@context.location.file}:#{start_line}:#{start_column}"
+    info = ["#{'error'.red}: #{@message.highlight}"]
+    loc = "#{@context.location.file}:#{start_line}:#{start_column}".highlight.underline
+    info << "#{gap}#{'-->'.blue} #{loc}"
     info << gap_with_bar
 
     part_width = Unicode::DisplayWidth.of(part)
@@ -378,25 +415,25 @@ class Lox::Error < StandardError
 
     if ctx.size <= 1
       info << ("#{start_line} | ".blue + ctx.last.chomp)
-      info << ("#{"#{gap_with_bar} #{" " * start_line_prefix_width}"}#{part_mark(part_width)}")
+      info << "#{"#{gap_with_bar} #{' ' * start_line_prefix_width}"}#{part_mark(part_width)}"
     elsif ctx.size <= MAX_CTX_LINES
       info << ("#{start_line.to_s.rjust(gap_len)} |   ".blue + ctx.first.chomp)
-      info << ("#{gap_with_bar}  #{"_".red * (start_line_prefix_width + 1)}#{"^".red}")
+      info << "#{gap_with_bar}  #{'_'.red * (start_line_prefix_width + 1)}#{'^'.red}"
       ctx[1..].each_with_index do |line, index|
-        info << ("#{(start_line + index + 1).to_s.rjust(gap_len)} | ".blue + "| ".red + line.chomp)
+        info << ("#{(start_line + index + 1).to_s.rjust(gap_len)} | ".blue + '| '.red + line.chomp)
       end
-      info << ("#{gap_with_bar} #{"|".red}#{"_".red * end_line_prefix_width}#{"^".red}")
+      info << "#{gap_with_bar} #{'|'.red}#{'_'.red * end_line_prefix_width}#{'^'.red}"
     else
       info << ("#{start_line.to_s.rjust(gap_len)} |   ".blue + ctx.first.chomp)
-      info << ("#{gap_with_bar}  #{"_".red * (start_line_prefix_width + 1)}#{"^".red}")
+      info << "#{gap_with_bar}  #{'_'.red * (start_line_prefix_width + 1)}#{'^'.red}"
       ctx[1..2].each_with_index do |line, index|
-        info << ("#{(start_line + index + 1).to_s.rjust(gap_len)} | ".blue + "| ".red + line.chomp)
+        info << ("#{(start_line + index + 1).to_s.rjust(gap_len)} | ".blue + '| '.red + line.chomp)
       end
-      info << ("...   ".blue + "|".red)
+      info << ('...   '.blue + '|'.red)
       ctx[-2..].each_with_index do |line, index|
-        info << ("#{(start_line + index + ctx[...-2].size).to_s.rjust(gap_len)} | ".blue + "| ".red + line.chomp)
+        info << ("#{(start_line + index + ctx[...-2].size).to_s.rjust(gap_len)} | ".blue + '| '.red + line.chomp)
       end
-      info << ("#{gap_with_bar} #{"|".red}#{"_".red * end_line_prefix_width}#{"^".red}")
+      info << "#{gap_with_bar} #{'|'.red}#{'_'.red * end_line_prefix_width}#{'^'.red}"
     end
 
     info.join("\n")
@@ -405,7 +442,7 @@ class Lox::Error < StandardError
   private
 
   def part_mark(length)
-    ("^" * [1, length].max).red
+    ('^' * [1, length].max).red
   end
 end
 
@@ -432,7 +469,7 @@ var language = "lox";
 
 解释器在识别词素时，要记住是哪种类型的词素，每个关键字、操作符、标点、字面量等都有不同的类型。
 
-创建一个 `TokenType` 枚举，用于保存 Token 的类型。由于 Ruby 原生不支持枚举类型，因此在 `Gemfile` 中添加一个 `ruby-enum` 包。
+创建一个 `TokenType` 枚举，用于保存 Token 的类型。由于 Ruby 原生不支持枚举类型，因此使用 `ruby-enum` 包来实现。
 
 ```ruby
 module Lox
@@ -440,75 +477,73 @@ module Lox
     include Ruby::Enum
 
     # single-character tokens
-    define :LEFT_BRACE # {
-    define :RIGHT_BRACE # }
-    define :LEFT_PAREN # (
-    define :RIGHT_PAREN # )
-    define :COMMA # ,
-    define :DOT # .
-    define :COLON # :
-    define :QMARK # ?
-    define :SEMICOLON # ;
-    define :PLUS # +
-    define :MINUS # -
-    define :STAR # *
-    define :SLASH # /
-    define :PERCENT # %
-    define :CARET # ^
+    define :LEFT_BRACE, '{'
+    define :RIGHT_BRACE, '}'
+    define :LEFT_PAREN, '('
+    define :RIGHT_PAREN, ')'
+    define :COMMA, ','
+    define :COLON, ':'
+    define :QMARK, '?'
+    define :SEMICOLON, ';'
+    define :DOT, '.'
+    define :PIPE, '|'
 
     # one or two character tokens
-    define :BANG # !
-    define :BANG_EQUAL # !=
-    define :EQUAL # =
-    define :EQUAL_EQUAL # ==
-    define :GREATER # >
-    define :GREATER_EQUAL # >=
-    define :LESS # <
-    define :LESS_EQUAL # <=
+    define :BANG, '!'
+    define :BANG_EQUAL, '!='
+    define :EQUAL, '='
+    define :EQUAL_EQUAL, '=='
+    define :PLUS, '+'
+    define :PLUS_EQUAL, '+='
+    define :MINUS, '-'
+    define :MINUS_EQUAL, '-='
+    define :STAR, '*'
+    define :STAR_EQUAL, '*='
+    define :SLASH, '/'
+    define :SLASH_EQUAL, '/='
+    define :PERCENT, '%'
+    define :PERCENT_EQUAL, '%='
+    define :CARET, '^'
+    define :CARET_EQUAL, '^='
+    define :GREATER, '>'
+    define :GREATER_EQUAL, '>='
+    define :LESS, '<'
+    define :LESS_EQUAL, '<='
 
     # literals
-    define :STRING # e.g. "abc" "abc\n123"
-    define :NUMBER # e.g. 0 123.45
-    define :IDENTIFIER # e.g. abc abc123 _abc abc_123
+    define :STRING # e.g. "ab" "ab\"12" 'ab' 'ab\'12'
+    define :NUMBER # e.g. 0 12.34
+    define :IDENT # e.g. abc abc123 _abc abc_123
 
     # end of file
     define :EOF
 
     def self.keyword?(lexeme)
-      Keyword.values.any? { it == lexeme }
-    end
-
-    def self.builtin?(lexeme)
-      BuiltIn.values.any? { it == lexeme }
+      Lox::Keyword.value?(lexeme)
     end
   end
 
   class Keyword < TokenType
-    define :VAR, "var"
-    define :NIL, "nil"
-    define :AND, "and"
-    define :OR, "or"
-    define :TRUE, "true"
-    define :FALSE, "false"
-    define :IF, "if"
-    define :ELSE, "else"
-    define :WHILE, "while"
-    define :FOR, "for"
-    define :BREAK, "break"
-    define :NEXT, "next"
-    define :FUN, "fun"
-    define :RETURN, "return"
-    define :CLASS, "class"
-    define :THIS, "this"
-    define :SUPER, "super"
-  end
-
-  class BuiltIn < TokenType
-    define :PRINT, "print"
-    define :READ, "read"
+    define :NIL, 'nil'
+    define :AND, 'and'
+    define :OR, 'or'
+    define :TRUE, 'true'
+    define :FALSE, 'false'
+    define :VAR, 'var'
+    define :FN, 'fn'
+    define :RETURN, 'return'
+    define :IF, 'if'
+    define :ELSE, 'else'
+    define :WHILE, 'while'
+    define :FOR, 'for'
+    define :BREAK, 'break'
+    define :NEXT, 'next'
+    define :CLASS, 'class'
+    define :SELF, 'self'
+    define :SUPER, 'super'
+    define :PRINT, 'print'
   end
 end
-
 ```
 
 ### 4.2.2 字面量
@@ -523,7 +558,7 @@ end
 class Lox::Token
   attr_reader :type, :location, :lexeme, :literal
 
-  def initialize(type:, location: nil, lexeme: "", literal: nil)
+  def initialize(type:, location: nil, lexeme: '', literal: nil)
     @type = type
     @location = location
     @lexeme = lexeme
@@ -591,22 +626,21 @@ end
 class Lox::Scanner
   private
 
-  def tokenize
+def tokenize
     @lexeme_pos = @pos
+
     case advance
     # single-character tokens
-    when "{" then add_token(Lox::TokenType::LEFT_BRACE)
-    when "}" then add_token(Lox::TokenType::RIGHT_BRACE)
-    when "(" then add_token(Lox::TokenType::LEFT_PAREN)
-    when ")" then add_token(Lox::TokenType::RIGHT_PAREN)
-    when "," then add_token(Lox::TokenType::COMMA)
-    when "." then add_token(Lox::TokenType::DOT)
-    when ":" then add_token(Lox::TokenType::COLON)
-    when "?" then add_token(Lox::TokenType::QMARK)
-    when ";" then add_token(Lox::TokenType::SEMICOLON)
-    when "+" then add_token(Lox::TokenType::PLUS)
-    when "-" then add_token(Lox::TokenType::MINUS)
-    when "*" then add_token(Lox::TokenType::STAR)
+    when '{' then add_token(Lox::TokenType::LEFT_BRACE)
+    when '}' then add_token(Lox::TokenType::RIGHT_BRACE)
+    when '(' then add_token(Lox::TokenType::LEFT_PAREN)
+    when ')' then add_token(Lox::TokenType::RIGHT_PAREN)
+    when ',' then add_token(Lox::TokenType::COMMA)
+    when ':' then add_token(Lox::TokenType::COLON)
+    when '?' then add_token(Lox::TokenType::QMARK)
+    when ';' then add_token(Lox::TokenType::SEMICOLON)
+    when '.' then add_token(Lox::TokenType::DOT)
+    when '|' then add_token(Lox::TokenType::PIPE)
     end
   end
 end
@@ -615,6 +649,7 @@ end
 其中，也使用了一些辅助方法：
 
 - `advance`：从源代码中消耗一个字符并返回
+- `previous`：获取上一个被消费的字符
 - `location`：获取当前要添加 Token 的位置信息
 - `add_token`：为当前词素添加一个 Token 类型
 - `lexeme`：获取当前词素
@@ -624,7 +659,11 @@ class Lox::Scanner
   private
 
   def advance
-    @pos += 1
+    @pos += 1 unless at_end?
+    previous
+  end
+
+  def previous
     @src[@pos - 1]
   end
 
@@ -667,10 +706,10 @@ class Lox::Scanner
   end
 
   def error_context
-    Lox::Context.new(@src_map, location)
+    Lox::Context.new(src_map: @src_map, location:)
   end
 
-  def add_error(message = "unknown start of token")
+  def add_error(message = 'unknown start of token')
     @error_collector.add(Lox::Error::ScannerError.new(message, error_context))
   end
 end
@@ -694,10 +733,15 @@ class Lox::Scanner
     case advance
     # ...
     # one or two character tokens
-    when "!" then add_token(match_next?("=") ? Lox::TokenType::BANG_EQUAL : Lox::TokenType::BANG)
-    when "=" then add_token(match_next?("=") ? Lox::TokenType::EQUAL_EQUAL : Lox::TokenType::EQUAL)
-    when ">" then add_token(match_next?("=") ? Lox::TokenType::GREATER_EQUAL : Lox::TokenType::GREATER)
-    when "<" then add_token(match_next?("=") ? Lox::TokenType::LESS_EQUAL : Lox::TokenType::LESS)
+when '!' then add_token(match_next?('=') ? Lox::TokenType::BANG_EQUAL : Lox::TokenType::BANG)
+    when '=' then add_token(match_next?('=') ? Lox::TokenType::EQUAL_EQUAL : Lox::TokenType::EQUAL)
+    when '+' then add_token(match_next?('=') ? Lox::TokenType::PLUS_EQUAL : Lox::TokenType::PLUS)
+    when '-' then add_token(match_next?('=') ? Lox::TokenType::MINUS_EQUAL : Lox::TokenType::MINUS)
+    when '*' then add_token(match_next?('=') ? Lox::TokenType::STAR_EQUAL : Lox::TokenType::STAR)
+    when '%' then add_token(match_next?('=') ? Lox::TokenType::PERCENT_EQUAL : Lox::TokenType::PERCENT)
+    when '^' then add_token(match_next?('=') ? Lox::TokenType::CARET_EQUAL : Lox::TokenType::CARET)
+    when '>' then add_token(match_next?('=') ? Lox::TokenType::GREATER_EQUAL : Lox::TokenType::GREATER)
+    when '<' then add_token(match_next?('=') ? Lox::TokenType::LESS_EQUAL : Lox::TokenType::LESS)
     # ...
   end
 end
@@ -709,20 +753,46 @@ end
 class Lox::Scanner
   private
 
-  def match_next?(expect)
-    if at_end? || @src[@pos] != expect
-      false
-    else
+  def peek(offset = 0)
+    return '' if at_end?(offset)
+
+    @src[@pos + offset]
+  end
+
+  def match_next?(*chars)
+    if check?(*chars)
       advance
       true
+    else
+      false
     end
+  end
+
+  def check?(*chars)
+    !at_end? && chars.include?(peek)
+  end
+end
+```
+
+其中使用了 `peek` 辅助方法，用于预读后面的字符，但是不消费，称为**前瞻**（Lookahead）。词法语法规则决定了在识别某些词素时需要前瞻多少个字符，前瞻字符越少，扫描器速度就越快。
+
+`peek` 默认会前瞻后面第 `offset + 1` 个字符：
+
+```ruby
+class Lox::Scanner
+  private
+
+  def peek(offset = 0)
+    return '' if at_end?(offset)
+
+    @src[@pos + offset]
   end
 end
 ```
 
 ## 4.6 更长的词素
 
-还缺少一个 `/` 操作符，但这个操作符不仅可以表示除法，还可以表示注释。当为注释时，还需要判断是单行注释还是多行注释，并把表示注释的所有字符都消费掉，并更新 `@pos`。
+还缺少一个 `/` 操作符，但这个操作符不仅可以表示除法，还可以表示注释和赋值运算。当为注释时，还需要判断是单行注释还是多行注释，并把表示注释的所有字符都消费掉，并更新 `@pos`。
 
 在 `case` 中添加处理 `/` 的逻辑：
 
@@ -735,11 +805,13 @@ class Lox::Scanner
 
     case advance
     # ...
-    when "/"
-      if match_next?("/")
+    when '/'
+      if match_next?('/')
         skip_line_comment
-      elsif match_next?("*")
+      elsif match_next?('*')
         skip_block_comment
+      elsif match_next?('=')
+        add_token(Lox::TokenType::SLASH_EQUAL)
       else
         add_token(Lox::TokenType::SLASH)
       end
@@ -759,39 +831,22 @@ class Lox::Scanner
   end
 
   def skip_block_comment
-    advance while !at_end? && !(peek == "*" && peek(1) == "/")
+    advance while !at_end? && !(peek == '*' && peek(1) == '/')
 
     if at_end?
-      add_error("unterminated block comment")
+      add_error('unterminated block comment')
       return
     end
 
     advance
     advance
-  endance(2)
   end
 end
 ```
 
 这是处理长词素的一般策略：当检测到一个词素的开头后，会分流属于该词素的字符，直到结尾。
 
-其中使用了 `peek` 辅助方法，用于预读后面的字符，但是不消费，称为**前瞻**（Lookahead）。词法语法规则决定了在识别某些词素时需要前瞻多少个字符，前瞻字符越少，扫描器速度就越快。
-
-`peek` 默认会前瞻后面第 `offset + 1` 个字符：
-
-```ruby
-class Lox::Scanner
-  private
-
-  def peek(offset = 0)
-    return "" if at_end?(offset)
-
-    @src[@pos + offset]
-  end
-end
-```
-
-对于注释选择无视，对于空白字符，同样也可以无视。
+对于注释选择忽略，对于空白字符，同样也可以忽略。
 
 ```ruby
 class Lox::Scanner
@@ -802,15 +857,17 @@ class Lox::Scanner
 
     case advance
     # ...
-    when " ", "\t", "\r", "\n" # ignore whitespace
+    when /[\s\u3000\u2000-\u200F\u2028-\u202F]/ # ignore whitespace
     # ...
   end
 end
 ```
+
+这里会忽略 Unicode 中定义的所有空白字符，包括半角和全角空白以及制表符。
 
 ### 4.6.1 字符串字面量
 
-字符串都以 `"` 开头和结尾，因此可以根据该特征识别字符串字面量：
+字符串以 `"` 或 `'` 开头和结尾，因此可以根据该特征识别字符串字面量：
 
 ```ruby
 class Lox::Scanner
@@ -821,28 +878,29 @@ class Lox::Scanner
 
     case advance
     # ...
-    when '"' then string
+    when '"', "'" then string
     # ...
   end
 end
 ```
 
-其中使用了 `string` 辅助方法，会一直读取下一个字符，直到遇到下一个 `"`，如果遇到了错误则抛出。
+其中使用了 `string` 辅助方法，会一直读取下一个字符，直到遇到下一个匹配的引号，若遇到了错误则抛出。
 
 ```ruby
 class Lox::Scanner
   private
 
   def string
-    advance while !at_end? && peek != '"'
+    quote = previous
+    advance while !at_end? && peek != quote
 
     if at_end?
-      add_error("unterminated double quote string")
+      add_error('unterminated string')
       return
     end
 
     advance
-    add_token(Lox::TokenType::STRING, string_literal)
+    add_token(Lox::TokenType::STRING, string_literal(quote))
   end
 end
 ```
@@ -853,10 +911,10 @@ end
 class Lox::Scanner
   private
 
-  def string_literal
+  def string_literal(quote)
     literal = lexeme
-    literal = literal[1...] if literal[0] == '"'
-    literal = literal[...-1] if literal[-1] == '"'
+    literal = literal[1...] if literal[0] == quote
+    literal = literal[...-1] if literal[-1] == quote
     literal.freeze
   end
 end
@@ -880,7 +938,7 @@ Lox 中所有数字在运行时都是浮点数，但支持整数和浮点数字�
 
 若支持前者，那么在解析时需要更多的前瞻处理，若支持后者，那么在进行方法调用时会比较奇怪。
 
-在 `case` 中添加对数字的处理逻辑，支持半角和全角数字：
+在 `case` 中添加对数字的处理逻辑，支持处理半角和全角数字：
 
 ```ruby
 class Lox::Scanner
@@ -922,8 +980,8 @@ class Lox::Scanner
   private
 
   def number_literal
-    literal = lexeme.tr("０-９．", "0-9.")
-    if literal.include?(".")
+    literal = lexeme.tr('０-９．', '0-9.')
+    if literal.include?('.')
       literal.to_f
     else
       literal.to_i
@@ -934,7 +992,7 @@ class Lox::Scanner
 
 ## 4.7 保留字和标识符
 
-词法语法中还需要实现的部分仅剩保留字和标识符了。如果采用之前多字符操作符匹配的方法，那么当遇到 `orchid` 这种标识符时，会直接将前两个字符 `or` 识别为 `OR`，这样肯定是不对的。
+词法语法中还需要实现的部分仅剩保留字和标识符了。若采用之前多字符操作符匹配的方法，那么当遇到 `orchid` 这种标识符时，会直接将前两个字符 `or` 识别为 `OR`，这样肯定是不对的。
 
 针对这种情况，扫描器采取**最长匹配**（Maximal munch）原则：当多个语法规则都能匹配扫描器正在处理的一段代码时，使用匹配字符最多的那个。这表示只有在扫描完一个可能是标识符的全部片段，才能确认是否是一个保留字，因为保留字本质上也是一个标识符，只不过被语言本身所使用。
 
@@ -974,11 +1032,9 @@ class Lox::Scanner
   def identifier
     advance while peek.match?(/(\p{XID_Continue}|\p{Emoji})/)
     type = if Lox::TokenType.keyword?(lexeme)
-             Lox::Keyword.key(lexeme)
-           elsif Lox::TokenType.builtin?(lexeme)
-             Lox::BuiltIn.key(lexeme)
+             lexeme
            else
-             Lox::TokenType::IDENTIFIER
+             Lox::TokenType::IDENT
            end
     add_token(type)
   end

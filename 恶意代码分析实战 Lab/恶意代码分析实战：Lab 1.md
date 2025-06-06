@@ -1,4 +1,4 @@
-> 本系列文章为[《恶意代码分析实战》](https://book.douban.com/subject/25868289/)每章的课后 Lab 实践。
+> 本文为[《恶意代码分析实战》](https://book.douban.com/subject/25868289/)每章的课后 Lab 实践。
 
 # Lab 1-1
 
