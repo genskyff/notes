@@ -15,19 +15,23 @@
 先从分支开始。在 C 中，主要有 `if` 语句和条件运算符构成的表达式来表达分支。Lox 已经有了条件表达式，再添加 `if` 语句的生成式。
 
 ```
-stmt -> ";" | exprStmt | printStmt | blockStmt | ifStmt;
-ifStmt -> "if" "(" expr ")" stmt ("else" stmt)?;
+exec_stmt -> print_stmt
+             | block_stmt
+             | if_stmt
+             | expr_stmt;
+if_stmt -> "if" expr block_stmt ("else" (if_stmt | block_stmt))?
 ```
 
-`if` 语句以一个括号包裹的表达式作为条件，然后是条件为真时要执行的语句，语句可选的 `else` 分支。
+`if` 语句以一个表达式作为条件，然后是条件为真时要执行的块，并可选的 `else` 分支。`if` 语句可以嵌套，这样就可以支持 `else if` 的形式而不用额外添加一个像 `elsif` 这样的关键字。
 
-更新 `bin/gen_ast` 添加 `IfStmt` 节点：
+更新 `bin/gen_ast` 添加 `ifStmt` 节点：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
                         # ...
-                        "ifStmt    : expr, then_branch, else_branch"
-                      ]).make
+                        'ifStmt     : cond, then_branch, else_branch',
+                        'exprStmt   : expr'
+                      ]).generate
 ```
 
 更新 `Parser`，解析 `if` 语句：
@@ -36,50 +40,69 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt
-  def statement
-    # ...
-    elsif match_next?(Lox::Keyword.key("if"))
+  # execution -> ";"
+  #              | print_stmt
+  #              | block_stmt
+  #              | if_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
+      nil
+    elsif match_next?(Lox::Keyword::PRINT)
+      print_stmt
+    elsif match_next?(Lox::TokenType::LEFT_BRACE)
+      block_stmt
+    elsif match_next?(Lox::Keyword::IF)
       if_stmt
-    # ...
+    else
+      expr_stmt
+    end
   end
 
-  # if_stmt -> "if" "(" expression ")" statement ("else" statement)?
+  # if_stmt -> "if" expression block_stmt ("else" (if_stmt | block_stmt))?
   def if_stmt
     from = previous
-    consume(Lox::TokenType::LEFT_PAREN, "expect `(` after if-statement")
-    expr = expression
-    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` before if-statement", from)
-    then_branch = statement
-    else_branch = statement if match_next?(Lox::Keyword.key("else"))
-    Lox::Ast::IfStmt.new(expr:, then_branch:, else_branch:, location: location(from))
+    cond = expression
+    consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before then branch')
+    then_branch = block_stmt
+    else_branch = if match_next?(Lox::Keyword::ELSE)
+                    if match_next?(Lox::Keyword::IF)
+                      if_stmt
+                    else
+                      consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before else branch')
+                      block_stmt
+                    end
+                  end
+    Lox::Ast::IfStmt.new(cond:, then_branch:, else_branch:, location: location(from:))
   end
 end
 ```
 
-若遇到 `if` 关键字，就解析表达式，然后解析分支，但当嵌套 `if` 时该解析可能会引起一些歧义。
+若遇到 `if` 关键字，就解析表达式，然后解析分支。若语言允许单行而不需要块，则嵌套 `if` 时解析可能会引起一些歧义。
 
-```javascript
+在 C 中，像这样单行的 `if` 嵌套：
+
+```c
 if (first)
     if (second)
-        print 1;
+        printf("1");
 else
-    print 2;
+    printf("2");
 ```
 
 由于 `else` 是可选的，当嵌套时 `else` 关联的 `if` 会难以判断。可以定义一个新的语法来避免歧义，如一种允许带有 `else` 的语句，另一种不允许，但这样可能会更加迷惑。实际上大多数语言和解析器通过总是将 `else` 与最近的 `if` 配对来解决这个问题。
 
-Lox 的解析也同样如此，因此上面这段实际上应该是这样的：
+因此上面这段实际上应该是这样的：
 
-```
+```c
 if (first)
     if (second)
-        print 1;
+        printf("1");
     else
-        print 2;
+        printf("2");
 ```
 
-有些语言这不允许这种单独的语句，而是强制使用花括号：
+Lox 以及有些语言这不允许这种单独的语句，而是强制使用花括号，则不存在这种问题。
 
 ```
 if (first) {
@@ -96,10 +119,10 @@ if (first) {
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_if_stmt(if_stmt)
-    if evaluate_expr(if_stmt.expr)
-      execute_stmt(if_stmt.then_branch)
+    if evaluate(if_stmt.cond)
+      execute(if_stmt.then_branch)
     elsif if_stmt.else_branch
-      execute_stmt(if_stmt.else_branch)
+      execute(if_stmt.else_branch)
     end
   end
 end
