@@ -115,7 +115,7 @@ end
 添加对函数调用的访问者：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_call(call)
     callee = evaluate(call.callee)
     args = call.args.map { evaluate(it) }
@@ -146,7 +146,7 @@ end
 在 `visit_call` 中求得的 `callee` 实际上并不一定是 `Callable` 的，只有函数和类才能够被调用，因此添加类型检查。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_call(call)
     # ...
     if callee.is_a?(Lox::Callable)
@@ -177,12 +177,12 @@ end
 然后在 `visit_call` 中添加元数检查：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_call(call)
     # ...
     if callee.is_a?(Lox::Callable)
       error("expected #{callee.arity} arguments but got #{args.size}", call) if callee.arity != args.size
-      callee.call(Lox::Visitor::StmtInterpreter.new(@src_map, @env), args)
+      callee.call(Lox::Visitor::Interpreter.new(@src_map, @env), args)
     else
       error("can only call functions and classes", call)
     end
@@ -268,7 +268,7 @@ end
 增加一个 `@fun_ctx` 用于表示当前是否为函数上下文：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def initialize(src_map, env)
     # ...
     @fun_ctx = false
@@ -279,7 +279,7 @@ end
 修改 `visit_var` 和 `visit_call`：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_var(var)
     result = @env.value(var)
     return result if @fun_ctx
@@ -308,8 +308,8 @@ end
 ```
 decl -> varDecl | funDecl | stmt;
 funDecl -> "fun" func;
-func -> IDENTIFIER "(" params? ")" blockStmt;
-params -> IDENTIFIER ("," IDENTIFIER)*;
+func -> IDENT "(" params? ")" blockStmt;
+params -> IDENT ("," IDENT)*;
 ```
 
 一个函数声明以 `fun` 开头，然后引入了 `func` 来描述后面的部分：一个标识符，一对括号，括号中有 0 个或多个参数。在后面定义类中的方法时，可以复用 `func`。
@@ -349,13 +349,13 @@ class Lox::Parser
     func
   end
 
-  # func -> IDENTIFIER "(" params? ")" block_stmt
+  # func -> IDENT "(" params? ")" block_stmt
   def func
     from = previous
     advance
     if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
       add_error("expected identifier, found keyword or built-in", previous, previous)
-    elsif previous.type != Lox::TokenType::IDENTIFIER
+    elsif previous.type != Lox::TokenType::IDENT
       add_error("expect identifier", previous, previous)
     end
     ident = previous
@@ -367,14 +367,14 @@ class Lox::Parser
     Lox::Ast::FunStmt.new(ident:, params: param_list, body: block_stmt, location: location(from))
   end
 
-  # params -> IDENTIFIER ("," IDENTIFIER)*
+  # params -> IDENT ("," IDENT)*
   def params
     params_list = []
     unless peek.type == Lox::TokenType::RIGHT_PAREN
-      params_list << consume(Lox::TokenType::IDENTIFIER, "expect identifier", peek)
+      params_list << consume(Lox::TokenType::IDENT, "expect identifier", peek)
       while match_next?(Lox::TokenType::COMMA)
         add_error("cannot have more than #{MAX_ARGS} parameters", params_list.first, params_list.last) if params_list.size > MAX_ARGS
-        params_list << consume(Lox::TokenType::IDENTIFIER, "expect identifier", peek)
+        params_list << consume(Lox::TokenType::IDENT, "expect identifier", peek)
       end
     end
     params_list
@@ -458,7 +458,7 @@ end
 现在就可以解释函数声明了，添加对函数声明的访问者，用于创建一个 `UserFunction`，并把该函数保存在定义时的环境中，这样名称就能被找到。
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   attr_accessor :env
 
   def visit_fun_stmt(fun_stmt)
@@ -547,7 +547,7 @@ end
 添加一个错误类：
 
 ```ruby
-class Lox::Error::ReturnError < Lox::Error::InterpreterError
+class Lox::Error::ReturnError < Lox::Error::InterpError
   attr_reader :value
 
   def initialize(value = nil)
@@ -560,7 +560,7 @@ end
 然后添加对 `return` 语句的访问者：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_return_stmt(return_stmt)
     value = return_stmt.expr ? evaluate_expr(return_stmt.expr) : nil
     raise Lox::Error::ReturnError, value
@@ -633,7 +633,7 @@ end
 在创建函数时，捕获当前环境并保存。这是函数声明时的环境，不是调用时的环境，因为作用域是静态的词法作用域。
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_fun_stmt(fun_stmt)
     user_function = Lox::UserFunction.new(fun_stmt, @env)
     # ...
@@ -754,10 +754,9 @@ end
 最后添加对 Lambda 表达式的访问者：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_lambda_fun(lambda_fun)
     Lox::UserFunction.new(lambda_fun, @env)
   end
 end
 ```
-

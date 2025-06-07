@@ -274,7 +274,7 @@ class Lox::Interpreter
 
   def interpret
     @ast.accept(Lox::Visitor::Interpreter.new(src_map: @src_map))
-  rescue Lox::Error::InterpreterError => e
+  rescue Lox::Error::InterpError => e
     @error_collector.add(e)
     nil
   end
@@ -322,7 +322,7 @@ class Lox::Entry
     pp ast if @options[:ast] && !ast_only
     return ast if ast_only
 
-    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:, env: @env).interpret
+    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:).interpret
     raise Lox::Error::InterpError if @error_collector.error?
 
     return unless repl
@@ -337,4 +337,3 @@ end
 ```
 
 现在，就有一个完整的解释器管道，扫描得到 Token 序列，解析得到语法树，并在语法树上执行得到结果，且具有良好的报错信息。
-

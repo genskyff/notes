@@ -91,10 +91,10 @@ if (first) {
 }
 ```
 
-在 `StmtInterpreter` 中添加 `if_stmt` 的访问者：
+在 `Interpreter` 中添加 `if_stmt` 的访问者：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_if_stmt(if_stmt)
     if evaluate_expr(if_stmt.expr)
       execute_stmt(if_stmt.then_branch)
@@ -175,10 +175,10 @@ class Lox::Parser
 end
 ```
 
-在 `ExprInterpreter` 中添加 `logic` 的访问者：
+在 `Interpreter` 中添加 `logic` 的访问者：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_logic(logic)
     left = evaluate(logic.left)
 
@@ -251,7 +251,7 @@ end
 然后添加对 `while` 的访问者：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_while_stmt(while_stmt)
     execute_stmt(while_stmt.body) while evaluate_expr(while_stmt.expr)
   end
@@ -350,7 +350,7 @@ class Lox::Parser
 end
 ```
 
-依次对初始化、条件、增量进行解析，分别创建语法树节点，最后再和 `body` 连接起来，这样就利用现有的节点，而无需创建新的语法树节点，以及对 `StmtInterpreter` 做修改。同时 `init` 可能含有多条初始化语句构成的数组，因此需要进行 `flatten`。
+依次对初始化、条件、增量进行解析，分别创建语法树节点，最后再和 `body` 连接起来，这样就利用现有的节点，而无需创建新的语法树节点，以及对 `Interpreter` 做修改。同时 `init` 可能含有多条初始化语句构成的数组，因此需要进行 `flatten`。
 
 ## 9.6 break 和 next
 
@@ -447,10 +447,10 @@ class Lox::Parser
 end
 ```
 
-然后在 `StmtInterpreter` 中添加访问者：
+然后在 `Interpreter` 中添加访问者：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_break_stmt(_break_stmt)
     raise Lox::Error::BreakError
   end
@@ -464,14 +464,14 @@ end
 这里直接通过抛出一个异常来解决，添加错误类：
 
 ```ruby
-class Lox::Error::BreakError < Lox::Error::InterpreterError; end
-class Lox::Error::NextError < Lox::Error::InterpreterError; end
+class Lox::Error::BreakError < Lox::Error::InterpError; end
+class Lox::Error::NextError < Lox::Error::InterpError; end
 ```
 
 然后修改 `while` 访问者，捕获异常：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_while_stmt(while_stmt)
     while evaluate_expr(while_stmt.expr)
       begin
@@ -491,7 +491,7 @@ end
 可以通过当遇到 `next` 时，执行一次最后一条语句来解决：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_while_stmt(while_stmt)
     while evaluate_expr(while_stmt.expr)
       begin
@@ -520,4 +520,3 @@ class Lox::Parser
   end
 end
 ```
-
