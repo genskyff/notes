@@ -20,11 +20,11 @@
 
 ## 7.2 表达式求值
 
-在之前，已经使用访问者模式创建了一个 `ExprPrinter`，实际上这就是遍历语法树，并最终返回一个构建的字符串，本质上就是在语法树上执行，但不是求值，而是连接字符串。因此创建一个 `ExprInterpreter` 类，作为一个新的访问者用于求值。
+在之前，已经使用访问者模式创建了一个 `ExprFormatter`，实际上这就是遍历语法树，并最终返回一个构建的字符串，本质上就是在语法树上执行，但不是求值，而是连接字符串。因此创建一个 `Interpreter` 类，作为一个新的访问者用于求值。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def initialize(src_map)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def initialize(src_map:)
     @src_map = src_map
   end
 end
@@ -35,9 +35,9 @@ end
 一个表达式树的叶子节点就是字面量，而字面量就是用于产生值的语法单元。要将字面量转换为值，只需要根据字面量的类型，直接转化为 Ruby 中所映射的值就可以了。在之前构建 AST 的过程中实际上已经转化为了运行时的值，直接使用即可。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_literal(literal)
-    literal.value
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_literal_expr(literal_expr)
+    literal_expr.value
   end
 end
 ```
@@ -47,9 +47,9 @@ end
 下一个要求值的节点是分组，而括号中的也是一个表达式，即最终括号中的值就是表达式的值：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_group(group)
-    evaluate(group.expr)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_group_expr(group_expr)
+    evaluate(group_expr.expr)
   end
 end
 ```
@@ -57,7 +57,7 @@ end
 为了计算表达式的值，引入了 `evaluate`，这会递归地计算子表达式的值并返回：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   private
 
   def evaluate(ast_node)
@@ -71,11 +71,11 @@ end
 和分组表达式类似，一元表达式也必须先求子表达式的值，然后根据操作符类型计算最终值：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_unary(unary)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_unary_expr(unary_expr)
     right = evaluate(unary.right)
 
-    case unary.op.type
+    case unary_expr.op.type
     when Lox::TokenType::BANG
       !right
     when Lox::TokenType::PLUS
@@ -94,14 +94,18 @@ end
 与一元表达式是类似的，只不过先求两边的操作数的值，最后根据中缀运算符计算最终值。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_binary(binary)
-    left = evaluate(binary.left)
-    right = evaluate(binary.right)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_binary_expr(binary_expr)
+    left = evaluate(binary_expr.left)
+    right = evaluate(binary_expr.right)
 
-    case binary.op.type
+    case binary_expr.op.type
     when Lox::TokenType::PLUS
-      left + right
+      if (left.is_a?(String) && right.is_a?(Numeric)) || (left.is_a?(Numeric) && right.is_a?(String))
+        "#{left}#{right}"
+      else
+        left + right
+      end
     when Lox::TokenType::MINUS
       left - right
     when Lox::TokenType::STAR
@@ -129,7 +133,7 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
 end
 ```
 
-这里对 `+` 操作实际上可以有两种语义，一种是数字相加，另一种是字符串连接，由于 Ruby 本身支持这种操作，所以这里把对两种不同类型的 `+` 操作合并了，如果实现解释器的语言本身不支持这种操作的话，就需要判断两边值的类型，再进行对应的操作，就有可能是如下写法：
+这里对 `+` 操作实际上可以有两种语义，一种是数字相加，另一种是字符串连接，由于 Ruby 本身支持这种操作，所以这里把对两种不同类型的 `+` 操作合并了，仅需要额外实现数字和字符串相加的逻辑即可。若实现解释器的语言本身不支持这种操作的话，就需要判断两边值的类型，再进行对应的操作，就有可能是如下写法：
 
 ```Ruby
 if left.is_a?(Numeric) && right.is_a?(Numeric)
@@ -146,12 +150,12 @@ end
 条件表达式需要先计算条件中的表达式的值，然后再对分支进行求值。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_cond(cond)
-    if evaluate(cond.expr)
-      evaluate(cond.then_branch)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_cond_expr(cond_expr)
+    if evaluate(cond_expr.cond)
+      evaluate(cond_expr.then_expr)
     else
-      evaluate(cond.else_branch)
+      evaluate(cond_expr.else_expr)
     end
   end
 end
@@ -165,16 +169,16 @@ end
 
 ### 7.3.1 检测运行时错误
 
-在递归遍历语法树时，出现错误后，会跳出所有的调用层，但不使用 Ruby 自己的异常机制，而是添加一个 `InterpreterError` 类。
+在递归遍历语法树时，出现错误后，会跳出所有的调用层，但不使用 Ruby 自己的异常机制，而是添加一个 `InterpError` 类。
 
 ```ruby
-class Lox::Error::InterpreterError < Lox::Error; end
+class Lox::Error::InterpError < Lox::Error; end
 ```
 
 在对语法树每个表达式节点进行计算前，先进行类型检查：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_unary(unary)
     # ...
     when Lox::TokenType::MINUS
@@ -190,7 +194,7 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
 
     types.any? do |type|
       operands.all? { it.is_a?(type) }
-    end || error("operands must be #{types.map(&:to_s).map(&:downcase).join(", ")}", ast_node)
+    end || error("operands must be #{types.map(&:to_s).map(&:downcase).join(', ')}", ast_node)
   end
 end
 ```
@@ -198,55 +202,56 @@ end
 同样的，对二元计算表达式也添加检查。其中 `+` 由于还被用作字符串连接，比较运算符还可以比较字符串大小， 因此做特殊处理。
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_binary(binary)
     # ...
+    case binary_expr.op.type
     when Lox::TokenType::PLUS
       if (left.is_a?(String) && right.is_a?(Numeric)) || (left.is_a?(Numeric) && right.is_a?(String))
         "#{left}#{right}"
       else
-        check_operands(binary, [left, right], [String, Numeric])
+        check_operands(binary_expr, [left, right], [String, Numeric])
         left + right
       end
     when Lox::TokenType::MINUS
-      check_operands(binary, [left, right])
+      check_operands(binary_expr, [left, right])
       left - right
     when Lox::TokenType::STAR
-      check_operands(binary, [left, right])
+      check_operands(binary_expr, [left, right])
       left * right
     when Lox::TokenType::SLASH
-      check_operands(binary, [left, right])
+      check_operands(binary_expr, [left, right])
       begin
         left / right
       rescue ZeroDivisionError
-        error("division by zero", binary.right)
+        error('division by zero', binary_expr.right)
       end
       left / right
     when Lox::TokenType::PERCENT
-      check_operands(binary, [left, right])
+      check_operands(binary_expr, [left, right])
       begin
         left % right
       rescue ZeroDivisionError
-        error("division by zero", binary.right)
+        error('division by zero', binary_expr.right)
       end
     when Lox::TokenType::CARET
-      check_operands(binary, [left, right])
+      check_operands(binary_expr, [left, right])
       left**right
     when Lox::TokenType::EQUAL_EQUAL
       left == right
     when Lox::TokenType::BANG_EQUAL
       left != right
     when Lox::TokenType::GREATER
-      check_operands(binary, [left, right], [String, Numeric])
+      check_operands(binary_expr, [left, right], [String, Numeric])
       left > right
     when Lox::TokenType::GREATER_EQUAL
-      check_operands(binary, [left, right], [String, Numeric])
+      check_operands(binary_expr, [left, right], [String, Numeric])
       left >= right
     when Lox::TokenType::LESS
-      check_operands(binary, [left, right], [String, Numeric])
+      check_operands(binary_expr, [left, right], [String, Numeric])
       left < right
     when Lox::TokenType::LESS_EQUAL
-      check_operands(binary, [left, right], [String, Numeric])
+      check_operands(binary_expr, [left, right], [String, Numeric])
       left <= right
     end
   end
@@ -257,7 +262,7 @@ end
 
 ## 7.4 连接解释器
 
-`visit` 方法是 `ExprInterpreter` 的核心，但还需要封装一层，以方便与其它部分对接。通过创建一个 `Interpreter` 类作为执行的入口，`interpret` 方法执行 AST 然后返回结果。
+`visit` 方法是 `Interpreter` 访问者的核心，但还需要封装一层，以方便与其它部分对接。通过创建一个 `Interpreter` 类作为执行的入口，`interpret` 方法执行 AST 然后返回结果。
 
 ```ruby
 class Lox::Interpreter
@@ -268,9 +273,7 @@ class Lox::Interpreter
   end
 
   def interpret
-    return unless @ast
-
-    @ast.accept(Lox::Visitor::ExprInterpreter.new(@src_map))
+    @ast.accept(Lox::Visitor::Interpreter.new(src_map: @src_map))
   rescue Lox::Error::InterpreterError => e
     @error_collector.add(e)
     nil
@@ -280,10 +283,10 @@ end
 
 ### 7.4.1 报告运行时错误
 
-在 `ExprInterpreter` 中发生错误时调用了 `error` 方法，用于抛出一个错误，具体实现如下：
+在 `Interpreter` 访问者中发生错误时调用了 `error` 方法，用于抛出一个错误，具体实现如下：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   private
 
   def location(ast_node)
@@ -292,16 +295,16 @@ class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
   end
 
   def error_context(ast_node)
-    Lox::Context.new(@src_map, location(ast_node))
+    Lox::Context.new(src_map: @src_map, location: location(ast_node))
   end
 
   def error(message, ast_node)
-    raise Lox::Error::InterpreterError.new(message, error_context(ast_node))
+    raise Lox::Error::InterpError.new(message, error_context(ast_node))
   end
 end
 ```
 
-这会收集上下文和位置信息，抛出错误后 `Interpreter` 的 `interpret` 方法会捕获并添加错误到错误收集器中。
+这会收集上下文和位置信息，抛出错误后 `Lox::Interpreter#interpret` 会捕获并添加错误到错误收集器中。
 
 ### 7.4.2 运行解释器
 
@@ -311,17 +314,24 @@ end
 class Lox::Entry
   private
 
-  def run(repl: false)
-    tokens = Lox::Scanner.new(src_map: @src_map, error_collector: @error_collector).scan
-    raise Lox::Error::ScannerError if @error_collector.error?
-
+  def run(repl: false, ast_only: false)
+    # ...
     ast = Lox::Parser.new(src_map: @src_map, error_collector: @error_collector, tokens:).parse
     raise Lox::Error::ParserError if @error_collector.error?
 
-    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:).interpret
-    raise Lox::Error::InterpreterError if @error_collector.error?
+    pp ast if @options[:ast] && !ast_only
+    return ast if ast_only
 
-    puts "#{"=>".blue} #{result.inspect}" if repl
+    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:, env: @env).interpret
+    raise Lox::Error::InterpError if @error_collector.error?
+
+    return unless repl
+
+    if result.is_a?(Lox::Callable)
+      puts "#{'=>'.blue} #{result}"
+    else
+      puts "#{'=>'.blue} #{result.inspect}"
+    end
   end
 end
 ```
