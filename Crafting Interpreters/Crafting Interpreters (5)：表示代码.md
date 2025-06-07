@@ -173,18 +173,18 @@ Lox 中的表达式，如：
 除了与精确词素相匹配的终止符会加引号外，还对表示单一词素的终止符进行**大写化**，这些词素的文本表示方式可能会有所不同。`NUMBER` 是任何数字字面量，`STRING` 是任何字符串字面量，对 `IDENT` 也进行同样的处理。这些符号使用生成式语法可以表达为：
 
 ```
-expr -> literal_expr
-        | unary_expr
-        | binary_expr
-        | group_expr
-        | cond_expr;
+expr    -> literal
+        | unary
+        | binary
+        | group
+        | cond;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
-binary  -> left op right;
+binary  -> expr op expr;
 op      -> "+" | "-" | "*" | "/" | "%" | "^";
-           | "==" | "!=" | "<" | "<=" | ">" | ">=";
+        | "==" | "!=" | "<" | "<=" | ">" | ">=";
 group   -> "(" expr ")";
-cond    -> cond ? then_expr : else_expr;
+cond    -> expr ? expr : expr;
 ```
 
 > 目前这个语法是有歧义的，之后会修改。
@@ -794,3 +794,4 @@ puts ast.accept(Lox::Visitor::ExprFormatter.new)
 ```
 -12 * (true ? 34 : 56)
 ```
+

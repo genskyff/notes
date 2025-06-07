@@ -9,13 +9,17 @@
 如下面 Lox 的表达式语法：
 
 ```
-expr    -> literal | unary | binary | group | cond;
+expr    -> literal
+        | unary
+        | binary
+        | group
+        | cond;
 literal -> NUMBER | STRING | "true" | "false" | "nil";
 unary   -> ("!" | "+" | "-") expr;
 binary  -> expr op expr;
 op      -> "+" | "-" | "*" | "/" | "%" | "^";
-           | "==" | "!=" | "<" | "<=" | ">" | ">=";
-group   -> "(" expr ","? ")";
+        | "==" | "!=" | "<" | "<=" | ">" | ">=";
+group   -> "(" expr ")";
 cond    -> expr ? expr : expr;
 ```
 
@@ -73,7 +77,7 @@ NUMBER op expr
 
 **优先级**决定了在一个包含不同运算符的混合表达式中，哪个运算符先被执行。优先级较高的运算符在优先级较低的运算符之前计算，因此优先级较高的运算符被称为**更严格的绑定**，如 `*` 的优先级比 `+` 高。
 
-**结合性**决定在一系列相同操作符中先计算哪个操作符。若一个操作符是**左结合**的，左边的操作符在右边的操作符之前计算，如 `+` 是左结合的，而 `=` 是右结合的。
+**结合性**决定在一系列相同操作符中先计算哪个操作符。若一个操作符是**左结合**的，左边的操作符在右边的操作符之前计算，如 `+` 是左结合的，而 `^` 是右结合的。
 
 若语法中没有定义优先级和结合性，则使用多个运算符就会造成歧义。修改表达式语法，通过**分层**将不同优先级的表达式定义在不同的产生式中：
 
@@ -163,7 +167,8 @@ $$
 A \rightarrow \beta_1(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^* \\
 \mid \beta_2(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^* \\
 \mid\cdots \\
-\mid\beta_m(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^*
+\mid\beta_m(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^* \\
+= (\beta_1 \mid\beta_2 \mid\cdots\mid \beta_m)(\alpha_1 \mid\alpha_2 \mid\cdots\mid \alpha_n)^*
 $$
 
 对于**多重**左递归，如以下产生式：
@@ -205,7 +210,7 @@ $$
 对于上述表达式文法，可以做如下转换：
 
 ```
-expression -> condition ("," condition)*;
+expression -> condition
 condition -> equality "?" condition ":" condition | equality;
 equality -> comparison (("==" | "!=") comparison)*;
 comparison -> term (( ">" | ">=" | "<" | "<=" ) term)*;
@@ -213,7 +218,7 @@ term -> factor (("+" | "-") factor)*;
 factor -> unary (("*" | "/" | "%") unary)*;
 unary -> ("!" | "+" | "-") unary | power;
 power -> primary ("^" power)?;
-primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil";
+primary -> "(" expression ")" | NUMBER | STRING | "true" | "false" | "nil";
 ```
 
 这个语法虽然更复杂，但消除了歧义，可以被解析器正常解析。
@@ -287,10 +292,10 @@ class Lox::Parser
     expr = equality
 
     if match_next?(Lox::TokenType::QMARK)
-      then_branch = condition
-      consume(Lox::TokenType::COLON, "expect `:` after condition", expr)
-      else_branch = condition
-      expr = Lox::Ast::Cond.new(expr:, then_branch:, else_branch:, location: location(expr))
+      then_expr = condition
+      consume(Lox::TokenType::COLON, 'expect `:` after condition', from: expr)
+      else_expr = condition
+      expr = Lox::Ast::CondExpr.new(cond: expr, then_expr:, else_expr:, location: location(from: expr))
     end
 
     expr
@@ -298,21 +303,19 @@ class Lox::Parser
 end
 ```
 
-先通过解析 `condition` 得到 `exprs`，然后判断终止条件，定义一个 `match_next?` 来匹配。
+先通过解析 `condition` 得到 `expr`，然后判断终止条件，定义一个 `match_next?` 来匹配。
 
 ```ruby
 class Lox::Parser
   private
 
   def match_next?(*types)
-    types.each do |type|
-      if check?(type)
-        advance
-        return true
-      end
+    if check?(*types)
+      advance
+      true
+    else
+      false
     end
-
-    false
   end
 end
 ```
@@ -323,13 +326,13 @@ end
 class Lox::Parser
   private
 
-  def check?(type)
-    !at_end? && peek.type == type
-  end
-
   def advance
     @current += 1 unless at_end?
     previous
+  end
+
+  def check?(*types)
+    !at_end? && types.include?(peek.type)
   end
 end
 ```
@@ -356,13 +359,13 @@ end
 
 `at_end?` 检查 Token 是否结束，`peek` 返回还未消费的当前 Token，`previous` 会返回最后一个被消费的Token。
 
-生成 `Condtion` 节点时，还需要传入位置信息，定义一个 `location` 来获取指定的位置信息：
+生成 `CondExpr` 节点时，还需要传入位置信息，定义一个 `location` 来获取指定的位置信息：
 
 ```ruby
 class Lox::Parser
   private
 
-  def location(from = previous, to = previous)
+  def location(from: previous, to: previous)
     start_offset = from.location.offset[:start]
     end_offset = to.location.offset[:end]
     Lox::Location.new(src_map: @src_map, start_offset:, end_offset:)
@@ -383,7 +386,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::EQUAL_EQUAL, Lox::TokenType::BANG_EQUAL)
       op = previous
       right = comparison
-      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr), )
+      expr = Lox::Ast::BinaryExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -391,7 +394,7 @@ class Lox::Parser
 end
 ```
 
-匹配完中间的 Token 后，就知道要处理什么表达式，然后再次调用 `comparison` 解析右边的操作数，最后通过 `Binary` 生成一个新的语法树节点，然后继续循环。每次迭代都将结果表达式存储在同一个 `expr` 中，这样就会连续创建一个由二元操作符节点组成的左结合嵌套树。
+匹配完中间的 Token 后，就知道要处理什么表达式，然后再次调用 `comparison` 解析右边的操作数，最后通过 `BinaryExpr` 生成一个新的语法树节点，然后继续循环。每次迭代都将结果表达式存储在同一个 `expr` 中，这样就会连续创建一个由二元操作符节点组成的左结合嵌套树。
 
 然后 `comparison`、`term` 和 `factor` 都是类似的：
 
@@ -403,10 +406,11 @@ class Lox::Parser
   def comparison
     expr = term
 
-    while match_next?(Lox::TokenType::GREATER, Lox::TokenType::GREATER_EQUAL, Lox::TokenType::LESS, Lox::TokenType::LESS_EQUAL)
+    while match_next?(Lox::TokenType::GREATER, Lox::TokenType::GREATER_EQUAL,
+                      Lox::TokenType::LESS, Lox::TokenType::LESS_EQUAL)
       op = previous
       right = term
-      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::BinaryExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -419,7 +423,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::PLUS, Lox::TokenType::MINUS)
       op = previous
       right = factor
-      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::BinaryExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -432,7 +436,7 @@ class Lox::Parser
     while match_next?(Lox::TokenType::STAR, Lox::TokenType::SLASH, Lox::TokenType::PERCENT)
       op = previous
       right = unary
-      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::BinaryExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -451,7 +455,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::BANG, Lox::TokenType::PLUS, Lox::TokenType::MINUS)
       op = previous
       right = unary
-      Lox::Ast::Unary.new(op:, right:, location: location(op))
+      Lox::Ast::UnaryExpr.new(op:, right:, location: location(from: op))
     else
       power
     end
@@ -459,7 +463,7 @@ class Lox::Parser
 end
 ```
 
-需要先检查 Token 以确认要如何解析。若是 `!` 或 `-`，则一定是一个一元表达式，接着就可以递归调用 `unary` 来解析操作数，并将所有这些都包装到一元表达式语法树中。
+需要先检查 Token 以确认要如何解析。若是 `!`、`+` 或 `-`，则一定是一个一元表达式，接着就可以递归调用 `unary` 来解析操作数，并将所有这些都包装到 `UnaryExpr` 节点中。
 
 然后是 `power`：
 
@@ -474,7 +478,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::CARET)
       op = previous
       right = power
-      expr = Lox::Ast::Binary.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::BinaryExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -490,27 +494,29 @@ end
 class Lox::Parser
   private
 
-  # primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil"
+  # primary -> "(" expression ")"
+  #            | NUMBER
+  #            | STRING
+  #            | "true"
+  #            | "false"
+  #            | "nil"
   def primary
     from = peek
     if match_next?(Lox::TokenType::LEFT_PAREN)
       expr = expression
-      advance if peek.type == Lox::TokenType::COMMA
-      consume(Lox::TokenType::RIGHT_PAREN, "expect `)` after expression", from)
-      Lox::Ast::Group.new(expr:, location: location(from))
+      consume(Lox::TokenType::RIGHT_PAREN, 'expect `)` after expression', from:)
+      Lox::Ast::GroupExpr.new(expr:, location: location(from:))
     elsif match_next?(Lox::TokenType::NUMBER, Lox::TokenType::STRING)
-      Lox::Ast::Literal.new(value: previous.literal, location:)
-    elsif match_next?(Lox::Keyword.key("true"), Lox::Keyword.key("false"), Lox::Keyword.key("nil"))
-      value_map = { "true" => true, "false" => false, "nil" => nil }
-      Lox::Ast::Literal.new(value: value_map[previous.lexeme], location:)
-    else
-      add_error("expect expression", from, peek, Lox::Error::NotExpressionError)
+      Lox::Ast::LiteralExpr.new(value: previous.literal, location:)
+    elsif match_next?(Lox::Keyword::TRUE, Lox::Keyword::FALSE, Lox::Keyword::NIL)
+      value_map = { 'true' => true, 'false' => false, 'nil' => nil }
+      Lox::Ast::LiteralExpr.new(value: value_map[previous.lexeme], location:)
     end
   end
 end
 ```
 
-该产生式大部分是终止符，可以直接解析成字面量，对于嵌套的 `expression`，则利用同样的方式解析，同时对于带有括号的表达式，支持尾随逗号，并添加了错误处理。
+该产生式大部分是终止符，可以直接解析成字面量，对于嵌套的 `expression`，则利用同样的方式解析。
 
 ## 6.3 语法错误
 
@@ -532,13 +538,13 @@ end
 
 ### 6.3.1 恐慌模式错误恢复
 
-恐慌模式是一种成熟的恢复技术。一旦解析器遇到一个错误，就进入恐慌模式。此时至少有一个 Token 是没有意义的，且当前解析器处于一些生成式的堆栈中间。
+**恐慌模式**（Panic mode）是一种成熟的恢复技术。一旦解析器遇到一个错误，就进入恐慌模式。此时至少有一个 Token 是没有意义的，且当前解析器处于一些生成式的堆栈中间。
 
-要继续进行解析，需要将状态和要读取的 Token 对齐，使下一个 Token 能够匹配正确的产生式，该过程称为**同步**。
+要继续进行解析，需要将状态和要读取的 Token 对齐，使下一个 Token 能够匹配正确的产生式，该过程称为**同步**（Synchronization）。
 
-要进行同步，需要选择一些生成式来当作同步点，解析器会跳出所有嵌套的生成式直到退回到同步点以修复解析状态，然后不断丢弃标记直到第一个可以匹配同步点的 Token。
+要进行同步，需要选择一些生成式来当作同步点，解析器会跳出所有嵌套的生成式直到退回到同步点以修复解析状态，并不断丢弃标记直到第一个可以匹配同步点的 Token。
 
-这些被丢弃的 Token 所对应的语法错误都不会被报告，但由初始错误引起的级联错误也不会被报告，这是一种比较好的平衡。
+这些被丢弃的 Token 所对应的语法错误都不会被报告，但由初始错误引起的级联错误也不会被报告，这是一种较好的平衡。
 
 ### 6.3.2 进入恐慌模式
 
@@ -546,7 +552,7 @@ end
 
 ```ruby
 class Lox::Error::ParserError < Lox::Error; end
-class Lox::Error::NotExpressionError < Lox::Error::ParserError; end
+class Lox::Error::NotExprError < Lox::Error::ParserError; end
 ```
 
 在 `condition` 和 `primary` 中，有一行调用 `consume` 来检查需要的 Token 是否匹配，否则抛出错误，实现如下：
@@ -555,21 +561,17 @@ class Lox::Error::NotExpressionError < Lox::Error::ParserError; end
 class Lox::Parser
   private
 
-  def check?(type)
-    !at_end? && peek.type == type
+  def error_context(from:, to:)
+    Lox::Context.new(src_map: @src_map, location: location(from:, to:))
   end
 
-  def consume(type, message, from = previous, to = previous, error_type = Lox::Error::ParserError)
-    check?(type) ? advance : add_error(message, from, to, error_type)
-  end
-
-  def error_context(from, to)
-    Lox::Context.new(@src_map, location(from, to))
-  end
-
-  def add_error(message, from = previous, to = previous, error_type = Lox::Error::ParserError)
-    @error_collector.add(error_type.new(message, error_context(from, to)))
+  def add_error(message = 'unknown parsing error', error_type: Lox::Error::ParserError, from: previous, to: previous)
+    @error_collector.add(error_type.new(message, error_context(from:, to:)))
     raise error_type
+  end
+
+  def consume(token_type, message = 'unknown parsing error', error_type: Lox::Error::ParserError, from: previous, to: previous)
+    check?(token_type) ? advance : add_error(message, error_type:, from:, to:)
   end
 end
 ```
@@ -580,7 +582,7 @@ end
 
 在递归下降时，解析器当前处于某个产生式的状态是没有被保存在字段中的，但可以使用 Ruby 本身的调用栈来跟踪解析器当前状态。每条正在被解析的规则都是栈上的一个调用帧。要重置状态，可以清除这些调用帧。
 
-最自然的方式就是通过异常来进行清理，因此在 `add_error` 中抛出 `ParserError`，然后在解析器最顶层处理，这样就可以在语句边界上同步。
+最自然的方式就是通过异常来进行清理，因此在 `add_error` 中抛出指定的错误类型，然后在解析器最顶层处理，这样就可以在语句边界上同步。
 
 进行同步需要丢弃标记，直至达到下一条语句的开头。这个边界很容易判断，如在 `;` 后就视为语句结束，以及大多数语句都以 `if`、 `while`、 `return`、 `class` 等关键字开头。当下一个标记是其中之一时，表示一条新语句的开始，只需要丢弃新语句之前的标记就可以完成同步。
 
@@ -592,9 +594,12 @@ class Lox::Parser
     until at_end?
       case peek.type
       when Lox::TokenType::SEMICOLON, Lox::TokenType::LEFT_BRACE,
-        Lox::Keyword.key("var"), Lox::Keyword.key("if"), Lox::Keyword.key("while"),
-        Lox::Keyword.key("for"), Lox::Keyword.key("fun"), Lox::Keyword.key("return"),
-        Lox::Keyword.key("class"), Lox::BuiltIn.key("print"), Lox::BuiltIn.key("read")
+        Lox::Keyword::VAR,
+        Lox::Keyword::IF,
+        Lox::Keyword::WHILE, Lox::Keyword::FOR,
+        Lox::Keyword::BREAK, Lox::Keyword::NEXT,
+        Lox::Keyword::FN, Lox::Keyword::RETURN,
+        Lox::Keyword::CLASS
         return
       else
         advance
@@ -619,7 +624,7 @@ class Lox::Parser
     if match_next?(Lox::TokenType::LEFT_PAREN)
     # ...
     else
-      add_error("expect expression", from, peek, Lox::Error::NotExpressionError)
+      add_error('expect expression', error_type: Lox::Error::NotExprError, from:, to: peek)
     end
   end
 end
@@ -631,13 +636,8 @@ end
 class Lox::Parser
   def parse
     ast = expression
-    add_error("expect `(` before expression", ast) if match_next?(Lox::TokenType::RIGHT_PAREN)
-
-    unless at_end?
-      add_error("unexpected token")
-      return
-    end
-
+    add_error('expect `(` before expression', from: expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
+    add_error('expect EOF at the end of program', from: peek, to: peek) unless at_end?
     ast
   rescue Lox::Error::ParserError
     sync
