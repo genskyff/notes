@@ -327,11 +327,7 @@ class Lox::Entry
 
     return unless repl
 
-    if result.is_a?(Lox::Callable)
-      puts "#{'=>'.blue} #{result}"
-    else
-      puts "#{'=>'.blue} #{result.inspect}"
-    end
+    puts "#{'=>'.blue} #{result.inspect}"
   end
 end
 ```

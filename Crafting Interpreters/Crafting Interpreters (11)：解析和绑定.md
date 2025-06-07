@@ -5,7 +5,7 @@
 Lox 对变量和代码块的作用域的控制符合预期，但当添加闭包后，就出现了问题。考虑下面的代码：
 
 ```
-fun f() {
+fn f() {
   print a;
 }
 
@@ -35,7 +35,7 @@ f();
 ```
 var a = "global";
 {
-  fun showA() {
+  fn showA() {
     print a;
   }
 
@@ -114,8 +114,12 @@ var a = "global";
 
 ## 11.3 Resolver 类
 
-变量解析这实际上是一个访问者类，因此分别对 `Expr` 和 `Stmt` 创建 `Resolver` 类：
+变量解析这实际上是一个访问者类，添加 `Resolver` 类：
 
 ```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  def initialize(interp)
+    @interp = interp
+  end
+end
 ```
-
