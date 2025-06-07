@@ -74,7 +74,7 @@ class Lox::Parser
 end
 ```
 
-首先解析成基本表达式，若下一个 Token 不是以 `(`，则返回基本表达式的结果，否则就认为是一个函数调用。
+首先解析成基本表达式，若下一个 Token 不是 `(`，则返回基本表达式的结果，否则就认为是一个函数调用。
 
 ### 10.1.1 最大参数数量
 
@@ -176,7 +176,7 @@ class Lox::Visitor::Interpreter < Lox::Visitor::Base
 end
 ```
 
-在 `visit_call_ex[r]` 中统一做检查而不是在实现 `call` 时做检查可以避免验证逻辑分散在多个类中。
+在 `visit_call_expr` 中统一做检查而不是在实现 `call` 时做检查可以避免验证逻辑分散在多个类中。
 
 ## 10.2 原生函数
 
@@ -330,22 +330,22 @@ end
 
 ```ruby
 class Lox::UserFunction < Lox::Callable
-  def initialize(decl)
-    super(decl.params.size)
-    @decl = decl
+  def initialize(fn_decl)
+    super(fn_decl.params.size)
+    @fn_decl = fn_decl
   end
 
   def call(interp, args)
     env = Lox::Env.new
-    @decl.params.each_with_index do |param, i|
+    @fn_decl.params.each_with_index do |param, i|
       env.define(param.lexeme, args[i])
     end
 
-    interp.execute_block(@decl.body, env)
+    interp.execute_block(@fn_decl.body, env)
   end
 
   def to_s
-    "<function #{@decl.ident.lexeme}>"
+    "<function #{@fn_decl.ident.lexeme}>"
   end
 end
 ```
@@ -578,9 +578,9 @@ counter(); // "2"
 
 ```ruby
 class Lox::UserFunction < Lox::Callable
-  def initialize(decl, closure)
-    super(decl.params.size)
-    @decl = decl
+  def initialize(fn_decl, closure)
+    super(fn_decl.params.size)
+    @fn_decl = fn_decl
     @closure = closure
   end
 end
@@ -698,22 +698,36 @@ end
 class Lox::UserFunction < Lox::Callable
   def call(interp, args)
     # ...
-    if @decl.body.is_a?(Lox::Ast::Expr)
-      interp.evaluate_expr(@decl.body, env)
+    if @fn_decl.body.is_a?(Lox::Ast::Expr)
+      interp.evaluate_expr(@fn_decl.body, env)
     else
-      interp.execute_block(@decl.body, env)
+      interp.execute_block(@fn_decl.body, env)
     end
   rescue Lox::Error::ReturnError => e
     e.value
   end
 
   def to_s
-    @decl.respond_to?(:ident) ? "<function #{@decl.ident.lexeme}>" : '<lambda function>'
+    @fn_decl.respond_to?(:ident) ? "<function #{@fn_decl.ident.lexeme}>" : '<lambda function>'
   end
 end
 ```
 
-最后添加对 Lambda 表达式的访问者：
+这里调用了 `evaluate_expr` 来执行表达式，因此在 Interpreter 中添加：
+
+```ruby
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def evaluate_expr(expr, expr_env)
+    pre_env = @env
+    @env = expr_env
+    evaluate(expr)
+  ensure
+    @env = pre_env
+  end
+end
+```
+
+最后添加 Lambda 表达式的访问者：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -722,3 +736,4 @@ class Lox::Visitor::Interpreter < Lox::Visitor::Base
   end
 end
 ```
+
