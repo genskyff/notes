@@ -6,24 +6,23 @@
 
 ## 8.1 语句
 
-首先扩展 Lox 的语法以支持语句，有三种语句：
+首先扩展 Lox 的语法以支持语句，有两种语句：
 
--   **空语句**：一个空的 `;` 构成一个空语句，即什么也不做，可以在程序中用来占位，以及在语法树上构成一个空节点，方便处理一些某些操作。
--   **表达式语句**：将表达式放在需要语句的位置，并在后面加上一个 `;`，这主要是为了计算含有副作用表达式。
 -   `print` **语句**：计算一个表达式，并将结果展示给用户。通常应该在标准库中完成而不是在语言中内置，但需要在开发早期就能看到结果，因此暂时内置在语言中。
+-   **表达式语句**：将表达式放在需要语句的位置，并在后面加上一个 `;`，这主要是为了计算含有副作用表达式。
 
 Lox 是一个动态的、命令式的语言，因此程序由一组语句构成，并可选的在最后有一个表达式。
 
 添加语句的生成式：
 
 ```
-prog   -> stmt* expr? EOF;
-stmt -> ";" | exprStmt | printStmt;
-exprStmt  -> expr ";";
-printStmt -> "print" expr ";";
+prog -> stmt* expr? EOF;
+stmt -> print_stmt | expr_stmt;
+print_stmt -> "print" expr ";";
+expr_stmt  -> expr ";";
 ```
 
-现在程序顶层由 `prog` 开始，一个程序由 0 条或多条语句，结尾可以有一个表达式组成，并含有一个 `EOF` 结束标记。强制性的添加结束标记可以确保解析器能够消费所有输入内容，而不会忽略结尾处的错误、未消耗的标记。
+现在程序顶层由 `prog` 开始，一个程序由 0 条或多条语句，在结尾可选地有一个表达式，并含有一个 `EOF` 结束标记组成。强制性的添加结束标记可以确保解析器能够消费所有输入内容，而不会忽略结尾处的错误、未消耗的标记。
 
 ### 8.1.1 Statement 语法树
 
@@ -32,11 +31,10 @@ Lox 语法中并没有地方既允许表达式也允许语句，因此两种表�
 在 `bin/gen_ast` 中添加：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
-                        "blankStmt",
-                        "exprStmt  : expr",
-                        "printStmt : expr"
-                      ]).make
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
+                        'printStmt  : value',
+                        'exprStmt   : expr'
+                      ]).generate
 ```
 
 ### 8.1.2 解析语句
@@ -55,6 +53,12 @@ class Lox::Parser
 end
 ```
 
+添加错误类：
+
+```ruby
+class Lox::Error::NotStmtError < Lox::Error::ParserError; end
+```
+
 添加用于解析语句的方法，首先是 `program`：
 
 ```ruby
@@ -63,28 +67,33 @@ class Lox::Parser
 
   # program -> statement* expression? EOF
   def program
+    from = peek
     stmts = []
     until at_end?
       begin
         save_current = @current
         stmt = statement
-        stmts << stmt unless stmt.nil?
-      rescue Lox::Error::NotStatementError
+        if stmt.is_a?(Array)
+          stmts.concat(stmt)
+        else
+          stmts << stmt
+        end
+      rescue Lox::Error::NotStmtError
         @current = save_current
         @error_collector.pop
         break
       end
     end
-
+    stmts.compact!
     expr = expression unless at_end?
-    add_error("expect EOF", peek, peek, Lox::Error::ParserError) unless at_end?
+    add_error('expect EOF at the end of program', from: peek, to: peek) unless at_end?
 
-    { stmts:, expr: }
+    Lox::Ast::Prog.new(stmts:, expr:, location: location(from:))
   end
 end
 ```
 
-因为程序最后可能含有一个表达式，因此先不断解析语句，若遇到 `NotStatementError`，就认为语句解析结束，剩下的是表达式，但由于已经添加了错误，因此从 `@error_collector` 删除最后一个错误。这里实际上是相当于进行了**预读**，用于确定剩下的是否为语句，因此结束后需要将 `@current` 复原，然后进行表达式的解析，表达式应该是程序最后一条，因此如果表达式解析完成后还没有遇到 `EOF` 则报错。这里最后返回的是一个对象，包含了语句的 AST 和表达式 AST，两者皆有可能为空。
+因为程序最后可能含有一个表达式，因此先不断解析语句，若遇到 `NotStmtError`，就认为语句解析结束，剩下的是表达式，但由于已经添加了错误，因此从 `@error_collector` 删除最后一个错误。这里实际上是相当于进行了**预读**，用于确定剩下的是否为语句，因此结束后需要将 `@current` 复原，然后进行表达式的解析，表达式应该是程序最后一条，因此如果表达式解析完成后还没有遇到 `EOF` 则报错。
 
 然后是具体语句的解析方法：
 
@@ -92,114 +101,62 @@ end
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt
+  # statement -> ";" | print_stmt | expr_stmt
   def statement
-    if match_next?(Lox::TokenType::SEMICOLON)
-      Lox::Ast::BlankStmt.new(location:)
-    elsif match_next?(Lox::BuiltIn.key("print"))
+   if match_next?(Lox::TokenType::SEMICOLON)
+      nil
+    elsif match_next?(Lox::Keyword::PRINT)
       print_stmt
     else
       expr_stmt
     end
   end
 
-  # exprStmt -> expression ";"
+  # print_stmt -> "print" expression ";"
+  def print_stmt
+    from = previous
+    value = expression
+    add_error('expect `(` before expression', from: value) if match_next?(Lox::TokenType::RIGHT_PAREN)
+    consume(Lox::TokenType::SEMICOLON, 'print statement must end with `;`', from:)
+    Lox::Ast::PrintStmt.new(value:, location: location(from:))
+  end
+
+  # expr_stmt -> expression ";"
   def expr_stmt
     from = previous
     expr = expression
-    add_error("expect `(` before expression", expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
-    consume(Lox::TokenType::SEMICOLON, "expression statement must end with `;`", from, previous, Lox::Error::NotStatementError)
-    Lox::Ast::ExprStmt.new(expr:, location: location(from))
-  end
-
-  # printStmt -> "print" expression ";"
-  def print_stmt
-    from = previous
-    expr = expression
-    add_error("expect `(` before expression", expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
-    consume(Lox::TokenType::SEMICOLON, "print statement must end with `;`", from)
-    Lox::Ast::PrintStmt.new(expr:, location: location(from))
+    add_error('expect `(` before expression', from: expr) if match_next?(Lox::TokenType::RIGHT_PAREN)
+    consume(Lox::TokenType::SEMICOLON, 'expression statement must end with `;`', error_type: Lox::Error::NotStmtError, from:)
+    Lox::Ast::ExprStmt.new(expr:, location: location(from:))
   end
 end
 ```
 
 ### 8.1.3 执行语句
 
-和利用访问者模式对表达式进行执行，语句也是类似的，添加用于执行语句的 `StmtInterpreter` 类：
+和利用访问者模式对表达式进行执行，语句也是类似的，实现语句相关地访问者方法：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
-  def initialize(src_map)
-    @src_map = src_map
-    @expr_interpreter = Lox::Visitor::ExprInterpreter.new(src_map)
-  end
-
-  def visit_blank_stmt(_blank_stmt)
-    nil
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_print_stmt(print_stmt)
+    value = evaluate(print_stmt.value)
+    puts value
   end
 
   def visit_expr_stmt(expr_stmt)
-    evaluate_expr(expr_stmt.expr)
-    nil
-  end
-
-  def visit_print_stmt(print_stmt)
-    puts evaluate_expr(print_stmt.expr)
+    execute(expr_stmt.expr)
   end
 
   private
 
-  def evaluate_expr(ast_node)
-    ast_node.accept(@expr_interpreter)
-  end
-end
-```
-
-由于语句包含了表达式，且需要对表达式进行计算，因此这里还需要利用 `ExprInterpreter` 类。和表达式不同，语句不会产生值，或者说语句隐式的返回一个空值。
-
-然后修改 `Interpreter` 类的执行入口：
-
-```ruby
-class Lox::Interpreter
-  def interpret
-    if @ast.is_a?(Lox::Ast::Expr)
-      @ast.accept(Lox::Visitor::ExprInterpreter.new(@src_map))
-    else
-      @ast&.each do |stmt|
-        stmt.accept(Lox::Visitor::StmtInterpreter.new(@src_map))
-      end
-      nil
-    end
-  rescue Lox::Error::InterpreterError => e
-    @error_collector.add(e)
+  def execute(ast_node)
+    evaluate(ast_node)
     nil
   end
 end
 ```
 
-表达式和语句调用的访问者是不同的，因此在开始需要进行判断。
-
-然后修改 `Entry` 中的 `run` 方法：
-
-```ruby
-class Lox::Entry
-  private
-
-  def run(repl: false)
-    tokens = Lox::Scanner.new(src_map: @src_map, error_collector: @error_collector).scan
-    raise Lox::Error::ScannerError if @error_collector.error?
-
-    ast = Lox::Parser.new(src_map: @src_map, error_collector: @error_collector, tokens:).parse
-    raise Lox::Error::ParserError if @error_collector.error?
-
-    Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:stmts]).interpret if ast[:stmts].any?
-    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:expr]).interpret
-    raise Lox::Error::InterpreterError if @error_collector.error?
-
-    puts "#{"=>".blue} #{result.inspect}" if repl
-  end
-end
-```
+这里实现了一个 `execute` 方法，用于执行语句。和 `evaluate` 唯一区别为语句总是返回 `nil`。
 
 ## 8.2 全局变量
 
@@ -217,54 +174,67 @@ var s = "hello";
 
 变量声明是一种语句，但不同于其它语句，需要特殊处理 `stmt` 语法，因为语法需要限制某个位置上哪种类型的语句是被允许的。
 
-控制流语句中的子句，如 `if` 语句体中的 `else` 分支语句是允许的，但声明语句不行，除非放在一个块中：
+在 C 中，控制流语句中的子句，若只有一行，则可以省略大括号，但该语句就不能为声明语句，除非放在一个块中：
 
-```
-if (cond) print "hello"; // ok
-if (cond) var s = "hello"; // err
-if (cond) { var s = "hello" } // ok
+```c
+if (cond) printf("hello"); // ok
+if (cond) char *s = "hello"; // error
+if (cond) { char *s = "hello" } // ok
 ```
 
 或许也可以允许后者，但是这会导致 `s` 的作用域不清晰。语句好像有两种优先级，有些允许语句的地方，如程序顶层或块中，可以允许任何语句，其它地方只允许非声明语句和优先级更高的语句。
 
-为了处理这种情况，修改语句的生成式：
+为了处理这种情况，Lox 对于控制语句的语句体，只允许块语句的形式，而不允许单行。并对语句进行分类，分成声明语句和执行语句。声明语句如变量声明和函数声明，执行语句如块语句和表达式语句。
+
+修改语句的生成式：
 
 ```
-prog -> decl* expr? EOF;
-decl -> varDecl | stmt;
+stmt -> decl_stmt | exec_stmt;
+decl_stmt -> var_decl;
+exec_stmt -> print_stmt
+             | expr_stmt;
 ```
 
-声明语句属于新的 `decl` 规则，目前有变量声明，后续还会添加函数和类。同时任何允许声明的地方也都允许非声明式的语句，因此规则会下降到 `stmt`。
+声明语句属于新的 `decl_stmt` 规则，目前有变量声明，后续还会添加函数和类。
 
-然后对 `varDecl` 进行定义：
+对 `var_decl` 进行定义：
 
 ```
-varDecl -> "var" singleVar (", singleVar)* ";";
-singleVar -> IDENTIFIER ("=" expr)?;
+var_decl -> "var" var_defs ";";
+var_defs -> var_def ("," var_def)*;
+var_def -> IDENT ("=" expr)?;
 ```
 
 变量声明以 `var` 关键字开头，然后是一个标识符作为名称，可选的有一个初始化表达式，这部分可以有多个，最后以 `;` 结尾。
 
+块以 `{` 开头，中间可以有若干个语句，并以 `}` 结尾。
+
 为了访问变量，需要对表达式中的 `primary` 生成式进行修改：
 
 ```
-primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER;
+primary -> "(" expression ")"
+           | NUMBER
+           | STRING
+           | "true"
+           | "false"
+           | "nil"
+           | IDENT;
 ```
 
-`IDENTIFIER` 会匹配标识符标记，被看作要访问变量的名称。
+`IDENT` 会匹配标识符标记，被看作要访问变量的名称。
 
 这些新的语法规则需要重新生成 AST 节点，更新 `bin/gen_ast`：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
+                        'varDecl    : ident, init',
                         # ...
-                        "var     : ident"
-                      ]).make
+                      ]).generate
 
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
                         # ...
-                        "varStmt   : ident, expr"
-                      ]).make
+                        'varExpr      : ident'
+                      ]).generate
 ```
 
 ### 8.2.2 解析变量
@@ -273,81 +243,83 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 
 ```ruby
 class Lox::Parser
-    private
+  private
 
-  # program -> declaration* expression? EOF
-  def program
-    stmts = []
-    until at_end?
-      begin
-        save_current = @current
-        stmt = declaration
-        if stmt.is_a?(Array)
-          stmts.concat(stmt)
-        else
-          stmts << stmt
-        end
-      rescue Lox::Error::NotStatementError
-        # ...
-      end
+  def identifier
+    ident = advance
+    if Lox::TokenType.keyword?(previous.type)
+      add_error('expected an identifier, found a keyword')
+    elsif previous.type != Lox::TokenType::IDENT
+      add_error('expect an identifier')
     end
-    # ...
+    ident
   end
 
-  # declaration -> var_decl | statement
-  def declaration
-    if match_next?(Lox::Keyword.key("var"))
-      var_decl
+  # statement -> declaration | execution
+  def statement
+    if check?(Lox::Keyword::VAR, Lox::Keyword::FN)
+      declaration
     else
-      statement
+      execution
     end
   end
 
-  # var_decl -> "var" single_var (", single_var)* ";"
+  # declaration -> var_decl
+  def declaration
+    if match_next?(Lox::Keyword::VAR)
+      var_decl
+    end
+  end
+
+  # var_decl -> "var" var_defs ";"
   def var_decl
     from = previous
-    vars = []
-    vars << single_var
-    vars << single_var while match_next?(Lox::TokenType::COMMA)
-    consume(Lox::TokenType::SEMICOLON, "expect `;` after variable declaration", from)
+    vars = var_defs
+    consume(Lox::TokenType::SEMICOLON, 'expect `;` after variable declaration', from:)
     vars
   end
 
-  # single_var -> IDENTIFIER ("=" expression)?
-  def single_var
-    from = previous
-    advance
-    if Lox::Keyword.key?(previous.type) || Lox::BuiltIn.key?(previous.type)
-      add_error("expected identifier, found keyword or built-in", previous, previous)
-    elsif previous.type != Lox::TokenType::IDENTIFIER
-      add_error("expect identifier", previous, previous)
-    end
-    ident = previous
-    expr = expression if match_next?(Lox::TokenType::EQUAL)
-    Lox::Ast::VarStmt.new(ident:, expr:, location: location(from))
+  # var_defs -> var_def ("," var_def)*
+  def var_defs
+    vars = [var_def]
+    vars << var_def while match_next?(Lox::TokenType::COMMA)
+    vars
   end
 
-  def block_stmt
-    from = previous
-    stmts = []
-    while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
-      stmt = declaration
-      if stmt.is_a?(Array)
-        stmts.concat(stmt)
-      else
-        stmts << stmt
-      end
-    end
-    # ...
+  # var_def -> IDENT ("=" expression)?
+  def var_def
+    from = peek
+    ident = identifier
+    init = expression if match_next?(Lox::TokenType::EQUAL)
+    Lox::Ast::VarDecl.new(ident:, init:, location: location(from:))
   end
 
-  # primary -> "(" expression ","? ")" | NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER
+  # execution -> ";"
+  #              | print_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
+      nil
+    elsif match_next?(Lox::Keyword::PRINT)
+      print_stmt
+    else
+      expr_stmt
+    end
+  end
+
+  # primary -> "(" expression ")"
+  #            | NUMBER
+  #            | STRING
+  #            | "true"
+  #            | "false"
+  #            | "nil"
+  #            | IDENT
   def primary
     from = peek
     if match_next?(Lox::TokenType::LEFT_PAREN)
       # ...
-    elsif match_next?(Lox::TokenType::IDENTIFIER)
-      Lox::Ast::Var.new(ident: previous, location:)
+    elsif match_next?(Lox::TokenType::IDENT)
+      Lox::Ast::VarExpr.new(ident: previous, location:)
     else
       # ...
     end
@@ -355,7 +327,7 @@ class Lox::Parser
 end
 ```
 
-由于 `var_decl` 返回的是一个数组，因此在 `program` 和 `block_stmt` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
+由于 `var_decl` 返回的是一个数组，因此在 `program` 中根据情况进行语句的追加，否则就会造成语句的嵌套。
 
 ## 8.3 环境
 
@@ -381,10 +353,10 @@ class Lox::Env
     if @vars.key?(name)
       return @vars[name] unless @vars[name] == :uninit
 
-      raise Lox::Error::UninitializedError
+      raise Lox::Error::UninitError
     end
 
-    raise Lox::Error::UndefinedError
+    raise Lox::Error::UndefError
   end
 end
 ```
@@ -394,8 +366,8 @@ end
 添加错误类型：
 
 ```ruby
-class Lox::Error::UndefinedError < Lox::Error::InterpreterError; end
-class Lox::Error::UninitializedError < Lox::Error::InterpreterError; end
+class Lox::Error::UndefError < Lox::Error::InterpError; end
+class Lox::Error::UninitError < Lox::Error::InterpError; end
 ```
 
 可以不允许覆盖已有变量，或在使用不存在的变量时返回一个 `nil`，亦或者在使用未初始化的变量时抛出一个错误，这取决于语言设计时的考量。
@@ -403,18 +375,22 @@ class Lox::Error::UninitializedError < Lox::Error::InterpreterError; end
 当抛出错误时，可以视为语法错误，也可以是运行时错误。若是前者，那么可能不允许使用相互递归的程序：
 
 ```javascript
-fun isOdd(n) {
-  if (n == 0) return false;
+fn is_odd(n) {
+  if (n == 0) {
+      return false;
+  }
   return isEven(n - 1);
 }
 
-fun isEven(n) {
-  if (n == 0) return true;
+fn is_even(n) {
+  if (n == 0) {
+      return true;
+  }
   return isOdd(n - 1);
 }
 ```
 
-当解析 `isOdd` 时， `isEven` 被调用的时候还没有被声明，即使交换顺序也会导致相同的虚无。
+当解析 `isOdd` 时，`isEven` 被调用的时候还没有被声明，即使交换顺序也会导致相同的问题。
 
 因此视为语法错误这类**静态错误**会使递归声明过于困难，因此视为运行时错误，在一个变量被定义之前可以**引用**，但不能**求值**。
 
@@ -426,22 +402,23 @@ fun isEven(n) {
 
 ```ruby
 class Lox::Entry
-  def initialize
+  def initialize(options = {})
+    @options = options
     @error_collector = Lox::ErrorCollector.new
     @env = Lox::Env.new
   end
 
   private
 
-  def run(repl: false)
+  def run(repl: false, ast_only: false)
     # ...
-    Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:stmts], env: @env).interpret if ast[:stmts].any?
-    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast: ast[:expr], env: @env).interpret
+    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:, env: @env).interpret
+    raise Lox::Error::InterpError if @error_collector.error?
     # ...
   end
 ```
 
-更新 `Interpreter`：
+更新 `Lox::Interpreter`：
 
 ```ruby
 class Lox::Interpreter
@@ -451,54 +428,43 @@ class Lox::Interpreter
   end
 
   def interpret
-    if @ast.is_a?(Lox::Ast::Expr)
-      @ast.accept(Lox::Visitor::ExprInterpreter.new(@src_map, @env))
-    else
-      @ast&.each do |stmt|
-        stmt.accept(Lox::Visitor::StmtInterpreter.new(@src_map, @env))
-      end
-      nil
-    end
-  rescue Lox::Error::InterpreterError => e
+    ast.accept(Lox::Visitor::Interpreter.new(src_map: @src_map, env: @env))
+  rescue Lox::Error::InterpError => e
     # ...
   end
 end
 ```
 
-在 `StmtInterpreter` 中添加对 `var_stmt` 的访问者，同时需要接受环境：
+在 `Interpreter` 中添加对 `var_decl` 的访问者，同时需要接受环境：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
-  def initialize(src_map, env)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  attr_accessor :env
+
+  def initialize(src_map:, env:)
     @src_map = src_map
     @env = env
-    @expr_interpreter = Lox::Visitor::ExprInterpreter.new(src_map, @env)
   end
 
-  def visit_var_stmt(var_stmt)
-    name = var_stmt.ident.lexeme
-    value = var_stmt.expr ? evaluate_expr(var_stmt.expr) : :uninit
+  def visit_var_decl(var_decl)
+    name = var_decl.ident.lexeme
+    value = var_decl.init ? evaluate(var_decl.init) : :uninit
     @env.define(name, value)
     nil
   end
 end
 ```
 
-同样地，在 `ExprInterpreter` 中添加 `var` 的访问者：
+同样地，在 `Interpreter` 中添加 `var_expr` 的访问者：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def initialize(src_map, env)
-    @src_map = src_map
-    @env = env
-  end
-
-  def visit_var(var)
-    @env.value(var)
-  rescue Lox::Error::UndefinedError
-    error("undefined variable `#{var.ident.lexeme}`", var)
-  rescue Lox::Error::UninitializedError
-    error("variable `#{var.ident.lexeme}` is not initialized", var)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_var_expr(var_expr)
+    @env.value(var_expr)
+  rescue Lox::Error::UndefError
+    error("undefined variable `#{var_expr.ident.lexeme}`", var_expr)
+  rescue Lox::Error::UninitError
+    error("variable `#{var_expr.ident.lexeme}` is not initialized", var_expr)
   end
 end
 ```
@@ -513,16 +479,16 @@ end
 
 ```
 expression -> assign;
-assign -> IDENTIFIER "=" assign | condition;
+assign -> IDENT "=" assign
+          | condition
 ```
 
 更新 `bin/gen_ast`，添加 `Assign` 节点：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
-                        # ...
-                        "assign  : ident, expr"
-                      ]).make
+Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
+                        'assignExpr   : ident, value'
+                      ]).generate
 ```
 
 更新 `Parser#expression`：
@@ -558,43 +524,43 @@ Lox 的解析器只会前瞻一个标记，因此使用一种小技巧来解决�
 class Lox::Parser
   private
 
-  # assign -> IDENTIFIER "=" assign | condition
+  # assign -> IDENT ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=") assign
+  #           | condition
   def assign
     expr = condition
 
-    if match_next?(Lox::TokenType::EQUAL)
-      right = assign
+    if match_next?(Lox::TokenType::EQUAL) # =
+      value = assign
 
-      if expr.is_a?(Lox::Ast::Var)
+      if expr.is_a?(Lox::Ast::VarExpr)
         ident = expr.ident
-        expr = Lox::Ast::Assign.new(ident:, expr: right, location: location(expr))
+        expr = Lox::Ast::AssignExpr.new(ident:, value:, location: location(from: expr))
       else
-        add_error("invalid assignment target", expr, expr)
+        add_error('invalid assignment target', from: expr, to: expr)
       end
     end
 
     expr
   end
-
 end
 ```
 
-既然不确定是否是一个赋值运算，就先当成表达式来解析，因此先解析 `condition`（`IDENTIFIER` 的解析也包含在其中），然后看后面是否是一个 `=`。如果是， 则前面 `condition` 解析得到的结果就应该是一个 `Var` 节点，那么就继续解析右边的表达式即可，否则报错。
+既然不确定是否是一个赋值运算，就先当成表达式来解析，因此先解析 `condition`（`IDENT` 的解析也包含在其中），然后看后面是否是一个 `=`。如果是， 则前面 `condition` 解析得到的结果就应该是一个 `Var` 节点，那么就继续解析右边的表达式即可，否则报错。
 
-目前只有简单变量是有效的赋值目标，后续会添加属性字段。
+目前只有变量是有效的左值，其它语言中的对象字段访问、数组的索引访问等都是有效的左值。
 
 ### 8.4.2 赋值语义
 
-现在有了一个新的 `Assign` 节点，同样添加一个访问者方法，更新 `ExprInterpreter`：
+现在有了一个新的 `Assign` 节点，同样添加一个访问者方法，更新 `Interpreter`：
 
 ```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  def visit_assign(assign)
-    value = evaluate(assign.expr)
-    @env.assign(assign.ident, value)
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_assign_expr(assign_expr)
+    value = evaluate(assign_expr.value)
+    @env.assign(assign_expr.ident, value)
     value
-  rescue Lox::Error::UndefinedError
-    error("undefined variable `#{assign.ident.lexeme}`", assign.ident)
+  rescue Lox::Error::UndefError
+    error("undefined variable `#{assign_expr.ident.lexeme}`", assign_expr.ident)
   end
 end
 ```
@@ -605,9 +571,10 @@ end
 class Lox::Env
   def assign(ident, value)
     name = ident.lexeme
-    raise Lox::Error::UndefinedError unless @vars.key?(name)
 
-    @vars[name] = value
+    return @vars[name] = value if @vars.key?(name)
+
+    raise Lox::Error::UndefError
   end
 end
 ```
@@ -638,47 +605,14 @@ a %= b
 a ^= b
 ```
 
-这不会增加语法树节点，而是利用现有的功能实现。
+这可以不增加新的语法树节点，而是利用赋值和二元运算的组合来实现，也可以增加的一个新的节点来实现。为了实现简单，这里通过新增节点实现：
 
-更新 `TokenType`：
-
-```ruby
-class Lox::TokenType
-  define :PLUS_EQUAL # +=
-  define :MINUS_EQUAL # -=
-  define :STAR_EQUAL # *=
-  define :SLASH_EQUAL # /=
-  define :PERCENT_EQUAL # %=
-  define :CARET_EQUAL # ^=
-end
-```
-
-更新 `Scanner`：
+更新 `bin/gen_ast`，添加 `AssignOp` 节点：
 
 ```ruby
-class Lox::Scanner
-  private
-
-  def tokenize
-    # ...
-    when "+" then add_token(match_next?("=") ? Lox::TokenType::PLUS_EQUAL : Lox::TokenType::PLUS)
-    when "-" then add_token(match_next?("=") ? Lox::TokenType::MINUS_EQUAL : Lox::TokenType::MINUS)
-    when "*" then add_token(match_next?("=") ? Lox::TokenType::STAR_EQUAL : Lox::TokenType::STAR)
-    when "/"
-      if match_next?("/")
-        skip_line_comment
-      elsif match_next?("*")
-        skip_block_comment
-      elsif match_next?("=")
-        add_token(Lox::TokenType::SLASH_EQUAL)
-      else
-        add_token(Lox::TokenType::SLASH)
-      end
-    when "%" then add_token(match_next?("=") ? Lox::TokenType::PERCENT_EQUAL : Lox::TokenType::PERCENT)
-    when "^" then add_token(match_next?("=") ? Lox::TokenType::CARET_EQUAL : Lox::TokenType::CARET)
-    # ...
-  end
-end
+Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
+                        'assignOpExpr : ident, op, value'
+                      ]).generate
 ```
 
 更新 `Parser`：
@@ -687,97 +621,24 @@ end
 class Lox::Parser
   private
 
-  # assign -> IDENTIFIER "=" assign
-  #           | IDENTIFIER "+=" assign
-  #           | IDENTIFIER "-=" assign
-  #           | IDENTIFIER "*=" assign
-  #           | IDENTIFIER "/=" assign
-  #           | IDENTIFIER "%=" assign
-  #           | IDENTIFIER "^=" assign
+  # assign -> IDENT ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=") assign
   #           | condition
   def assign
     expr = condition
 
     if match_next?(Lox::TokenType::EQUAL) # =
-      right = assign
+      # ...
+    elsif match_next?(Lox::TokenType::PLUS_EQUAL, Lox::TokenType::MINUS_EQUAL,
+                      Lox::TokenType::STAR_EQUAL, Lox::TokenType::SLASH_EQUAL,
+                      Lox::TokenType::PERCENT_EQUAL, Lox::TokenType::CARET)
+      op = previous
+      value = assign
 
-      if expr.is_a?(Lox::Ast::Var)
+      if expr.is_a?(Lox::Ast::VarExpr)
         ident = expr.ident
-        expr = Lox::Ast::Assign.new(ident:, expr: right, location: location(expr))
+        expr = Lox::Ast::AssignOpExpr.new(ident:, op:, value:, location: location(from: expr))
       else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::PLUS_EQUAL) # +=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::PLUS)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::MINUS_EQUAL) # -=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::MINUS)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::STAR_EQUAL) # *=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::STAR)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::SLASH_EQUAL) # /=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::SLASH)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::PERCENT_EQUAL) # %=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::PERCENT)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
-      end
-    elsif match_next?(Lox::TokenType::CARET_EQUAL) # ^=
-      right = assign
-
-      if expr.is_a?(Lox::Ast::Var)
-        ident = expr.ident
-        left = Lox::Ast::Var.new(ident:)
-        op = Lox::Token.new(type: Lox::TokenType::CARET)
-        binary = Lox::Ast::Binary.new(left:, op:, right:)
-        expr = Lox::Ast::Assign.new(ident:, expr: binary, location: location(expr))
-      else
-        add_error("invalid assignment target", expr, expr)
+        add_error('invalid assignment target', from: expr, to: expr)
       end
     end
 
@@ -821,14 +682,14 @@ class Bar {
   }
 }
 
-fun f(obj) {
+fn f(obj) {
   obj.run();
 }
 ```
 
 当 `f` 调用 `obj.run` 时，无法静态的知道调用的是 `Foo` 还是 `Bar`，亦或者两者都不是，这取决于实际传递的是什么。
 
-作用域是概念，而环境就是实现它的机制。解释器在执行时，影响作用域的语法树节点会改变环境的上下文。在 Lox 中，环境是由**块**（Block）控制的，称为**块作用域**（Block scope）。
+作用域是概念，而环境则是实现它的机制。解释器在执行时，影响作用域的语法树节点会改变环境的上下文。在 Lox 中，环境是由**块**（Block）控制的，称为**块作用域**（Block scope）。
 
 ```javascript
 {
@@ -839,7 +700,7 @@ print a; // error
 
 ### 8.5.1 嵌套和遮蔽
 
-当访问块中的每个语句时，跟踪所有变量，执行完块中最后一条一句时，删除环境中的所有变量，但要注意，只能删除该块所属的环境，不然其它作用域的环境会被干扰。
+当访问块中的每个语句时，跟踪所有变量，执行完块中最后一条一句时，删除环境中的所有变量，但要注意，只能删除该块所属的环境，否则其它作用域的环境会被干扰。
 
 当局部变量与外部作用域的变量有相同名称时，内部变量会遮蔽外部变量，块内部无法获取外部同名变量的值。
 
@@ -877,17 +738,10 @@ end
 ```ruby
 class Lox::Env
   def value(var)
-    name = var.ident.lexeme
-
-    if @vars.key?(name)
-      return @vars[name] unless @vars[name] == :uninit
-
-      raise Lox::Error::UninitializedError
-    end
-
+    # ...
     return @enclosing&.value(var) if @enclosing
 
-    raise Lox::Error::UndefinedError
+    raise Lox::Error::UndefError
   end
 end
 ```
@@ -897,34 +751,35 @@ end
 ```ruby
 class Lox::Env
   def assign(ident, value)
-    name = ident.lexeme
-
-    return @vars[name] = value if @vars.key?(name)
+    # ...
     return @enclosing&.assign(ident, value) if @enclosing
 
-    raise Lox::Error::UndefinedError
+    raise Lox::Error::UndefError
   end
 end
 ```
 
 ### 8.5.2 块语法和语义
 
-已经完成了环境的嵌套，然后添加块，更新 `stmt` 的产生式：
+已经完成了环境的嵌套，然后添加块，更新 `exec_stmt` 的产生式：
 
 ```
-stmt -> ";" | exprStmt | printStmt | blockStmt;
-blockStmt -> "{" decl* "}";
+exec_stmt -> print_stmt
+             | block_stmt
+             | expr_stmt
+block_stmt -> "{" stmt* "}"
 ```
 
-块是一种语句，由 `{}` 组成，其中可以包含任意语句，包括声明语句。
+块是一种语句，由 `{}` 组成，其中可以包含任意语句。
 
-更新 `bin/gen_ast`，`BlockStmt` 节点包含一个语句数组：
+更新 `bin/gen_ast`：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
                         # ...
-                        "blockStmt : stmts"
-                      ]).make
+                        'blockStmt  : body',
+                        # ...
+                      ]).generate
 ```
 
 更新 `Parser` 添加解析块的部分：
@@ -933,26 +788,46 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt
-  def statement
-    # ...
+  # execution -> ";"
+  #              | print_stmt
+  #              | block_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
+      nil
+    elsif match_next?(Lox::Keyword::PRINT)
+      print_stmt
     elsif match_next?(Lox::TokenType::LEFT_BRACE)
       block_stmt
-    # ...
+    else
+      expr_stmt
+    end
   end
 
-  # block_stmt -> "{" declaration* "}"
+  # block_stmt -> "{" statement* "}"
   def block_stmt
     from = previous
-    stmts = []
-    stmts << declaration while !at_end? && peek.type != Lox::TokenType::RIGHT_BRACE
-    consume(Lox::TokenType::RIGHT_BRACE, "block must be end with `}`", from)
-    Lox::Ast::BlockStmt.new(stmts:, location: location(from))
+    body = []
+    until at_end? || check?(Lox::TokenType::RIGHT_BRACE)
+      begin
+        stmt = statement
+        if stmt.is_a?(Array)
+          body.concat(stmt)
+        else
+          body << stmt
+        end
+      rescue Lox::Error::NotStmtError => e
+        raise Lox::Error::ParserError, e
+      end
+    end
+    body.compact!
+    consume(Lox::TokenType::RIGHT_BRACE, 'block must be end with `}`', from:)
+    Lox::Ast::BlockStmt.new(body:, location: location(from:))
   end
 end
 ```
 
-`block_stmt` 其实与 `program` 是类似的，因为都是解析 `declaration`。
+`block_stmt` 其实与 `program` 是类似的，因为都是解析 `statement`。
 
 修改 `program` 来对块进行错误处理：
 
@@ -964,9 +839,9 @@ class Lox::Parser
     stmts = []
     until at_end?
       begin
-        add_error("block must be start with `{`") if match_next?(Lox::TokenType::RIGHT_BRACE)
+        add_error('block must be start with `{`') if match_next?(Lox::TokenType::RIGHT_BRACE)
         # ...
-      rescue Lox::Error::NotStatementError
+      rescue Lox::Error::NotStmtError
         # ...
       end
     end
@@ -978,13 +853,7 @@ end
 然后添加对块的访问者：
 
 ```ruby
-class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
-  def initialize(src_map, env)
-    @src_map = src_map
-    @env = env
-    @expr_interpreter = Lox::Visitor::ExprInterpreter.new(src_map, @env)
-  end
-
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_block_stmt(block_stmt)
     block_env = Lox::Env.new(@env)
     execute_block(block_stmt, block_env)
@@ -993,32 +862,15 @@ class Lox::Visitor::StmtInterpreter < Lox::Ast::StmtVisitor
   def execute_block(block, block_env)
     pre_env = @env
     @env = block_env
-    @expr_interpreter.env = block_env
-    block.stmts.each { execute_stmt(it) }
+    block.body.each { execute(it) }
     nil
   ensure
     @env = pre_env
-    @expr_interpreter.env = pre_env
-  end
-
-  private
-
-  def execute_stmt(stmt)
-    stmt.accept(self)
-    nil
   end
 end
 ```
 
 每一个块都会创建一个新的环境，并把链接上层环境。每个块都会在给定上下文中执行语句，因此会先将当前环境指定为 `block_env`，并在执行结束后恢复之前的环境，并通过 `ensure` 来确保即使发生了异常也能恢复。
-
-由于在最开始初始化时 `@expr_interpreter` 保存的是当前环境，并不是 `block_env`，因此还需要修改 `@expr_interpreter` 的 `env`，对 `ExprInterpreter` 增加一个访问器即可。
-
-```ruby
-class Lox::Visitor::ExprInterpreter < Lox::Ast::ExprVisitor
-  attr_accessor :env
-end
-```
 
 ## 设计笔记：隐式变量声明
 
@@ -1044,6 +896,6 @@ Lox 使用不同的语法来声明变量和为已有变量赋值，有些语言�
 
 -   JavaScript 的严格模式会将全局隐式声明视为一个错误
 -   Python 添加了 `global` 和 `nonlocal` 语句
--   Ruby 扩展了块语法允许显示声明新变量
+-   Ruby 扩展了块语法允许显式声明新变量
 
 显式还是隐式取决于语言设计和目的，脚本语言可能倾向于简单，静态类型语言可能倾向于尽可能多的发现错误。

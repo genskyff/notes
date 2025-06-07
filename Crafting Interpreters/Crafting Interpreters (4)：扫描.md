@@ -59,7 +59,6 @@ class Lox::Entry
   def initialize(options = {})
     @options = options
     @error_collector = Lox::ErrorCollector.new
-    @env = Lox::Env.new(Lox::Global.new.env)
   end
 
   def run_eval(src)
