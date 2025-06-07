@@ -19,7 +19,7 @@ exec_stmt -> print_stmt
              | block_stmt
              | if_stmt
              | expr_stmt;
-if_stmt -> "if" expr block_stmt ("else" (if_stmt | block_stmt))?
+if_stmt -> "if" expr block_stmt ("else" (if_stmt | block_stmt))?;
 ```
 
 `if` 语句以一个表达式作为条件，然后是条件为真时要执行的块，并可选的 `else` 分支。`if` 语句可以嵌套，这样就可以支持 `else if` 的形式而不用额外添加一个像 `elsif` 这样的关键字。
@@ -47,11 +47,7 @@ class Lox::Parser
   #              | expr_stmt
   def execution
     if match_next?(Lox::TokenType::SEMICOLON)
-      nil
-    elsif match_next?(Lox::Keyword::PRINT)
-      print_stmt
-    elsif match_next?(Lox::TokenType::LEFT_BRACE)
-      block_stmt
+    # ...
     elsif match_next?(Lox::Keyword::IF)
       if_stmt
     else
@@ -114,7 +110,7 @@ if (first) {
 }
 ```
 
-在 `Interpreter` 中添加 `if_stmt` 的访问者：
+在 `Interpreter` 中添加 `if_stmt` 的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -152,10 +148,10 @@ logic_and -> equality ("and" equality)*;
 更新 `bin/gen_ast`，添加逻辑运算的节点：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "expr", productions: [
+Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
                         # ...
-                        "logic   : left, op, right"
-                      ]).make
+                        'logicExpr    : left, op, right'
+                      ]).generate
 ```
 
 然后修改 `Parser`，解析逻辑运算：
@@ -174,23 +170,23 @@ class Lox::Parser
   def logic_or
     expr = logic_and
 
-    while match_next?(Lox::Keyword.key("or"))
+    while match_next?(Lox::Keyword::OR)
       op = previous
       right = logic_and
-      expr = Lox::Ast::Logic.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::LogicExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
   end
 
-  # logic_and -> equality ("and" equality)*;
+  # logic_and -> equality ("and" equality)*
   def logic_and
     expr = equality
 
-    while match_next?(Lox::Keyword.key("and"))
+    while match_next?(Lox::Keyword::AND)
       op = previous
       right = equality
-      expr = Lox::Ast::Logic.new(left: expr, op:, right:, location: location(expr))
+      expr = Lox::Ast::LogicExpr.new(left: expr, op:, right:, location: location(from: expr))
     end
 
     expr
@@ -198,20 +194,20 @@ class Lox::Parser
 end
 ```
 
-在 `Interpreter` 中添加 `logic` 的访问者：
+在 `Interpreter` 中添加 `logic` 的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
-  def visit_logic(logic)
-    left = evaluate(logic.left)
+  def visit_logic_expr(logic_expr)
+    left = evaluate(logic_expr.left)
 
-    if logic.op.type == Lox::Keyword.key("or")
+    if logic_expr.op.type == Lox::Keyword::OR
       return true if left
     else
       return false unless left
     end
 
-    !!evaluate(logic.right)
+    !!evaluate(logic_expr.right)
   end
 end
 ```
@@ -232,16 +228,20 @@ print nil or "yes"; // "yes"
 `while` 循环和 `if` 结构上是类似的，只不过没有 `else` 分支，更新生成式：
 
 ```
-stmt -> ";" | exprStmt | printStmt | blockStmt | ifStmt | whileStmt;
-whileStmt -> "while" "(" expr ")" stmt;
+exec_stmt -> print_stmt
+             | block_stmt
+             | if_stmt
+             | while_stmt
+             | expr_stmt;
+while_stmt -> "while" expr block_stmt;
 ```
 
 更新 `bin/gen_ast` 生成 `while` 的语法节点：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
                         # ...
-                        "whileStmt : expr, body",
+                        'whileStmt  : cond, body'
                       ]).make
 ```
 
@@ -251,32 +251,41 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt
-  def statement
+  # execution -> ";"
+  #              | print_stmt
+  #              | block_stmt
+  #              | if_stmt
+  #              | while_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
     # ...
-    elsif match_next?(Lox::Keyword.key("while"))
+    elsif match_next?(Lox::Keyword::WHILE)
       while_stmt
-    #...
+    else
+      expr_stmt
+    end
   end
 
-  # while_stmt -> "while" "(" expression ")" statement
+  # while_stmt -> "while" expression block_stmt
   def while_stmt
     from = previous
-    consume(Lox::TokenType::LEFT_PAREN, "expect `(` after while-statement")
-    expr = expression
-    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` before while-statement", from)
-    body = statement
-    Lox::Ast::WhileStmt.new(expr:, body:, location: location(from))
+    cond = expression
+    consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before while body')
+    body = block_stmt
+    Lox::Ast::WhileStmt.new(cond:, body:, location: location(from:))
   end
 end
 ```
 
-然后添加对 `while` 的访问者：
+然后添加 `while` 的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_while_stmt(while_stmt)
-    execute_stmt(while_stmt.body) while evaluate_expr(while_stmt.expr)
+    while evaluate(while_stmt.cond)
+      execute(while_stmt.body)
+    end
   end
 end
 ```
@@ -285,21 +294,29 @@ end
 
 ## 9.5 for 循环
 
-最后是 C 风格的 `for` 循环，看起来是这样的：
+最后是 C 风格的 `for` 循环，看起来像这样：
 
 ```javascript
-for (var i = 0; i < 10; i = i + 1)
-    print i;
+for var i = 0, j = i; i + j < 100; i += 1, j += i {
+    print i + j;
+}
 ```
 
 更新语句的生成式：
 
 ```
-stmt -> ";" | exprStmt | printStmt | blockStmt | ifStmt | whileStmt | forStmt;
-forStmt -> "for" "(" (varDecl | exprStmt | ";") expr? ";" expr? ")" stmt;
+exec_stmt -> print_stmt
+             | block_stmt
+             | if_stmt
+             | while_stmt
+             | for_stmt
+             | expr_stmt;
+for_stmt -> "for" for_init? ";" expr? ";" items? block_stmt;
+for_init -> "var" var_defs | expr;
+items -> expression ("," expression)*;
 ```
 
-在括号内，有 3 个分号分隔的子句，且都可以忽略：
+有三个由分号分隔的子句，且都可以忽略：
 
 -   第一个是初始化式，在整个 `for` 中只会执行一次，通常是一个表达式或作用域为 `for` 的其余部分的变量声明。
 -   第二个条件表达式，会在每次循环开始前执行一次，若为真则执行循环体，否则结束循环。
@@ -307,73 +324,110 @@ forStmt -> "for" "(" (varDecl | exprStmt | ";") expr? ";" expr? ")" stmt;
 
 ### 9.5.1 语法脱糖
 
-`for` 语句咋一看多了很多部分，但实际上都可以用已有的语句实现，换句话说，Lox 其实不需要 `for` 语句，只是这样能够让代码更容易编写，所有这类功能被称为**语法糖**（Syntactic sugar）。
+`for` 语句咋一看多了很多部分，但实际上都可以用已有的语句实现，换句话说，Lox 其实不需要 `for` 语句，只是这样能够让代码更容易编写，所有这类功能被称为**语法糖**（Syntactic sugar），像赋值 `+=` 这类可由已有功能组合实现的也可以称为语法糖。
 
 所有的 `for` 都可以用 `while` 来完成：
 
 ```
 {
   var i = 0;
-  while (i < 10) {
+  while i < 10 {
     print i;
-    i = i + 1;
+    i += 1;
   }
 }
 ```
 
 这个 `while` 的写法与 `for` 的语义完全等价。因此没有必要为语言添加一个 `for` 节点，而是通过**脱糖**（Desugaring）——将使用语法糖的代码转换成更基础形式的组合来实现，`for` 就可以脱糖为 `while` 和其它解释器已经可以处理语句。
 
-更新 `Parser`，添加对 `for` 解析的方法：
+但这种不添加额外节点的做法，在某些情况下并不会带来实现上的便利性，如要为语言实现格式化工具，由于 `for` 是用的组合实现，因此实际上语法树没有保存原始 `for` 语句的信息，导致很难生成原本的代码。
+
+Lox 选择额外添加一个 `for` 节点，更新 `bin/gen_ast`：
+
+```ruby
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
+                        # ...
+                        'forStmt    : init, cond, inc, body',
+                        'exprStmt   : expr'
+                      ]).generate
+```
+
+更新 `Parser`，添加对 `for` 的解析：
 
 ```ruby
 class Lox::Parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt
-  def statement
+  # execution -> ";"
+  #              | print_stmt
+  #              | block_stmt
+  #              | if_stmt
+  #              | while_stmt
+  #              | for_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
     # ...
-    elsif match_next?(Lox::Keyword.key("for"))
+    elsif match_next?(Lox::Keyword::FOR)
       for_stmt
-    # ...
+    else
+      expr_stmt
+    end
   end
 
-  # for_stmt -> "for" "(" (var_decl | expr_stmt | ";") expression? ";" expression? ")" statement
+  # for_stmt -> "for" for_init? ";" expr? ";" items? block_stmt
   def for_stmt
     from_for = previous
-    consume(Lox::TokenType::LEFT_PAREN, "expect `(` after for-statement")
-    init = if match_next?(Lox::TokenType::SEMICOLON)
-             Lox::Ast::BlankStmt.new(location:)
-           elsif match_next?(Lox::Keyword.key("var"))
-             var_decl
-           else
-             expr_stmt
-           end
-
+    init = for_init unless check?(Lox::TokenType::SEMICOLON)
+    consume(Lox::TokenType::SEMICOLON, 'expect `;` after for-initializer', from: from_for)
     from_cond = peek
-    cond = if peek.type == Lox::TokenType::SEMICOLON
-             Lox::Ast::Literal.new(value: true, location: location(from_cond))
-           else
-             expression
-           end
-    consume(Lox::TokenType::SEMICOLON, "expect `;` after for-condition", from_cond)
-
-    from_inc = peek
-    inc = if peek.type == Lox::TokenType::RIGHT_PAREN
-            Lox::Ast::BlankStmt.new(location:)
-          else
-            Lox::Ast::ExprStmt.new(expr: expression, location: location(from_inc))
-          end
-    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` before for-statement", from_for)
-
+    cond = expression unless check?(Lox::TokenType::SEMICOLON)
+    consume(Lox::TokenType::SEMICOLON, 'expect `;` after for-condition', from: from_cond)
+    inc = items unless check?(Lox::TokenType::LEFT_BRACE)
     from_body = peek
-    body = Lox::Ast::BlockStmt.new(stmts: [body, inc], location: location(from_body))
-    while_part = Lox::Ast::WhileStmt.new(expr: cond, body:, location: location(from_body))
-    Lox::Ast::BlockStmt.new(stmts: [init, while_part].flatten, location: location(from_body))
+    consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before for body', from: from_body)
+    body = block_stmt
+    Lox::Ast::ForStmt.new(init:, cond:, inc:, body:, location: location(from: from_for))
+  end
+
+  # for_init -> "var" var_defs | expr ("," expr)*
+  def for_init
+    if match_next?(Lox::Keyword::VAR)
+      var_defs
+    else
+      exprs = [expression]
+      exprs << expression while match_next?(Lox::TokenType::COMMA)
+      exprs
+    end
+  end
+
+  # items -> expression ("," expression)*
+  def items
+    item_list = []
+    unless check?(Lox::TokenType::RIGHT_PAREN)
+      item_list << expression
+      item_list << expression while match_next?(Lox::TokenType::COMMA)
+    end
+    item_list
   end
 end
 ```
 
-依次对初始化、条件、增量进行解析，分别创建语法树节点，最后再和 `body` 连接起来，这样就利用现有的节点，而无需创建新的语法树节点，以及对 `Interpreter` 做修改。同时 `init` 可能含有多条初始化语句构成的数组，因此需要进行 `flatten`。
+然后添加 `for` 的访问者方法：
+
+```ruby
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_for_stmt(for_stmt)
+    for_stmt.init&.each { it.accept(self) }
+    cond = for_stmt.cond
+    inc = for_stmt.inc
+    while cond.nil? || evaluate(cond)
+      execute(for_stmt.body)
+      inc&.each { it.accept(self) }
+    end
+  end
+end
+```
 
 ## 9.6 break 和 next
 
@@ -382,19 +436,26 @@ end
 更新产生式：
 
 ```
-stmt -> ";" | exprStmt | printStmt | blockStmt | ifStmt | whileStmt | forStmt | breakStmt | nextStmt;
-breakStmt -> "break" ";";
-nextStmt -> "next" ";";
+exec_stmt -> print_stmt
+             | block_stmt
+             | if_stmt
+             | while_stmt
+             | for_stmt
+             | break_stmt
+             | next_stmt
+             | expr_stmt;
+break_stmt -> "break" ";";
+next_stmt -> "next" ";";
 ```
 
-更新 `bin/gen_ast`，添加 `break` 和 `next` 语句：
+更新 `bin/gen_ast`，添加 `break` 和 `next` 节点：
 
 ```ruby
-Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
-                        # ...
-                        "breakStmt",
-                        "nextStmt"
-                      ]).make
+Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
+                        'breakStmt',
+                        'nextStmt',
+                        'exprStmt   : expr'
+                      ]).generate
 ```
 
 这两个的产生式都是空的，因为仅仅起到一个标记作用。
@@ -405,14 +466,25 @@ Lox::AstGenerator.new(output_path:, basename: "stmt", productions: [
 class Lox::parser
   private
 
-  # statement -> ";" | expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt | next_stmt
-  def statement
-    #...
-    elsif match_next?(Lox::Keyword.key("break"))
-      break_stmt
-    elsif match_next?(Lox::Keyword.key("next"))
-      next_stmt
+  # execution -> ";"
+  #              | print_stmt
+  #              | block_stmt
+  #              | if_stmt
+  #              | while_stmt
+  #              | for_stmt
+  #              | break_stmt
+  #              | next_stmt
+  #              | expr_stmt
+  def execution
+    if match_next?(Lox::TokenType::SEMICOLON)
     # ...
+    elsif match_next?(Lox::Keyword::BREAK)
+      break_stmt
+    elsif match_next?(Lox::Keyword::NEXT)
+      next_stmt
+    else
+      expr_stmt
+    end
   end
 end
 ```
@@ -430,47 +502,47 @@ class Lox::Parser
 
   def while_stmt
     # ...
-    consume(Lox::TokenType::RIGHT_PAREN, "expect `)` before while-statement", from)
     begin
       @loop_depth += 1
-      body = statement
+      consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before while body')
+      body = block_stmt
     ensure
       @loop_depth -= 1
     end
-    # ...
+    Lox::Ast::WhileStmt.new(cond:, body:, location: location(from:))
   end
 
   def for_stmt
     # ...
-    from_body = peek
     begin
       @loop_depth += 1
-      body = statement
+      consume(Lox::TokenType::LEFT_BRACE, 'expect `{` before for body', from: from_body)
+      body = block_stmt
     ensure
       @loop_depth -= 1
     end
-    # ...
+    Lox::Ast::ForStmt.new(init:, cond:, inc:, body:, location: location(from: from_for))
   end
 
   # break_stmt -> "break" ";"
   def break_stmt
     from = previous
-    consume(Lox::TokenType::SEMICOLON, "break statement must end with `;`", from)
-    add_error("break statement must be inside a loop", from) if @loop_depth.zero?
-    Lox::Ast::BreakStmt.new(location: location(from))
+    consume(Lox::TokenType::SEMICOLON, 'break statement must end with `;`')
+    add_error('break statement must be inside a loop', from:) if @loop_depth.zero?
+    Lox::Ast::BreakStmt.new(location: location(from:))
   end
 
   # next_stmt -> "next" ";"
   def next_stmt
     from = previous
-    consume(Lox::TokenType::SEMICOLON, "next statement must end with `;`", from)
-    add_error("break statement must be inside a loop", from) if @loop_depth.zero?
-    Lox::Ast::NextStmt.new(location: location(from))
+    consume(Lox::TokenType::SEMICOLON, 'next statement must end with `;`')
+    add_error('break statement must be inside a loop', from:) if @loop_depth.zero?
+    Lox::Ast::NextStmt.new(location: location(from:))
   end
 end
 ```
 
-然后在 `Interpreter` 中添加访问者：
+然后添加 `break` 和 `next` 的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -491,14 +563,14 @@ class Lox::Error::BreakError < Lox::Error::InterpError; end
 class Lox::Error::NextError < Lox::Error::InterpError; end
 ```
 
-然后修改 `while` 访问者，捕获异常：
+然后修改 `while` 和 `for` 访问者方法，捕获异常：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
   def visit_while_stmt(while_stmt)
-    while evaluate_expr(while_stmt.expr)
+    while evaluate(while_stmt.cond)
       begin
-        execute_stmt(while_stmt.body)
+        execute(while_stmt.body)
       rescue Lox::Error::BreakError
         break
       rescue Lox::Error::NextError
@@ -506,40 +578,25 @@ class Lox::Visitor::Interpreter < Lox::Visitor::Base
       end
     end
   end
-end
-```
 
-目前还有一个问题，由于 `for` 是通过 `while` 的语法糖实现的，而 `while` 并不包含增量式，当循环中包含 `next` 时，`for` 的正确行为应该是需要执行一次增量式，然后开始下一轮循环，但现在会直接跳过导致可能产生死循环。
-
-可以通过当遇到 `next` 时，执行一次最后一条语句来解决：
-
-```ruby
-class Lox::Visitor::Interpreter < Lox::Visitor::Base
-  def visit_while_stmt(while_stmt)
-    while evaluate_expr(while_stmt.expr)
+  def visit_for_stmt(for_stmt)
+    for_stmt.init&.each { it.accept(self) }
+    cond = for_stmt.cond
+    inc = for_stmt.inc
+    while cond.nil? || evaluate(cond)
       begin
-        execute_stmt(while_stmt.body)
+        execute(for_stmt.body)
       rescue Lox::Error::BreakError
         break
       rescue Lox::Error::NextError
-        execute_stmt(while_stmt.body.stmts.last)
+        inc&.each { it.accept(self) }
         next
       end
+      inc&.each { it.accept(self) }
     end
   end
 end
 ```
 
-在 `for` 中已经将增量式添加到最后一个语句中去了，但是 `while` 不一定，因此还需要在 `while` 解析时，把 `body` 转成块语句，然后追加一条空语句，以防止 `while` 在遇到 `next` 时执行不必要的代码。
+若 `for` 是通过 `while` 和语句的组合实现的，那么这里就会面临一个问题。由于 `while` 并不包含增量式，当循环中包含 `next` 时，`for` 的正确行为应该是需要执行一次增量式，然后开始下一轮循环，通过 `while` 语法糖实现实现的话，就需要添加额外的处理，这增加了代码实现的复杂度。
 
-```ruby
-class Lox::Parser
-  private
-
-  def while_stmt
-    # ...
-    body = Lox::Ast::BlockStmt.new(stmts: [body, Lox::Ast::BlankStmt.new(location:)], location: body.location)
-    Lox::Ast::WhileStmt.new(expr:, body:, location: location(from))
-  end
-end
-```

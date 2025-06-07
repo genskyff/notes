@@ -435,7 +435,7 @@ class Lox::Interpreter
 end
 ```
 
-在 `Interpreter` 中添加对 `var_decl` 的访问者，同时需要接受环境：
+添加 `var_decl` 的访问者方法，同时需要接受环境：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -455,7 +455,7 @@ class Lox::Visitor::Interpreter < Lox::Visitor::Base
 end
 ```
 
-同样地，在 `Interpreter` 中添加 `var_expr` 的访问者：
+添加 `var_expr` 的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -552,7 +552,7 @@ end
 
 ### 8.4.2 赋值语义
 
-现在有了一个新的 `Assign` 节点，同样添加一个访问者方法，更新 `Interpreter`：
+现在有了一个新的 `Assign` 节点，同样添加一个访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
@@ -652,6 +652,26 @@ class Lox::Parser
     end
 
     expr
+  end
+end
+```
+
+然后添加 `assignOp` 的访问者方法：
+
+```ruby
+class Lox::Visitor::Interpreter < Lox::Visitor::Base
+  def visit_assign_op_expr(assign_op_expr)
+    ident = assign_op_expr.ident
+    left = Lox::Ast::VarExpr.new(ident:, location: ident.location)
+    op = assign_op_expr.op
+    op = Lox::Token.new(type: op.type[0], location: op.location, lexeme: op.lexeme, literal: op.literal)
+    right = assign_op_expr.value
+    binary = Lox::Ast::BinaryExpr.new(left:, op:, right:, location: assign_op_expr.location)
+    value = evaluate(binary)
+    @env.assign(assign_op_expr.ident, value)
+    value
+  rescue Lox::Error::UndefError
+    error("undefined variable `#{assign_op_expr.ident.lexeme}`", assign_op_expr.ident)
   end
 end
 ```
@@ -859,7 +879,7 @@ class Lox::Parser
 end
 ```
 
-然后添加对块的访问者：
+然后添加块的访问者方法：
 
 ```ruby
 class Lox::Visitor::Interpreter < Lox::Visitor::Base
