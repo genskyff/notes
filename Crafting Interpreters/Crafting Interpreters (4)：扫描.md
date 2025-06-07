@@ -136,23 +136,6 @@ class Lox::Entry
     raise Lox::Error::ScannerError if @error_collector.error?
 
     Lox::Utils.print_tokens(src_map: @src_map, tokens:) if @options[:token] && !ast_only
-
-    ast = Lox::Parser.new(src_map: @src_map, error_collector: @error_collector, tokens:).parse
-    raise Lox::Error::ParserError if @error_collector.error?
-
-    pp ast if @options[:ast] && !ast_only
-    return ast if ast_only
-
-    result = Lox::Interpreter.new(src_map: @src_map, error_collector: @error_collector, ast:, env: @env).interpret
-    raise Lox::Error::InterpError if @error_collector.error?
-
-    return unless repl
-
-    if result.is_a?(Lox::Callable)
-      puts "#{'=>'.blue} #{result}"
-    else
-      puts "#{'=>'.blue} #{result.inspect}"
-    end
   end
 
   def make_src_map(file: nil, src: '', line_from: 1)
