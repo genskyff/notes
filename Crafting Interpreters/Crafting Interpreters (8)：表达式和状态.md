@@ -480,13 +480,14 @@ end
 ```
 expression -> assign;
 assign -> IDENT "=" assign
-          | condition
+          | condition;
 ```
 
 更新 `bin/gen_ast`，添加 `Assign` 节点：
 
 ```ruby
 Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
+                        # ...
                         'assignExpr   : ident, value'
                       ]).generate
 ```
@@ -605,12 +606,20 @@ a %= b
 a ^= b
 ```
 
-这可以不增加新的语法树节点，而是利用赋值和二元运算的组合来实现，也可以增加的一个新的节点来实现。为了实现简单，这里通过新增节点实现：
+这可以不增加新的语法树节点，而是利用赋值和二元运算的组合来实现，也可以增加的一个新的节点来实现。为了实现简单，这里通过新增节点实现。
+
+更新生成式：
+
+```
+assign -> IDENT ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=") assign
+          | condition;
+```
 
 更新 `bin/gen_ast`，添加 `AssignOp` 节点：
 
 ```ruby
 Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
+                        # ...
                         'assignOpExpr : ident, op, value'
                       ]).generate
 ```
@@ -766,8 +775,8 @@ end
 ```
 exec_stmt -> print_stmt
              | block_stmt
-             | expr_stmt
-block_stmt -> "{" stmt* "}"
+             | expr_stmt;
+block_stmt -> "{" stmt* "}";
 ```
 
 块是一种语句，由 `{}` 组成，其中可以包含任意语句。
@@ -778,7 +787,7 @@ block_stmt -> "{" stmt* "}"
 Lox::AstGenerator.new(output_path:, type: 'stmt', productions: [
                         # ...
                         'blockStmt  : body',
-                        # ...
+                        'exprStmt   : expr'
                       ]).generate
 ```
 
