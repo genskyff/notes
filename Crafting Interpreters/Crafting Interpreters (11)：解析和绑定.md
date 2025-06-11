@@ -123,3 +123,84 @@ class Lox::Visitor::Resolver < Lox::Visitor::Base
   end
 end
 ```
+
+解析器访问并处理每个节点，其中的部分需要做特殊处理，因为：
+
+-   块语句为包含的语句引入了新作用域
+-   函数声明为函数体引入了新作用域，并在该作用域中绑定了形参
+-   变量声明将新变量追加到作用域
+-   变量定义和赋值需要解析变量值
+
+而其它节点则不用额外处理，当然也可以做更多的检查，如检查 `break` 或 `return` 的位置是否正确，因为只能在相关上下文中使用，但这里也实现相关的访问者方法。
+
+### 11.3.1 解析代码块
+
+先从代码块开始，因为它创建一个新作用域，而函数体本质上也是一个块。
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  def visit_block_stmt(block_stmt)
+    begin_scope
+    resolve(*block_stmt.body)
+    end_scope
+    nil
+  end
+end
+```
+
+首先开始一个新作用域，并在其中遍历块中的语句，并结束作用域。
+
+`resolve` 方法定义为：
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  private
+
+  def resolve(*ast_nodes)
+    ast_nodes.each { it.accept(self) }
+    nil
+  end
+end
+```
+
+其接受 AST 节点数组，然后遍历处理，这其实和解释器的 `evaluate` 方法是类似的。
+
+`begin_scope` 方法定义为：
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  def initialize(interp)
+    @interp = interp
+    @scope = []
+  end
+
+  private
+
+  def begin_scope
+    @scope << {}
+  end
+end
+```
+
+在解释器中，词法作用域是通过环境链接来实现的，本质上是用链表来模拟一个栈。当一个新作用域开启时，则创建一个环境，并链接到上一个环境，其实就是把新环境 `push` 到上一个环境，当在一个作用域中创建声明时，则是把一个键值对加入到所处环境的末尾，这也是一种 `push` 操作。在解析器中，则使用真正的栈来进行。
+
+首先创建了一个实例变量 `@scope` 用来存放环境，而每个环境又是一个哈希表。当开始一个新作用域时，就将一个新的哈希表放入末尾，当创建一个新声明时，就把该声明放入哈希表末尾。
+
+作用域栈只能用于局部作用域，解析器不会跟踪在顶层作用域的全局声明。当解析一个变量但局部作用域栈中找不到时，就认为一定是全局的。
+
+由于作用域在一个栈中，当作用域结束时，需要销毁掉环境，这实际上就是一个 `pop` 操作，因此 `end_scope` 方法定义为：
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  private
+
+  def end_scope
+    @scope.pop
+  end
+end
+```
+
+现在就实现了在栈中压入和弹出空作用域。
+
+### 11.3.2 解析变量声明
+
