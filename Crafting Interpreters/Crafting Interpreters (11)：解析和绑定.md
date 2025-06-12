@@ -171,20 +171,20 @@ end
 class Lox::Visitor::Resolver < Lox::Visitor::Base
   def initialize(interp)
     @interp = interp
-    @scope = []
+    @scopes = []
   end
 
   private
 
   def begin_scope
-    @scope << {}
+    @scopes << {}
   end
 end
 ```
 
 在解释器中，词法作用域是通过环境链接来实现的，本质上是用链表来模拟一个栈。当一个新作用域开启时，则创建一个环境，并链接到上一个环境，其实就是把新环境 `push` 到上一个环境，当在一个作用域中创建声明时，则是把一个键值对加入到所处环境的末尾，这也是一种 `push` 操作。在解析器中，则使用真正的栈来进行。
 
-首先创建了一个实例变量 `@scope` 用来存放环境，而每个环境又是一个哈希表。当开始一个新作用域时，就将一个新的哈希表放入末尾，当创建一个新声明时，就把该声明放入哈希表末尾。
+首先创建了一个实例变量 `@scopes` 用来存放环境，而每个环境又是一个哈希表。当开始一个新作用域时，就将一个新的哈希表放入末尾，当创建一个新声明时，就把该声明放入哈希表末尾。
 
 作用域栈只能用于局部作用域，解析器不会跟踪在顶层作用域的全局声明。当解析一个变量但局部作用域栈中找不到时，就认为一定是全局的。
 
@@ -195,7 +195,7 @@ class Lox::Visitor::Resolver < Lox::Visitor::Base
   private
 
   def end_scope
-    @scope.pop
+    @scopes.pop
   end
 end
 ```
@@ -203,4 +203,76 @@ end
 现在就实现了在栈中压入和弹出空作用域。
 
 ### 11.3.2 解析变量声明
+
+解析一个变量声明，就是在当前作用域的哈希表追加一个键值对。
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  def visit_var_decl(var_decl)
+    name = var_decl.ident.lexeme
+    declare(name)
+    resolve(var_decl.init) if var_decl.init
+    define(name)
+    nil
+  end
+end
+```
+
+这里将变量的解析分为两步：先处理声明，再处理定义。这样就能够处理变量可选的初始化式。
+
+如这样的边界情况：
+
+```
+var a = "outer";
+{
+  var a = a;
+}
+```
+
+当局部变量的初始化式指向一个同名变量时，有几种处理方式：
+
+1.   先运行初始化式，然后将新变量放入作用域。这样内部 `a` 会使用外部 `a` 的值来进行初始化。这相当于：
+
+     ```
+     var temp = a;
+     var a;
+     a = temp;
+     ```
+
+2.   将新变量放入作用域，然后运行初始化式。这代表变量可以在被初始化前查找到，因此内部 `a` 的值为 `nil`，当语言不允许使用未初始化的变量时就会报错。这相当于：
+
+     ```
+     var a;
+     a = a;
+     ```
+
+3.   若在初始化式中使用同名变量则视为错误。
+
+在第一种中，使用被遮蔽的变量去初始化一个变量，这看起来不太像是有意为之。在第二种中变量始终为 `nil`，这通常没有任何意义。第三种则过于严格，但先使用这种方式实现，这也是为什么要将声明和定义给分开。
+
+定义 `declare` 和 `define` 方法：
+
+```ruby
+class Lox::Visitor::Resolver < Lox::Visitor::Base
+  private
+
+  def declare(name)
+    return if @scopes.empty?
+
+    @scopes.last[name] = false
+  end
+
+  def define(name)
+    return if @scopes.empty?
+
+    @scopes.last[name] = true
+  end
+end
+```
+
+这两个方法逻辑基本一致。声明会将变量名添加到最内层作用域，但键值对却不是“变量名-变量值”的形式，值是一个布尔值，代表该变量是否就绪。单独的声明并不能使变量就绪，只有定义后该变量才能够使用。
+
+这样当在初始化式中使用同名变量时，由于先进行声明，此时变量被声明但尚未就绪，此时再对初始化式进行 `resolve` 就会报错。
+
+### 11.3.3 解析变量表达式
 
