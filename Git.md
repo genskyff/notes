@@ -392,6 +392,7 @@ git add <new>
 - 常见用法
   - 撤销工作区的更改：`git restore <file>`
   - 撤销暂存区的更改：`git restore --staged <file>`
+  - 把文件恢复到指定提交：`git restore --source <commit> <file>`
 
 ### reset
 
@@ -500,6 +501,15 @@ git branch -v
 
 ```shell
 git branch -a
+```
+
+`switch` 切换分支：
+
+```shell
+git switch <branch>
+
+# 切换到上一个分支
+git switch -
 ```
 
 ## 创建
