@@ -1548,6 +1548,27 @@ while let Some(top) = stack.pop() {
 
 > `while let` 不能使用 `else if`、`else if let` 和 `else` 分支组合。
 
+### let 链
+
+在 Rust 2024 版本中，`let` 链可以在 `if` 和 `while` 中使用 `&&` 链接 `let` 语句，并可与逻辑表达式混合使用，以简化嵌套的写法。`let` 表达式内的模式可以是不可反驳的，也可以是可反驳的，且绑定在链的后续部分以及主体部分中均可使用。
+
+```rust
+enum Foo {
+    A(Option<i32>),
+}
+
+fn main() {
+    let wrap = Some(Foo::A(Some(42)));
+    if let Some(inner) = wrap
+        && let Foo::A(o) = inner
+        && let Some(i) = o
+        && i > 0
+    {
+        println!("Positive integer: {i}");
+    }
+}
+```
+
 ### 函数参数
 
 函数参数也是模式。
