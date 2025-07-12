@@ -34,7 +34,7 @@ apt install -y bat build-essential curl docker-compose docker.io duf fd-find fis
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom choose curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less lsd mtr openssh ripgrep sd starship sudo tokei unzip wget zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bottom choose curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less lsd mtr openssh reflector ripgrep sd starship sudo tokei unzip wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -55,9 +55,8 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin mise-bin tlrc-bin usage-bin
 ```
 
-若下载速度过慢，可能是源的问题。安装 reflector，然后自动选择最快的源：
+若下载速度过慢，可能是源的问题。使用 reflector 自动选择最快的源：
 
 ```shell
-yay -S --needed --noconfirm reflector
 reflector --verbose --latest 5 -c <country> --sort rate --save /etc/pacman.d/mirrorlist
 ```
