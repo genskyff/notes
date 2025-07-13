@@ -24,13 +24,12 @@ apt install -y git
 
 ## 配置
 
-通过 `git config` 读取和配置环境变量：
+通过 `git config` 读取和设置配置：
 
 - `--system`：对所有用户都适用的配置
-
   - Windows：Git 安装目录下的 `etc/gitconfig`
   - Linux： `/etc/gitconfig`
-
+  
 - `--global`：仅对当前用户适用的配置
   - Windows、Linux：`~/.gitconfig`
   
@@ -80,19 +79,19 @@ git config --global --add credential.helper "oauth -device"
 # 默认分支
 git config --global init.defaultBranch main
 
-# Pull 策略
+# Pull 策略为 rebase
 git config --global pull.rebase true
 
-# 不自动转换换行符
-git config --global core.autocrlf false
+# 保持换行符为 LF
+git config --global core.autocrlf input
 
-# 显示非 ASCII 字符
+# 不转义非 ASCII 字符
 git config --global core.quotepath false
 
-# 默认编辑器
+# 设置默认编辑器为 VSCode
 git config --global core.editor "code --wait"
 
-# 取消配置
+# 取消指定配置
 git config --unset <key>
 ```
 
@@ -100,7 +99,7 @@ git config --unset <key>
 
 ## 工作区
 
-工作区是某个版本独立提取出来的内容，即磁盘上能看到的目录，也是实际编写代码所用到的目录。其中有一个隐藏目录 `.git`，这个不算作工作区的一部分，而是 Git 的版本库。
+工作区是某个版本独立提取出来的内容，即磁盘上能直接看到的目录，也是实际编写代码所用到的目录。其中有一个隐藏目录 `.git`，这个不算作工作区的一部分，而是 Git 的版本库。
 
 ## 暂存区
 
@@ -114,8 +113,8 @@ git config --unset <key>
 
 **工作区**的文件有两种状态：
 
-- 已跟踪：指被纳入了版本控制的文件，这些文件具有 Git 状态：已修改、已暂存、已提交；
-- 未跟踪：除已跟踪文件以外的所有其它文件。
+- 已跟踪：指被纳入了版本控制的文件，这些文件具有 Git 状态：已修改、已暂存、已提交
+- 未跟踪：除已跟踪外的所有其它文件
 
 ## Git 状态
 
@@ -237,7 +236,7 @@ git status -s
 # 只忽略当前目录下的 TODO 文件，而不忽略 subdir/TODO
 /TODO
 
-# 忽略任何目录下名为 build 的文件夹
+# 忽略任何目录下名为 build 的目录
 build/
 
 # 忽略 doc/notes.txt，但不忽略 doc/server/arch.txt
@@ -387,31 +386,35 @@ git add <new>
 ### restore
 
 - 用途：用于撤销工作区和暂存区的更改
-- 安全性：相对安全，因为不修改提交历史
+- 安全性：相对安全，不修改提交历史
 - 影响：只影响工作区和暂存区，不影响提交历史
 - 常见用法
-  - 撤销工作区的更改：`git restore <file>`
-  - 撤销暂存区的更改：`git restore --staged <file>`
-  - 把文件恢复到指定提交：`git restore --source <commit> <file>`
+    - 撤销工作区的更改：`git restore <file>`
+    - 撤销暂存区的更改：`git restore --staged <file>`
+    - 把文件恢复到指定提交：`git restore --source <commit> <file>`
+    - 同时撤销暂存区和工作区：`git restore --staged --worktree <file>`
 
 ### reset
 
-- 用途：用于重置 `HEAD` 指针，撤销提交，并可选地更改工作区和暂存区
-- 安全性：可能不安全，因为 `--hard` 可以修改提交历史
-- 影响：可以影响工作区、暂存区和提交历史
+- 用途：用于重置 HEAD 指针到指定提交，可选地更改暂存区和工作区
+- 安全性：不安全，会修改提交历史，`--hard` 还会丢失工作区和暂存区
+- 影响：始终移动 HEAD，根据参数影响暂存区和工作区
 - 常见用法
-  - 软重置（不影响工作区和暂存区）：`git reset --soft <commit>`
-  - 硬重置（影响工作区和暂存区）：`git reset --hard <commit>`
-  - 混合重置（**默认选项**，影响暂存区，但不影响工作区）：`git reset <commit>`
+    - 软重置（只移动 HEAD）：`git reset --soft <commit>`
+    - 混合重置（默认，移动 HEAD 并重置暂存区）：`git reset <commit>`
+    - 硬重置（移动 HEAD，重置暂存区和工作区）：`git reset --hard <commit>`
+    - 撤销暂存（不移动 HEAD）：`git reset <file>`
 
 ### revert
 
-- 用途：用于创建一个新的提交，以撤销一个或多个旧的提交
-- 安全性：相对安全，因为不修改现有的提交历史，而是添加新的提交
-- 影响：只影响提交历史
+- 用途：通过创建新提交来撤销指定提交的更改
+- 安全性：最安全，保留完整的提交历史
+- 影响：创建新提交，修改工作区内容，但保留所有历史记录
 - 常见用法
-  - 撤销最新提交：`git revert HEAD`
-  - 撤销指定提交：`git revert <commit>`
+    - 撤销最新提交：`git revert HEAD`
+    - 撤销指定提交：`git revert <commit>`
+    - 撤销多个提交：`git revert <range>`
+    - 不自动提交（只修改工作区和暂存区）：`git revert -n <commit>`
 
 > `revert` 可能导致冲突，需要手动解决。
 
@@ -444,7 +447,7 @@ git log --stat
 `--since` 和 `--until` 可以指定提交日期：
 
 ```shell
-git log --since="2023-09-24 00:00:00" --until="2023-09-24 23:59:59"
+git log --since="2025-01-01 00:00:00" --until="2025-02-01 23:59:59"
 ```
 
 查看所有提交的总变化行数：
@@ -485,13 +488,13 @@ git show <commit>:<file>
 
 ## 查看
 
-`branch` 查看分支列表：
+`branch` 查看本地分支列表：
 
 ```shell
 git branch
 ```
 
-`-v` 查看每个分支最后一次提交：
+`-v` 查看所有本地分支最后一次提交：
 
 ```shell
 git branch -v
@@ -543,18 +546,89 @@ git switch -c <name>
 `merge` 合并指定分支到当前分支：
 
 ```shell
-git merge [--squash] <branch>
+git merge <branch>
 ```
 
-当合并两个分支时，若顺着一个分支走下去能够到达另一个分支，那么 Git 在合并两者的时候，只会简单的将指针向前推进，因为这种情况下的合并没有冲突。
+Git 对合并有多种策略，其中常见的为：
 
-当在两个不同的分支中，对同一个文件的同一个部分进行了不同的修改，在进行合并时就会产生冲突。此时 Git 做了合并，但没有自动地创建一个新的合并提交，并会暂停下来，等待手工解决合并冲突。
+`--ff`：默认策略。当合并两个分支时，若顺着一个分支走下去能够到达另一个分支，那么 Git 在合并两者的时候，只会简单的将指针向前推进，即快进合并。如果不能直接到达，则会创建一个合并提交。
 
-`--squash` 和普通合并的区别为：普通合并会把另一个分支上所有的提交都保留，而 `squash` 会把另一个分支上的所有提交压缩为一个新提交，这样当前分支上的提交就会比较简洁，但 `squash` 操作完后还需要手动执行 `git commit` 以在当前分支上创建这个新的压缩提交。
+```
+# 场景1：可以快进
+本地: A---B
+远程: A---B---C---D
+
+# 结果：快进到远程最新提交
+本地: A---B---C---D
+
+# 场景2：不能快进
+本地: A---B---E
+远程: A---B---C---D
+
+# 结果：创建合并提交
+本地: A---B---E---M
+          \     /
+           C---D
+```
+
+`--no-ff`：总是创建合并提交，即使可以快进合并。
+
+```
+# 即使可以快进，也会创建合并提交
+本地: A---B
+远程: A---B---C---D
+
+# 结果：创建合并提交
+本地: A---B-------M
+          \     /
+           C---D
+```
+
+用途：
+
+-   保持清晰的分支历史
+-   便于追踪功能分支的合并点
+-   方便回滚整个功能
+
+`--ff-only`：只允许快进合并，否则拒绝操作。
+
+```
+# 场景1：可以快进
+本地: A---B
+远程: A---B---C---D
+
+# 结果：成功快进
+本地: A---B---C---D
+
+# 场景2：不能快进
+本地: A---B---E
+远程: A---B---C---D
+
+# 结果：拒绝合并，报错
+error: Not possible to fast-forward, aborting.
+```
+
+用途：
+
+-   保持线性历史
+-   避免意外的合并提交
+-   常用于要求 rebase 工作流的团队
+
+`--squash`：上述几种合并策略都会把另一个分支上所有的提交都保留，而 `squash` 则会把这些提交压缩为一个新提交，这样当前分支上的提交就会比较简洁，合并历史呈线性。但 `squash` 操作完后还需要手动执行 `git commit` 以在当前分支上创建这个新的压缩提交。
+
+```
+# 合并前
+main:    A---B
+feature:      \---C---D---E
+
+# 合并后（历史中只有：A, B, F（C, D, E 被压缩到了 F 中）
+main:    A---B---F       
+feature:      \---C---D---E
+```
 
 ### 解决冲突
 
-当使用 `merge` 时，若出现了冲突，则合并会失败，需要手动解决冲突。
+当在两个不同的分支中，对同一个文件的同一个部分进行了不同的修改，在进行合并时就会产生冲突。此时 Git 做了合并，但没有自动地创建一个新的合并提交，并会暂停下来，等待手工解决合并冲突。
 
 具体步骤如下：
 
@@ -1340,7 +1414,7 @@ git remote prune origin
 - `test`：测试相关的更改
 - `docs`：更新文档或注释
 - `perf`：性能优化相关的更改
-- `config`：更新配置
+- `config`：配置文件相关的更改
 - `cleanup`：清理无用的代码
 - `init`：初始化相关的更改
 - `security`：安全相关的更改
