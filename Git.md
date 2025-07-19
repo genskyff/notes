@@ -27,12 +27,14 @@ apt install -y git
 通过 `git config` 读取和设置配置：
 
 - `--system`：对所有用户都适用的配置
+
   - Windows：Git 安装目录下的 `etc/gitconfig`
   - Linux： `/etc/gitconfig`
-  
+
 - `--global`：仅对当前用户适用的配置
+
   - Windows、Linux：`~/.gitconfig`
-  
+
 - `--local`：**默认选项**，仅对当前 Git 仓库适用的配置
   - Windows、Linux：工作区中的 `.git/config`
 
@@ -389,10 +391,10 @@ git add <new>
 - 安全性：相对安全，不修改提交历史
 - 影响：只影响工作区和暂存区，不影响提交历史
 - 常见用法
-    - 撤销工作区的更改：`git restore <file>`
-    - 撤销暂存区的更改：`git restore --staged <file>`
-    - 把文件恢复到指定提交：`git restore --source <commit> <file>`
-    - 同时撤销暂存区和工作区：`git restore --staged --worktree <file>`
+  - 撤销工作区的更改：`git restore <file>`
+  - 撤销暂存区的更改：`git restore --staged <file>`
+  - 把文件恢复到指定提交：`git restore --source <commit> <file>`
+  - 同时撤销暂存区和工作区：`git restore --staged --worktree <file>`
 
 ### reset
 
@@ -400,10 +402,10 @@ git add <new>
 - 安全性：不安全，会修改提交历史，`--hard` 还会丢失工作区和暂存区
 - 影响：始终移动 HEAD，根据参数影响暂存区和工作区
 - 常见用法
-    - 软重置（只移动 HEAD）：`git reset --soft <commit>`
-    - 混合重置（默认，移动 HEAD 并重置暂存区）：`git reset <commit>`
-    - 硬重置（移动 HEAD，重置暂存区和工作区）：`git reset --hard <commit>`
-    - 撤销暂存（不移动 HEAD）：`git reset <file>`
+  - 软重置（只移动 HEAD）：`git reset --soft <commit>`
+  - 混合重置（默认，移动 HEAD 并重置暂存区）：`git reset <commit>`
+  - 硬重置（移动 HEAD，重置暂存区和工作区）：`git reset --hard <commit>`
+  - 撤销暂存（不移动 HEAD）：`git reset <file>`
 
 ### revert
 
@@ -411,10 +413,10 @@ git add <new>
 - 安全性：最安全，保留完整的提交历史
 - 影响：创建新提交，修改工作区内容，但保留所有历史记录
 - 常见用法
-    - 撤销最新提交：`git revert HEAD`
-    - 撤销指定提交：`git revert <commit>`
-    - 撤销多个提交：`git revert <range>`
-    - 不自动提交（只修改工作区和暂存区）：`git revert -n <commit>`
+  - 撤销最新提交：`git revert HEAD`
+  - 撤销指定提交：`git revert <commit>`
+  - 撤销多个提交：`git revert <range>`
+  - 不自动提交（只修改工作区和暂存区）：`git revert -n <commit>`
 
 > `revert` 可能导致冲突，需要手动解决。
 
@@ -586,9 +588,9 @@ Git 对合并有多种策略，其中常见的为：
 
 用途：
 
--   保持清晰的分支历史
--   便于追踪功能分支的合并点
--   方便回滚整个功能
+- 保持清晰的分支历史
+- 便于追踪功能分支的合并点
+- 方便回滚整个功能
 
 `--ff-only`：只允许快进合并，否则拒绝操作。
 
@@ -610,9 +612,9 @@ error: Not possible to fast-forward, aborting.
 
 用途：
 
--   保持线性历史
--   避免意外的合并提交
--   常用于要求 rebase 工作流的团队
+- 保持线性历史
+- 避免意外的合并提交
+- 常用于要求 rebase 工作流的团队
 
 `--squash`：上述几种合并策略都会把另一个分支上所有的提交都保留，而 `squash` 则会把这些提交压缩为一个新提交，这样当前分支上的提交就会比较简洁，合并历史呈线性。但 `squash` 操作完后还需要手动执行 `git commit` 以在当前分支上创建这个新的压缩提交。
 
@@ -622,7 +624,7 @@ main:    A---B
 feature:      \---C---D---E
 
 # 合并后（历史中只有：A, B, F（C, D, E 被压缩到了 F 中）
-main:    A---B---F       
+main:    A---B---F
 feature:      \---C---D---E
 ```
 
@@ -766,7 +768,7 @@ git push -u [remote] main
 
 首次推送时需要使用 `-u` 将本地和对应的远程分支相关联，之后就可以直接使用 `push` 推送。
 
-> 若使用了 `--amend`、`rebase` 之类的操作，推送时可能会失败，这时可以使用 `-f` 选项来强制推送。但注意，若在推送时有其他人在相同分支也进行了提交，则会**覆盖别人的提交**。除非提交的分支只有自己在使用，否则谨慎使用该选项。
+> 若使用了 `--amend`、`rebase` 之类的操作，推送时可能会失败，这时可以使用 `-f` 选项来强制推送。但注意，若在推送时有其它人在相同分支也进行了提交，则会**覆盖别人的提交**。除非提交的分支只有自己在使用，否则谨慎使用该选项。
 
 若本地分支名和远程分支名不同，如本地分支为 `dev`，远程分支为 `main`，则需要指定本地分支和远程分支。
 
@@ -1040,18 +1042,18 @@ git worktree unlock <path>
 
 共享 Git 数据库
 
--   所有工作树共享同一个 `.git` 目录和对象数据库，不会复制所有 Git 历史
--   复制文件夹会复制所有 `.git` 数据，占用大量额外空间
+- 所有工作树共享同一个 `.git` 目录和对象数据库，不会复制所有 Git 历史
+- 复制文件夹会复制所有 `.git` 数据，占用大量额外空间
 
 自动追踪引用
 
--   Git 会自动追踪所有工作树中的分支状态，防止在多个位置检出同一个分支
--   手动复制文件夹后，Git 不知道有多个副本，可能导致冲突
+- Git 会自动追踪所有工作树中的分支状态，防止在多个位置检出同一个分支
+- 手动复制文件夹后，Git 不知道有多个副本，可能导致冲突
 
 简化操作
 
--   创建工作树时会自动检出指定分支，无需额外设置
--   完成后可以用一个命令清理，包括相关引用
+- 创建工作树时会自动检出指定分支，无需额外设置
+- 完成后可以用一个命令清理，包括相关引用
 
 ## 应用指定提交
 
@@ -1380,7 +1382,7 @@ git push -u origin my-dev
 
 ### 发起合并请求
 
-代码被推送到远程分支后，发起一个合并请求，让此分支合并到主分支上。通常使用代码托管平台提供的功能（如 Pull Request）来发起合并请求，并邀请其他开发人员进行审核和合并操作。
+代码被推送到远程分支后，发起一个合并请求，让此分支合并到主分支上。通常使用代码托管平台提供的功能（如 Pull Request）来发起合并请求，并邀请其它开发人员进行审核和合并操作。
 
 ### 清理工作
 
