@@ -2,7 +2,7 @@
 
 任何编译器或解释器的第一步就是扫描。扫描器接受字符串，并将其分组成一系列标识，即词法单元序列，这些有意义的单词和标点构成了语言的语法。
 
-> 为了简略，代码只展示核心部分
+> 简单起见，代码只展示核心部分。
 
 ## 4.1 解释器框架
 
@@ -18,14 +18,14 @@ class Cli < Thor
   option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
   option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
   def eval(src)
-    Lox::Entry.new(options).run_eval(src)
+    Lox.eval(options, src)
   end
 
   desc 'repl [OPTIONS]', 'Start an interactive REPL (default)'
   option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
   option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
   def repl
-    Lox::Entry.new(options).run_repl
+    Lox.repl(options)
   end
 
   map run: :exec
@@ -33,8 +33,21 @@ class Cli < Thor
   option :token, aliases: '-t', type: :boolean, default: false, desc: 'show tokens'
   option :ast, aliases: '-a', type: :boolean, default: false, desc: 'show AST'
   def exec(file)
-    Lox::Entry.new(options).run_file(file)
+    Lox.exec(options, file)
   end
+
+  desc 'fmt [OPTIONS] <FILE>', 'Format source file'
+  option :use_tab, aliases: '-t', type: :boolean, default: false, desc: 'Use tabs instead of spaces'
+  option :indent_size, aliases: '-s', type: :numeric, default: 2, desc: 'Indentation size'
+  option :minify, aliases: '-m', type: :boolean, default: false, desc: 'Minify source code'
+  def fmt(file)
+    Lox.fmt(options, file)
+  end
+
+  def self.exit_on_failure?
+    true
+  end
+end
 
 begin
   Cli.start(ARGV)
@@ -44,10 +57,28 @@ rescue Thor::Error => e
 end
 ```
 
-`lib/lox.rb`：定义整个 `Lox` 模块的根入口。
+`lib/lox.rb`：定义整个 `Lox` 模块的根入口，并提供 API 接口。
 
 ```ruby
-module Lox; end
+module Lox
+  def self.eval(options, src)
+    Lox::Entry.new(options).run_eval(src)
+  end
+
+  def self.repl(options)
+    Lox::Entry.new(options).run_repl
+  end
+
+  def self.exec(options, file)
+    Lox::Entry.new(options).run_file(file)
+  end
+
+  def self.fmt(options, file)
+    ast = Lox::Entry.new.run_file(file, ast_only: true)
+    code = ast&.accept(Lox::Visitor::Formatter.new(options))
+    File.open(file, 'wb:UTF-8') { it.puts code } if code
+  end
+end
 ```
 
 `lib/lox`：所有的 `Lox` 模块中的具体定义都在该目录下实现。
@@ -978,7 +1009,7 @@ class Lox::Scanner
 
 针对这种情况，扫描器采取**最长匹配**（Maximal munch）原则：当多个语法规则都能匹配扫描器正在处理的一段代码时，使用匹配字符最多的那个。这表示只有在扫描完一个可能是标识符的全部片段，才能确认是否是一个保留字，因为保留字本质上也是一个标识符，只不过被语言本身所使用。
 
-可以将 `orchid` 匹配为一个 `or` 关键字和一个 `chid` 标识符，也可以匹配为一个 `orchid` 标识符，根据该原则，则使用后者。
+`orchid` 可以匹配为一个 `or` 关键字和一个 `chid` 标识符，或者为一个 `orchid` 标识符。根据该原则，将使用后者。
 
 通过 Unicode 属性，任何被认为可以当作标识符的符号都支持：
 
@@ -1001,7 +1032,7 @@ end
 
 -   所有字母字符（Latin、Greek、Cyrillic、CJK 等各种语言的字母）
 -   下划线
--   一些其他被 Unicode 标准认为可以开始标识符的特殊字符
+-   其它被 Unicode 标准认为可以作为标识符开头的字符
 
 `\p{Emoji}` 匹配所有的 emoji 字符。
 
@@ -1078,7 +1109,7 @@ Lua 还要求 `return` 必须是块中最后一条语句。
 
 Go 会处理换行符，如果在词法单元之后出现，且该词法标记是已知可能结束语句的少数标记类型之一，则将其视为分隔符，否则就忽略。
 
-Python 将所有换行符视为有效，除非在行末使用 `\` 来延续到下一行，但 `[]`、`()` 和 `{}` 内的任何换行都会被忽略。因此 Python 要求 Lambda 必须在同一行上，否则还需要一套不同的隐式连接行的规则
+Python 将所有换行符视为有效，除非在行末使用 `\` 来延续到下一行，但 `[]`、`()` 和 `{}` 内的任何换行都会被忽略。因此 Python 要求 Lambda 必须在同一行上，否则还需要一套不同的隐式连接行的规则。
 
 这确保了语句永远不会出现在表达式内。C 语言也是如此，但是很多带有 Lambda 的语言则不然，如 JavaScript：
 
