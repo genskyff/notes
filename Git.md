@@ -78,21 +78,6 @@ git config --global credential.helper osxkeychain
 git config --global credential.helper "cache --timeout 21600"
 git config --global --add credential.helper "oauth -device"
 
-# 默认分支
-git config --global init.defaultBranch main
-
-# Pull 策略为 rebase
-git config --global pull.rebase true
-
-# 保持换行符为 LF
-git config --global core.autocrlf input
-
-# 不转义非 ASCII 字符
-git config --global core.quotepath false
-
-# 设置默认编辑器为 VSCode
-git config --global core.editor "code --wait"
-
 # 取消指定配置
 git config --unset <key>
 ```
@@ -1224,6 +1209,8 @@ git bisect reset
 
 ## 生成密钥
 
+通过 OpenSSH 生成密钥对：
+
 ```shell
 ssh-keygen -t ed25519 [-C <message>]
 ```
@@ -1266,6 +1253,51 @@ Host mygit
 ```shell
 ssh -T mygit
 ```
+
+## 配置签名
+
+Git 支持使用 GPG 和 SSH 密钥为提交和标签添加数字签名。签名通过公钥加密技术验证提交者的身份，确保提交未被篡改。签名后的提交在 `git log` 中会显示签名状态（如 Good "git" signature），在 Github 上的提交也会显示 **Verified** 标识。
+
+常用于：
+
+-   **开源项目**：验证贡献者身份
+-   **企业环境**：确保代码来源可信
+-   **合规性**：满足安全审计要求
+
+这里以 SSH 签名作为例子，生成一个新的密钥对，与上面用于 Github 认证的密钥类似，但是作用不同。
+
+然后修改 Git 配置：
+
+```shell
+# 公钥文件路径
+git config --global user.signingkey ~/.ssh/<pubkey>
+
+# 签名格式为 SSH
+git config --global gpg.format ssh
+
+# 配置允许签名者文件
+git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+
+# 自动签名
+git config --global commit.gpgsign true
+```
+
+添加条目到允许签名者文件：
+
+```shell
+echo "<email> $(cat ~/.ssh/<pubkey>)" >> ~/.ssh/allowed_signers
+```
+
+`allowed_signers` 文件列出可信公钥及其关联邮箱，用于验证签名。因为 Git 需要一个文件来映射公钥到可信身份（将公钥映射到邮箱）。这不会影响 GitHub 上的 Verified 显示，但会影响本地日志查看。
+
+配置完成后测试签名是否生效：
+
+```shell
+git commit --allow-empty -m "Test SSH signed commit"
+git log --show-signature -1
+```
+
+然后同样在 Github 上添加签名的公钥，但是 Key type 需要选择 **Signing Key**。这样推送后就会在签名的提交上显示一个 Verified 标识。
 
 # 10 工作流
 
