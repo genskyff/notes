@@ -82,6 +82,20 @@ git config --global --add credential.helper "oauth -device"
 git config --unset <key>
 ```
 
+## 按目录配置
+
+在 `.gitconfig` 中的配置默认全局生效，若想要针对指定目录单独应用配置，如设置不同的用户名，可以在配置文件中使用 `includeIf`：
+
+```
+# 其它配置...
+[includeIf "gitdir:<dir>/**"]
+    path = <dir>/.gitconfig
+```
+
+这表示 `dir` 目录下的所有子目录都应用 `path` 中指定的 `.gitconfig` 中的配置，并覆盖上层配置。 
+
+>   由于 Git 默认按照最后的配置覆盖前面的，因此 `includeIf` 必须放在最后。
+
 # 2 Git 基础
 
 ## 工作区
