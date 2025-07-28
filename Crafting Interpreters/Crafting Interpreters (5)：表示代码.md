@@ -31,7 +31,7 @@ CFG 中每个产生式都有一个**头部**（Head）和描述其生成内容�
 - **终止符**（Terminal symbol）：语言的基本构建块，是语法分析中直接处理的符号，不能再被其它规则替换或分解的原子单位，如关键字（`if`、`var`）、字面值（`123`、`"foo"`）、标识符（`foo`）、操作符（`+`、`-`）等；
 - **非终止符**（Non-terminal symbol）：用于构建语言结构的符号，定义了一组可能的产生式规则中的替换规则，可以被进一步展开成非终止符或终止符的符号，如表达式、语句等。
 
-为了让这些规则具体化，需要一种方式来描述这些生成规则，现在通常使用[巴科斯范式](https://zh.wikipedia.org/wiki/%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)（BNF）及其[扩展](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)（EBNF）或[扩充](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%85%85%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)（ABNF）。
+为了让这些规则具体化，需要一种方式来描述这些生成规则，现在通常使用[巴科斯范式](https://zh.wikipedia.org/wiki/%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)（BNF）的衍生 [EBNF](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F) 或 [ABNF](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%85%85%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)。
 
 一种简单的 CFG 形式：
 
@@ -170,7 +170,7 @@ Lox 中的表达式，如：
 - 二元表达式（Binary expression）：`+`、`-`、`*`、`/`、`%`、`^`、`==`、`!=`、`<`、`<=`、`>`、`>=`
 - 括号（Parentheses）：`(`、`)`
 
-除了与精确词素相匹配的终止符会加引号外，还对表示单一词素的终止符进行**大写化**，这些词素的文本表示方式可能会有所不同。`NUMBER` 是任何数字字面量，`STRING` 是任何字符串字面量，对 `IDENT` 也进行同样的处理。这些符号使用产生式语法可以表达为：
+除了与精确词素相匹配的终止符会加引号外，还对表示单一词素的终止符进行**大写化**，这些词素的文本表示方式可能会有所不同。`NUMBER` 是任何数字字面量，`STRING` 是任何字符串字面量，`IDENT` 是任何标识符。这些符号使用产生式语法可以表达为：
 
 ```
 expr    -> literal
@@ -216,7 +216,7 @@ module Lox::Ast
 end
 ```
 
-而考虑到后面还会存在语句，因此定义一个用于表示整个程序的 `Prog` 类作为 `Expr` 和 `Stmt` 的父类会对后面的解析和执行提供方便。
+而考虑到后面还会存在语句，因此定义一个用于表示整个程序的 `Prog` 类作为 `Expr` 和 `Stmt` 的父类，这会让后面的解析和执行更方便。
 
 ```ruby
 class Lox::Ast::Prog
@@ -240,7 +240,7 @@ end
 
 ### 5.2.1 非面向对象
 
-`Expr` 类没有定义任何方法。在编译的上下文中，`Expr` 类和其它语法树节点类似，主要用于表示程序代码的结构而非其行为。这些类的对象通常在解析阶段被创建，并在整个编译或解释过程中传递。如果这些类包含了特定行为，如解析或解释的逻辑，那么会违背作为数据通信介质的角色，因为这会导致类与特定的处理阶段或逻辑过度绑定，而将这些结构设计为简单的数据容器，这样在不同的处理阶段之间更加通用和灵活。
+`Expr` 类没有定义任何方法。在编译的上下文中，`Expr` 类和其它语法树节点类似，主要用于表示程序代码的结构而非行为。这些类的对象通常在解析阶段被创建，并在整个编译或解释过程中传递。如果这些类包含了特定行为，如解析或解释的逻辑，那么会违背作为数据通信介质的角色，因为这会导致类与特定的处理阶段或逻辑过度绑定，而将这些结构设计为简单的数据容器，这样在不同的处理阶段之间更加通用和灵活。
 
 在面向对象语言中，数据和行为通常是绑定的，而函数式语言更倾向于将数据和行为分开，数据结构通常只是静态的，不含任何方法，而行为则通过函数来操作这些数据。虽然函数式语言更适合用来构建解释器，但其中的一些组件，如扫描器，则更适合用面向对象的方式来构建。关键在于如何保持对象行为封装的同时，合理地管理那么必须在多个阶段间流动的数据结构。
 
@@ -323,9 +323,9 @@ Lox::AstGenerator.new(output_path:, type: 'expr', productions: [
 ```ruby
 def evaluate(expr)
   case expr
-  when Lox:Ast::Literal
+  in Lox:Ast::Literal
     # ...
-  when Lox:Ast::Unary
+  in Lox:Ast::Unary
     # ...
   end
 end
@@ -353,9 +353,9 @@ class Lox:Ast::Unary < Lox:Ast::Expr
   # ...
   def evaluate
     case @op
-    when Lox::TokenType::PLUS
+    in Lox::TokenType::PLUS
       +@right.evaluate
-    when Lox::TokenType::MINUS
+    in Lox::TokenType::MINUS
       -@right.evaluate
     # ...
     end
@@ -365,7 +365,7 @@ end
 
 但这样会导致扩展性和可维护性变得很差，因为表达式类不仅用于语法分析部分生成语法树，还用于解释器执行，若语言是静态类型的，还需要在语义分析部分进行类型检查等操作。
 
-这会导致不同的模块都会用到这部分，因此表达式类是一个跨越多个模块的共通部分，而这些模块不一定会用到类中的所有方法，如语法分析不会用到 `evaluate`，解释器不会用到 `check`。为每一个操作的表达式类中添加方法，就会将不同模块需要的部分混在一起，这违反了关注点分离原则。
+这会导致不同的模块都会用到这部分，因此表达式类是一个跨越多个模块的共通部分，而这些模块不一定会用到类中的所有方法，如语法分析不会执行，解释器不会进行类型检查。为每一个操作的表达式类中添加方法，就会将不同模块需要的部分混在一起，这违反了关注点分离原则。
 
 ### 5.3.1 表达式问题
 
@@ -428,13 +428,13 @@ end
 
 def evaluate(expr)
   case expr.type
-  when :literal
+  in :literal
     expr.value
-  when :unary
+  in :unary
     case expr.op
-    when :+
+    in :+
       +evaluate(expr.right)
-    when :-
+    in :-
       -evaluate(expr.right)
       # ...
     end
@@ -444,9 +444,9 @@ end
 # add print
 def print(expr)
   case expr.type
-  when :literal
+  in :literal
     puts expr.value
-  when :unary
+  in :unary
     puts "#{expr.op}#{expr.right}"
   end
 end
@@ -457,6 +457,8 @@ end
 ```ruby
 Literal = Struct.new(:type, :value)
 Unary = Struct.new(:type, :op, :right)
+
+# add binary
 Binary = Struct.new(:type, :left, :op, :right)
 
 def literal(value)
@@ -474,22 +476,22 @@ end
 
 def evaluate(expr)
   case expr.type
-  when :literal
+  in :literal
     expr.value
-  when :unary
+  in :unary
     case expr.op
-    when :+
+    in :+
       +evaluate(expr.right)
-    when :-
+    in :-
       -evaluate(expr.right)
       # ...
     end
   # add binary
   when :binary
     case expr.op
-    when :+
+    in :+
       evaluate(expr.left) + evaluate(expr.right)
-    when :-
+    in :-
       evaluate(expr.left) - evaluate(expr.right)
     # ...
     end
@@ -498,12 +500,12 @@ end
 
 def print(expr)
   case expr.type
-  when :literal
+  in :literal
     puts expr.value
-  when :unary
+  in :unary
     puts "#{expr.op}#{expr.right}"
   # add binary
-  when :binary
+  in :binary
     puts "#{expr.left} #{expr.op} #{expr.right}"
   end
 end
