@@ -1,4 +1,4 @@
-> Linux 环境：Debian 12
+> Linux 环境：Debian 13
 
 # 1 前言
 
@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl docker-compose docker.io duf fd-find fish git less mtr nftables openssh-client openssh-server ripgrep sd sudo unzip vim wget
+apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
 ```
 
 # 3 登录设置
@@ -162,7 +162,7 @@ sysctl net.ipv4.tcp_congestion_control
 
 ```shell
 echo "net.core.default_qdisc=fq
-net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && sysctl -p
+net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.d/10-bbr.conf && sysctl -p
 ```
 
 ## ulimit 优化
