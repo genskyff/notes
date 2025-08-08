@@ -1,4 +1,4 @@
-> Linux 环境：Debian 12 & Arch Linux
+> Linux 环境：Debian 13 & Arch Linux
 
 # 软件包配置
 
@@ -28,13 +28,13 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl docker-compose docker.io duf fd-find fish git less mtr nftables openssh-client openssh-server ripgrep sd sudo unzip vim wget
+apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom choose curl docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix lazygit less lsd mtr openssh reflector ripgrep sd starship sudo tokei unzip wget zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bottom choose curl difftastic docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix hyperfine lazygit less lsd mise mtr nushell openssh reflector ripgrep sd starship sudo tokei unzip usage wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
@@ -52,7 +52,7 @@ git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --n
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin mise-bin tlrc-bin usage-bin
+yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin tlrc-bin
 ```
 
 若下载速度过慢，可能是源的问题。使用 reflector 自动选择最快的源：
