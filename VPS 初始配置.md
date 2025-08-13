@@ -162,7 +162,7 @@ sysctl net.ipv4.tcp_congestion_control
 
 ```shell
 echo "net.core.default_qdisc=fq
-net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.d/10-bbr.conf && sysctl -p
+net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.d/10-bbr.conf && sysctl -p /etc/sysctl.d/10-bbr.conf
 ```
 
 ## ulimit 优化
