@@ -1,7 +1,6 @@
 > 参考：
 >
-> - [Ruby on Rails ガイド](https://railsguides.jp/)
-> - [Ruby on Rails チュートリアル](https://railstutorial.jp/chapters/beginning)
+> - [Ruby on Rails Guides](https://guides.rubyonrails.org/index.html)
 
 ## Rails 常用命令
 
@@ -27,16 +26,10 @@ rails g model Article title:string body:text
 # 删除模型
 rails destroy model Article
 
-# 生成脚手架
-rails g scaffold Article title:string body:text
-
-# 生成集成测试
-rails g integration_test site_layout
-
-# 应用迁移
+# 执行迁移
 rails db:migrate
 
-# 撤回迁移
+# 撤回上次迁移
 rails db:rollback
 
 # 撤回到最初的迁移状态
@@ -45,8 +38,8 @@ rails db:migrate VERSION=0
 # 打开控制台
 rails c
 
-# 以沙箱打开控制台（不会对现有数据产生影响）
-rails c --sandbox
+# 以沙箱模式打开控制台
+rails c -s
 
 # 查看路由
 rails routes
