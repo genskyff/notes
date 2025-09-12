@@ -1,4 +1,4 @@
-> PC 环境：Windows 11 x64
+> 环境：Windows 11
 
 # 1 终端配置
 

@@ -1,6 +1,6 @@
 > 参考：
 >
-> - [《C# 入门经典》](https://book.douban.com/subject/35863218/)
+> - [C# 入门经典](https://book.douban.com/subject/35863218/)
 > - [C# 语言入门详解](https://www.bilibili.com/video/BV13b411b7Ht)
 
 # 1 概述

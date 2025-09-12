@@ -1,10 +1,10 @@
 > 参考：
 >
-> - [《C Primer Plus》](https://book.douban.com/subject/26792521/)
-> - [《C 陷阱与缺陷》](https://book.douban.com/subject/2778632/)
-> - [《C 和指针》](https://book.douban.com/subject/3012360/)
-> - [《深入理解计算机系统》](https://book.douban.com/subject/26912767/)
-> - [C 语言参考手册](https://zh.cppreference.com/w/c)
+> - [C Primer Plus](https://book.douban.com/subject/26792521/)
+> - [C 陷阱与缺陷](https://book.douban.com/subject/2778632/)
+> - [C 和指针](https://book.douban.com/subject/3012360/)
+> - [深入理解计算机系统](https://book.douban.com/subject/26912767/)
+> - [C reference](https://en.cppreference.com/w/c.html)
 
 # 1 概述
 

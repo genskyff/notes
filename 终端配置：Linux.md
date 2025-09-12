@@ -1,4 +1,4 @@
-> Linux 环境：Debian 13 & Arch Linux
+> Linux 环境：Debian & Arch Linux
 
 # 软件包配置
 

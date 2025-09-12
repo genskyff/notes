@@ -1,4 +1,4 @@
-> Mac 环境：Apple M1 Sonoma
+> 环境：Apple M1
 
 # 终端配置
 
