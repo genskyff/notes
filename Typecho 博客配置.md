@@ -50,7 +50,7 @@ include enable-php-pathinfo.conf;
 
 接着访问域名，如果能够正常访问则表示安装成功。
 
-## 修改 MySQL 默认字符集
+## 修改 MySQL 默认字符编码
 
 由于 MySQL 默认为 `utf8` 编码，此编码在 MySQL 中默认为 3 字节，不能显示 3 字节以上的字符，如 emoji 表情等，所以需要改成 `utf8mb4` 编码，该编码为 MySQL 特有编码。
 
@@ -77,7 +77,7 @@ default-character-set = utf8mb4
 default-character-set = utf8mb4
 ```
 
-接着在 MySQL 命令行中查看使用字符集：
+接着在 MySQL 命令行中查看使用的字符编码：
 
 ```mysql
 SHOW VARIABLES WHERE Variable_name LIKE 'character\_set\_%' OR Variable_name LIKE 'collation%';
@@ -98,7 +98,7 @@ SHOW VARIABLES WHERE Variable_name LIKE 'character\_set\_%' OR Variable_name LIK
 +--------------------------+--------------------+
 ```
 
-若已经有表存在，还需要对其转换字符集：
+若已经有 Typecho 的表存在，则需要转换字符编码：
 
 ```mysql
 alter table typecho_comments convert to character set utf8mb4 collate utf8mb4_unicode_ci;
@@ -133,7 +133,7 @@ rm -f typecho.zip
 
 ## 字符集
 
-若没有设置 Typecho 字符集为 `utf8mb4`，则需要手动修改。
+若没有设置 Typecho 字符编码为 `utf8mb4`，则需要手动修改。
 
 编辑 Typecho 配置文件：
 
