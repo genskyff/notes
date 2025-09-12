@@ -1,4 +1,4 @@
-> Linux 环境：Debian 13
+> 环境：Debian
 
 # 1 前言
 
