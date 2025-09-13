@@ -1289,14 +1289,14 @@ git config --global user.signingkey ~/.ssh/<pubkey>
 # 签名格式为 SSH
 git config --global gpg.format ssh
 
-# 配置允许签名者文件
+# 指定受允许签名者文件
 git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
 
-# 自动签名
+# 每次提交自动签名
 git config --global commit.gpgsign true
 ```
 
-添加条目到允许签名者文件：
+添加条目到受允许签名者文件：
 
 ```shell
 echo "<email> $(cat ~/.ssh/<pubkey>)" >> ~/.ssh/allowed_signers
@@ -1311,9 +1311,9 @@ git commit --allow-empty -m "Test SSH signed commit"
 git log --show-signature -1
 ```
 
-然后同样在 Github 上添加签名的公钥，但是 Key type 需要选择 **Signing Key**。这样推送后就会在签名的提交上显示一个 Verified 标识。
+然后同样在 Github 上添加 SSH keys，但是 Key type 需要选择 **Signing Key**。这样推送后就会在签名的提交上显示一个 Verified 标识。
 
-# 10 工作流
+# 10 协作规范
 
 个人项目通常直接使用 `add`、`commit`、`push` 这三步就足够了，但是在一个大项目中，通常需要遵循一些协作规范，以便多个开发人员可以协同工作，避免代码冲突和其它问题。
 
@@ -1321,19 +1321,19 @@ git log --show-signature -1
 
 ## 协作流程
 
-Git 协作策略和操作步骤，具体的协作流程可能因项目而异，但对于绝大多数项目而言，下面的工作流通常都能够胜任。
+Git 协作策略和操作步骤，具体实施可能因项目而异，但对于绝大多数项目而言，下面的工作流通常都能够胜任。
 
-> 以 Github 为例，设有一个多人协作项目 `demo-git`，然后根据 Git 工作流进行协作。
+> 以 Github 为例，设有一个多人协作项目 `demo-git`。
 
 ### 创建仓库
 
 首先在 Github 上创建一个新项目。
 
-<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041754340.png" alt="创建一个新项目" style="zoom: 67%;" />
+<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250913142204842.png" alt="创建一个新项目" style="zoom:67%;" />
 
 此时该项目仅有一个 `README.md` 文件。
 
-![创建好的项目](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041801399.png)
+![创建好的项目](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250913142359812.png)
 
 ### 克隆仓库
 
@@ -1356,10 +1356,10 @@ git pull
 
 ### 创建分支
 
-然后在本地创建一个 `my-dev` 分支并切换过去：
+然后在本地创建一个 `dev` 分支并切换过去：
 
 ```shell
-git switch -c my-dev
+git switch -c dev
 ```
 
 ### 进行开发
@@ -1367,48 +1367,47 @@ git switch -c my-dev
 在 `README.md` 中增加一行：
 
 ```shell
-echo "Hello world!" >> README.md
+echo "locally modified" >> README.md
 ```
 
 然后进行提交：
 
 ```shell
-git add .
-git commit -m "add a 'Hello world!' line"
+git commit -am "docs: locally modified"
 ```
 
 ### 再次同步远程仓库
 
 这里直接在 Github 上的 `main` 分支直接修改 `README.md` 文件，以模拟本地提交后，远程也发生了新的提交。
 
-<img src="https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305041845309.png" alt="直接修改" style="zoom:67%;" />
+![远程修改](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250913143210922.png)
 
-此时远程仓库的 `main` 和 `my-dev` 分支中 `README.md` 的内容分别为：
+此时远程仓库的 `main` 和 `dev` 分支中 `README.md` 的内容分别为：
 
 `main` 分支，**文件：README.md**
 
 ```markdown
 # demo-git
 
-Directly modified!
+remotely modified
 ```
 
-`my-dev` 分支，**文件：README.md**
+`dev` 分支，**文件：README.md**
 
 ```markdown
 # demo-git
 
-Hello world!
+locally modified
 ```
 
-因为本地的 `my-dev` 分支原本是基于没有新增的那一行的 `main` 分支修改的，此时本地提交后发现远程 `main` 分支有新的提交，因此在进行向远程推送前，需要先进行同步，并解决冲突。
+因为本地的 `dev` 分支原本是基于没有新增的那一行的 `main` 分支修改的，此时本地提交后发现远程 `main` 分支有新的提交，因此在进行向远程推送前，需要先进行同步，并解决冲突。
 
 同步有两种方式：
 
 - 使用 `merge` 来合并
 - 使用 `rebase` 来变基
 
-这两种都需要先将远程 `main` 分支的最新代码拉取到本地，但不合并到本地分支：
+这两种都需要先将远程 `main` 分支的最新代码拉取到本地：
 
 ```shell
 git fetch origin main
@@ -1419,12 +1418,12 @@ git fetch origin main
 在完成开发之后，将本地分支上的代码推送到远程仓库中。
 
 ```shell
-git push -u origin my-dev
+git push -u origin dev
 ```
 
-此时查看 Github 上的仓库，发现修改已经同步，并且新增了 `my-dev` 分支。
+此时查看 Github 上的仓库，发现修改已经同步，并且新增了 `dev` 分支。
 
-![修改后的仓库](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/202305042019318.png)
+![修改后的仓库](https://raw.githubusercontent.com/genskyff/image-hosting/main/images/20250913144522657.png)
 
 ### 发起合并请求
 
@@ -1432,13 +1431,13 @@ git push -u origin my-dev
 
 ### 清理工作
 
-当远程的 `my-dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的 `my-dev` 分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
+当远程的 `dev` 分支合并到远程的 `main` 分支后，可以将远程与本地的 `dev` 分支删除，并将远程的 `main` 分支同步到本地，以保持同步。
 
 ```shell
 git switch main
-git branch -d my-dev
-git push origin -d my-dev
 git pull
+git branch -d dev
+git push origin -d dev
 ```
 
 使用 `remote prune` 删除本地仓库中已经不存在的远程分支。这些无效的分支通常是由于远程仓库中的分支已被删除而在本地仍保留所致。
@@ -1449,7 +1448,7 @@ git remote prune origin
 
 这样，本地和远程就又一次保持了同步，并可进行下一次的开发流程。
 
-### 提交规范
+## 提交规范
 
 关于 Git 提交的最佳实践，可参考 [这篇文章](https://medium.com/@saeid/10-essential-practices-for-better-git-commits-and-why-they-matter-3cfc420bf53e)。具体的约定提交规范，可参考 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)。
 
