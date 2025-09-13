@@ -27,10 +27,9 @@ apt install -y git
 通过 `git config` 读取和设置配置：
 
 - `--system`：对所有用户都适用的配置
-
   - Windows：Git 安装目录下的 `etc/gitconfig`
   - Linux： `/etc/gitconfig`
-
+  
 - `--global`：仅对当前用户适用的配置
 
   - Windows、Linux：`~/.gitconfig`
@@ -74,7 +73,7 @@ git config --global credential.helper manager
 # 凭证管理 - macOS
 git config --global credential.helper osxkeychain
 
-# 凭证管理 - Linux
+# 凭证管理 - Linux (需要安装 git-credential-oauth)
 git config --global credential.helper "cache --timeout 21600"
 git config --global --add credential.helper "oauth -device"
 
@@ -92,9 +91,9 @@ git config --unset <key>
     path = <dir>/.gitconfig
 ```
 
-这表示 `dir` 目录下的所有子目录都应用 `path` 中指定的 `.gitconfig` 中的配置，并覆盖上层配置。 
+这表示指定目录下的所有子目录都应用 `path` 中指定的 `.gitconfig` 中的配置，并覆盖上层配置。 
 
->   由于 Git 默认按照最后的配置覆盖前面的，因此 `includeIf` 必须放在最后。
+>   由于 Git 默认按照最后的配置覆盖前面的，因此 `includeIf` 必须放在最后才能生效。
 
 # 2 Git 基础
 
@@ -361,7 +360,7 @@ git rm --cached <file>
 `clean` 从工作区将未跟踪文件删除，需要使用 `-f`
 
 ```shell
-git clean -f [path]
+git clean -f [file]
 ```
 
 ## 移动文件
@@ -552,7 +551,7 @@ git merge <branch>
 
 Git 对合并有多种策略，其中常见的为：
 
-`--ff`：默认策略。当合并两个分支时，若顺着一个分支走下去能够到达另一个分支，那么 Git 在合并两者的时候，只会简单的将指针向前推进，即快进合并。如果不能直接到达，则会创建一个合并提交。
+`--ff`：**默认策略**。当合并两个分支时，若顺着一个分支走下去能够到达另一个分支，那么 Git 在合并两者的时候，只会简单的将指针向前推进，即快进合并。若不能直接到达，则会创建一个合并提交。
 
 ```
 # 场景1：可以快进
@@ -645,7 +644,7 @@ feature:      \---C---D---E
 当 `rerere.enabled` 为 `true` 时，合并时 Git 会使用缓存的解决方法，但有时也需要查看冲突信息。
 
 ```shell
-git checkout --conflict=merge <path>
+git checkout --conflict=merge <file>
 ```
 
 ## 变基
@@ -806,7 +805,7 @@ git tag
 使用通配符查看指定标签：
 
 ```shell
-git tag -l "v1.2.3*"
+git tag -l "v1.*"
 ```
 
 ## 创建
@@ -915,7 +914,7 @@ git submodule add <repo> [name]
     url = https://github.com/<username>/mysub
 ```
 
-Git 并不会跟踪子模块的具体变更，当子模块更新后，Git 会把子模块当作一个可以添加的变更。
+Git 并不会跟踪子模块的具体变更，当子模块更新后，Git 会把子模块整体当作一个可以添加的变更。
 
 ## 克隆含有子模块的仓库
 
@@ -1000,7 +999,7 @@ git stash clear
 
 `stash` 虽然可以提供临时的上下文切换，在不同的分支上工作，但并不提供并行工作能力。当确实需要在两个分支上同时工作，或者不想使用 `stash` 来保存修改然后频繁的切换上下文时，可以使用 `worktree`。
 
-`worktree` 可以让一个仓库同时拥有多个工作树，每个工作树都可以检出不同的分支或提交。默认情况下，所有仓库都拥有一个工作树，即当前仓库。
+`worktree` 可以让一个仓库同时拥有多个工作树，每个工作树都可以检出不同的分支或提交。默认情况下，所有仓库都拥有一个主要工作树，即当前仓库。
 
 ### 基本使用
 
@@ -1009,10 +1008,10 @@ git stash clear
 git worktree list
 
 # 添加工作树
-git worktree add <path> <branch>
+git worktree add <dir> <branch>
 
 # 删除工作树
-git worktree remove <path>
+git worktree remove <dir>
 ```
 
 ### 清理工作树
@@ -1028,14 +1027,16 @@ git worktree prune
 `worktree lock` 用于锁定一个工作树，防止被 `worktree remove` 或 `worktree prune` 意外删除。用于表示该工作树用于特定目的，不应该被干扰，但依然可以检出分支、应用提交等操作。
 
 ```shell
-git worktree lock [--reason <string>] <path>
+git worktree lock [--reason <string>] <dir>
 ```
 
 锁定后可通过 `worktree unlock` 来解锁：
 
 ```shell
-git worktree unlock <path>
+git worktree unlock <dir>
 ```
+
+>   主要工作树无法被锁定。
 
 ### 工作树与直接复制文件夹的区别
 
@@ -1313,7 +1314,7 @@ git log --show-signature -1
 
 然后同样在 Github 上添加 SSH keys，但是 Key type 需要选择 **Signing Key**。这样推送后就会在签名的提交上显示一个 Verified 标识。
 
-# 10 协作规范
+# 10 Git 协作
 
 个人项目通常直接使用 `add`、`commit`、`push` 这三步就足够了，但是在一个大项目中，通常需要遵循一些协作规范，以便多个开发人员可以协同工作，避免代码冲突和其它问题。
 
@@ -1321,7 +1322,7 @@ git log --show-signature -1
 
 ## 协作流程
 
-Git 协作策略和操作步骤，具体实施可能因项目而异，但对于绝大多数项目而言，下面的工作流通常都能够胜任。
+Git 协作的具体实施可能因项目而异，但对于大多数情况而言，下面的工作流通常足够。
 
 > 以 Github 为例，设有一个多人协作项目 `demo-git`。
 
