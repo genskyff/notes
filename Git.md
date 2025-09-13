@@ -1449,36 +1449,7 @@ git remote prune origin
 
 这样，本地和远程就又一次保持了同步，并可进行下一次的开发流程。
 
-## 标识前缀
+### 提交规范
 
-在常见的分支和提交消息中，通常使用一些常见的前缀来标识提交的类型。这些前缀并不强制，但可以帮助更好地组织和理解提交历史。
+关于 Git 提交的最佳实践，可参考 [这篇文章](https://medium.com/@saeid/10-essential-practices-for-better-git-commits-and-why-they-matter-3cfc420bf53e)。具体的约定提交规范，可参考 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)。
 
-- `style`：代码风格的更改
-- `lint`：代码格式检查和修正
-- `refactor`：重构代码
-- `fix`：修复 Bug
-- `feat`：添加新功能
-- `chore`：构建相关的更改
-- `test`：测试相关的更改
-- `docs`：更新文档或注释
-- `perf`：性能优化相关的更改
-- `config`：配置文件相关的更改
-- `cleanup`：清理无用的代码
-- `init`：初始化相关的更改
-- `security`：安全相关的更改
-- `deps`：更新依赖
-- `wip`：尚未完成的更改
-- `ci`：CI 相关的更改
-
-```shell
-# 创建用于添加功能的新分支
-git switch -c feat/xxx
-
-# 用于修复代码格式的提交
-git commit -m "style: xxx"
-
-# 还可用括号说明更改所涉及的作用域
-git commit -m "chore(webpack): xxx"
-```
-
-> 关于 Git 提交的最佳实践，可参考 [这篇文章](https://medium.com/@saeid/10-essential-practices-for-better-git-commits-and-why-they-matter-3cfc420bf53e)。
