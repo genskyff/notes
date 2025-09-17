@@ -2,27 +2,33 @@
 
 ## 2.1 抽象
 
-**抽象**（Abstraction）的核心是从具体情况中提取共性，形成通用解决方案。通过引入名称来替代具体值可以实现**泛化**（Generalization），而后通过用具体值替换这些名称来实现**特化**（Specialization），从而将通用方案应用到具体问题中。抽象的层次递进（以购物计算为例）：
+**抽象**（Abstraction）的核心是从具体情况中提取共性，形成通用解决方案。
 
-第一层：将具体数量抽象为变量 `items`：
+-   泛化（Generalization）：通过引入名称来替代具体实例中的值或操作
+
+-   特化（Specialization）：通过用具体的值或操作替换名称，将通用方案应用于特定问题
+
+抽象的层次递进（以购物计算为例）：
+
+-   第一层，泛化数量，引入名称 `items`：
 
 ```
 10 * 9 -> 10 * items
 ```
 
-第二层：将单价也抽象为变量 `cost`：
+-   第二层，泛化单价，引入名称 `cost`：
 
 ```
 10 * items -> cost * items
 ```
 
-第三层：将运算符也抽象为变量 `op`：
+-   第三层，泛化操作，引入名称 `op`：
 
 ```
 cost * items -> cost op items
 ```
 
-这种抽象方式的强大之处在于同一个抽象模式可以用于解决多个相关问题。如 `cost op items` 这一抽象结构，既可以通过指定 `op` 为乘法来计算总价，也可以通过指定 `op` 为除法来计算单价，本质上是在创建可重用的函数模板。当然在抽象过程中需要注意类型匹配的约束，确保在具体使用时名称被恰当类型的值或操作所替换。
+这种抽象方式的强大之处在于同一个抽象模式可以用于解决多个相关问题。如 `cost op items` 这一抽象结构，既可以通过指定 `op` 为乘法来计算总价，也可以通过指定 `op` 为除法来计算单价，本质上是在创建可重用的函数模板。当然在实践中需要注意类型匹配的约束，确保在具体使用时名称被恰当类型的值或操作所替换。
 
 这种思维方式体现了函数式编程的基本概念：通过名称替换实现抽象（即函数抽象），通过具体值替换实现特化（即函数应用）。抽象提供了一种强大的问题解决思路：**先将具体问题泛化为通用形式，再通过特化来解决具体实例**。
 
@@ -60,24 +66,35 @@ cost * items -> cost op items
 λ 演算的基本单元是 **λ 表达式**（Lambda expression），可由标识抽象的名称、引入抽象的函数，或用于特化抽象的函数应用。其定义为：
 
 ```
-<expression> ::= <name> | <function> | <application>
+<expr> ::= <name> | <func> | <appl>
 ```
 
-名称的定义为任意非空字符串，如 `foo`、`bar_`、`123!` 等。
+名称（`name`）：任意非空字符串，如 `foo`、`bar_`、`123!` 等。
 
-函数是对 λ 表达式的抽象，其中 λ 符号位于前面并引入用于抽象的名称，作为函数的**绑定变量**（Bound variable），即**形式参数**，但函数本身无需名称。`.` 将名称与进行抽象的表达式分开。这个表达式称为函数的**主体**（Body），主体可以是任何 λ 表达式。其定义为：
+函数（`func`）：λ 表达式的抽象，形式为 `λ<name>.<body>`。
+
+-   λ：引入抽象的符号
+
+-   `<name>`：**绑定变量**（Bound variable）,，即**形式参数**，但函数本身无需名称
+
+-   `.`：将名称与进行抽象的表达式分开
+
+-   `<body>`：函数**主体**（Body），可为任意 λ 表达式，包括另一个函数
 
 ```
-<function> ::= λ<name>.<body>
-<body> ::= <expression>
+<func> ::= λ<name>.<body>
+<body> ::= <expr>
 ```
 
-函数应用通过为名称提供一个值来特化抽象。将函数表达式应用于参数表达式，这类似函数调用，而参数表达式对应实际参数。区别在于传统语言的函数调用使用函数名，编译器会找到相应的定义，λ 演算则允许函数定义直接出现在函数调用中。其定义为：
+函数应用（`appl`）：特化一个抽象，形式为 `<func expr> <arg expr>`。
+
+-   `<func expr>`：函数表达式，代表函数调用，会被应用于参数表达式
+-   `<arg expr>`：参数表达式，代表实际的参数，提供值来特化抽象
 
 ```
-<application> ::= (<function expression> <argument expression>)
-<function expression> ::= <expression>
-<argument expression> ::= <expression>
+<appl> ::= (<func expr> <arg expr>)
+<func expr> ::= <expr>
+<arg expr> ::= <expr>
 ```
 
 以下都是合法的 λ 表达式：
@@ -85,14 +102,10 @@ cost * items -> cost op items
 - 函数：`λx.x`、`λx.λy.x`、`λf.λa.(f a)`
 - 函数应用：`(λx.x λa.λb.b)`
 
-函数应用的求值有两种方式：
+函数应用的求值过程就是将函数体中的绑定变量替换为参数，区别在于替换的是**参数的值**还是**参数表达式本身**。
 
-- **应用序**（Applicative order）：类似传值调用，参数先求值
-- **正则序**（Normal order）：类似传名调用，参数延迟求值
-
-求值过程都是将函数体中的绑定变量替换为参数，区别在于替换的是**参数的值**还是**参数表达式本身**。
-
-这种简洁的形式系统通过名称、抽象（函数）和特化（应用）的组合，为计算提供了强大而统一的形式化基础。
+- **应用序**（Applicative order）：类似传值调用，参数先求值，再将其值替换到函数体中
+- **正则序**（Normal order）：类似传名调用，直接将**未求值的参数表达式**替换到函数体中
 
 ## 2.5 简单 λ 函数
 
@@ -113,10 +126,10 @@ cost * items -> cost op items
 - 特点：不做任何改变，类似于加法中的 0，乘法中的 1，即幺元
 - 意义：体现了函数式中最简单的变换，即保持不变
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
-function identity<T>(x: T): T {
+function ident<T>(x: T): T {
   return x;
 }
 ```
@@ -124,10 +137,6 @@ function identity<T>(x: T): T {
 ### 2.5.2 自应用函数（Self-application function）
 
 ```
-(λx.x λs.(s s))        // 作为恒等函数参数
-=> x := λs.(s s)
-=> λs.(s s)            // 得到本身
-
 (λx.(x x) λs.(s s))    // 应用于自身
 => x := λs.(s s)
 => (λx.(x x) λs.(s s)) // 得到原始表达式
@@ -135,12 +144,12 @@ function identity<T>(x: T): T {
 ```
 
 - 形式：`λs.(s s)`
-- 行为：作为恒等函数参数时，得到自身；应用于自身时，会导致无限循环
-- 特点：函数可作为参数传递，并将参数应用于自身
+- 行为：函数可作为参数传递，并将参数应用于自身
+- 特点：应用于自身时，会导致无限循环
 
 - 意义：体现了计算可能永远不会终止，为递归函数和复杂计算提供了理论基础
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
 type Fn = (f: Fn) => any;
@@ -165,9 +174,9 @@ function self_apply(f: Fn) {
 - 形式：`λfunc.λarg.(func arg)`
 - 行为：接受两个参数，并将第一个参数（作为函数）应用于第二个参数
 - 特点：函数可以作为参数传递和返回，并可动态组合使用
-- 意义：体现了函数组合的灵活性，并展示了高阶函数的基本工作方式
+- 意义：体现了函数组合的灵活性，是高阶函数的基本模型
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
 type Fn<T, R> = (x: T) => R;
@@ -179,50 +188,42 @@ function apply<T, R>(f: Fn<T, R>): Fn<T, R> {
 
 ## 2.6 引入新语法
 
-**语法糖**（Syntactic sugar）允许在不改变语言本质的前提下，提供更友好的语法形式。具名函数、中缀表达式和条件表达式等特性使复杂的 λ 表达式变得更容易编写和理解。
+**语法糖**（Syntactic sugar）允许在不改变语言本质的前提下，提供更友好的语法形式。具名函数、中缀表达式和条件表达式等特性使复杂的 λ 表达式变得更容易编写和理解。但需要遵循两个关键原则：
 
-语法扩展遵循两个关键原则：
+替换的确定性：
 
-1.  替换的确定性：
+- 所有高级语法都能转换回基础 λ 表达式
 
-    - 所有高级语法都能转换回基础 λ 表达式
+- 替换过程是有限且确定的
 
-    - 替换过程是有限且确定的
+- 不需要对基础 λ 演算做任何修改
 
-    - 不需要对基础 λ 演算做任何修改
+时序无关性：
 
-2.  时序无关性：
+- 所有语法替换必须是静态的
 
-    - 所有语法替换必须是静态的
+- 不同的替换顺序不会导致不同的结果
 
-    - 不同的替换顺序不会导致不同的结果
+- 确保语言的一致性和可预测性
 
-    - 确保语言的一致性和可预测性
-
-在实践应用中，理论上所有高级语法都可以被完全展开为基础 λ 表达式，但为保持代码可读性，通常不会进行完全展开。这种平衡既保持了语言理论基础的纯粹性，又提供了便利的编程接口。
+在实践应用中，理论上所有高级语法都可以被完全展开为基础 λ 表达式，但为保持代码可读性，通常不会进行完全展开。
 
 ## 2.7 具名函数和 β 归约的表示法
 
-**具名函数**（Naming function）机制通过 `def` 语法提供了一种简化函数表达式的方法，将复杂的函数定义与简单的名称关联起来。基本语法形式为 `def <name> = <function>`，使得函数可以通过名称重复使用。
+**具名函数**（Naming function）：`def <name> = <func>` 的形式为函数命名，方便复用。
+
+-   替换表示：`(<name> <arg>) == (<func> <arg>)` 表示将名称替换为其定义
 
 ```
-def identity = λx.x
+def ident = λx.x
 def self_apply = λs.(s s)
 def apply = λfunc.λarg.(func arg)
 ```
 
-具名函数遵循两个核心规则：
+**β 归约**（Beta reduction）：用参数替换函数体中绑定变量的过程
 
-1.  替换时机
-    - 理论上所有名称都应在求值前被替换
-    - 实践中仅在作为应用表达式的函数部分时才替换
-    - 使用 `(<name> <argument>) == (<function> <argument>)` 表示替换过程
-2.  β 归约规则
-    - 用参数替换函数体中绑定变量的过程称为 **β 归约**（Beta reduction）
-    - 使用 `(<function> <argument>) => <expression>` 表示归约结果
-    - 归约序列可用 `...` 省略中间步骤
-
-这种命名机制在保持语言形式严谨性的同时，通过提供简洁的命名方式来提高代码的可读性和可重用性。函数定义只需编写一次，之后可通过名称多次引用，简化了复杂表达式的编写过程。
+- 使用 `(<func> <arg>) => <expr>` 表示归约结果
+- 归约序列可用 `...` 省略中间步骤
 
 ## 2.8 由函数构造函数
 
@@ -231,18 +232,18 @@ def apply = λfunc.λarg.(func arg)
 恒等函数的等价构造：
 
 ```
-def identity = λx.x
-def identity2 = λx.((apply identity) x)
+def ident = λx.x
+def ident2 = λx.((apply ident) x)
 ```
 
 证明等价性：
 
 ```
-(identity2 <argument>)
-=> (λx.((apply identity) x) <argument>)
-=> (λx.(identity x) <argument>)
+(ident2 <arg>)
+=> (λx.((apply ident) x) <arg>)
+=> (λx.(ident x) <arg>)
 => ...
-=> <argument>
+=> <arg>
 ```
 
 - 通过 `apply` 函数包装原始恒等函数
@@ -258,9 +259,9 @@ def self_apply2 = λs.((apply s) s)
 证明等价性：
 
 ```
-(self_apply2 <argument>)
-=> ((apply <argument>) <argument>)
-=> (<argument> <argument>)
+(self_apply2 <arg>)
+=> ((apply <arg>) <arg>)
+=> (<arg> <arg>)
 ```
 
 - 通过 `apply` 函数重新构造自应用函数
@@ -275,9 +276,9 @@ def apply = λfunc.λarg.(func arg)
 证明等价性：
 
 ```
-(apply <function>)
-=> λarg.(<function> arg)
-=> (<function> <argument>)
+(apply <func>)
+=> λarg.(<func> arg)
+=> (<func> <arg>)
 ```
 
 - 对任意函数和参数，可生成与自身效果相同的新函数
@@ -292,9 +293,9 @@ def apply = λfunc.λarg.(func arg)
 ```
 def select_first = λfirst.λsecond.first
 
-((select_first <argument1>) <argument2>)
-=> (λsecond.<argument1> <argument2>)
-=> <argument1>
+((select_first <arg1>) <arg2>)
+=> (λsecond.<arg1> <arg2>)
+=> <arg1>
 ```
 
 - 形式：`λfirst.λsecond.first`
@@ -302,7 +303,7 @@ def select_first = λfirst.λsecond.first
 - 行为：返回第一个参数，忽略第二个参数
 - 特点：函数体中不包含 `second`，因此第二个参数永远不会被使用
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
 function select_first<F, S>(first: F): (second: S) => F {
@@ -315,9 +316,9 @@ function select_first<F, S>(first: F): (second: S) => F {
 ```
 def select_second = λfirst.λsecond.second
 
-((select_second <argument1>) <argument2>)
-=> (λsecond.second <argument2>)
-=> <argument2>
+((select_second <arg1>) <arg2>)
+=> (λsecond.second <arg2>)
+=> <arg2>
 ```
 
 - 形式：`λfirst.λsecond.second`
@@ -326,7 +327,7 @@ def select_second = λfirst.λsecond.second
 
 - 特点：当应用于任何参数时都会返回一个恒等函数的等价版本
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
 function select_second<F, S>(first: F): (second: S) => S {
@@ -339,24 +340,24 @@ function select_second<F, S>(first: F): (second: S) => S {
 ```
 def make_pair = λfirst.λsecond.λfunc.((func first) second)
 
-((make_pair <argument1>) <argument2>)
-=> (λsecond.λfunc.((func <argument1>) second) <argument2>)
-=> λfunc.((func <argument1>) <argument2>)
+((make_pair <arg1>) <arg2>)
+=> (λsecond.λfunc.((func <arg1>) second) <arg2>)
+=> λfunc.((func <arg1>) <arg2>)
 
 // 应用于 select_first 时
-=> <argument1>
+=> <arg1>
 
 // 应用于 select_second 时
-=> <argument2>
+=> <arg2>
 ```
 
 - 形式：`λfirst.λsecond.λfunc.((func first) second)`
 
-- 行为：返回可以根据选择函数（func）返回不同参数的配对函数
+- 行为：返回可以根据选择函数返回不同参数的配对函数
 
 - 特点：将两个参数打包成一个函数，该函数可通过接收 `select_first` 或 `select_second` 来分别获取第一或第二个参数，实现了一种数据结构组合机制。
 
-等价于一般语言中的：
+在 TypeScript 中可表示为：
 
 ```typescript
 type SelectFn<F, S> =
@@ -396,7 +397,7 @@ function make_pair<F, S>(
 - 在名称中：单独出现的变量名都是自由变量
 - 在函数中：`λ<name>.<body>` 中变量名是 `<name>` 或在 `<body>` 中绑定
 
-- 在应用中：`(<function> <argument>)` 中任一部分有绑定出现
+- 在应用中：`(<func> <arg>)` 中任一部分有绑定出现
 
 变量替换规则：
 
@@ -417,7 +418,7 @@ function make_pair<F, S>(
 
 正则序 β 归约规则：
 
-- 形式：`(λ<name>.<body> <argument>)`
+- 形式：`(λ<name>.<body> <arg>)`
 - 操作：仅替换 `<body>` 中自由出现的 `<name>`
 - 目的：确保只替换实际对应于当前绑定变量的出现
 
@@ -456,17 +457,17 @@ function make_pair<F, S>(
 形如这样的表达式：
 
 ```
-λ<name>.(<expression> <name>)
+λ<name>.(<expr> <name>)
 ```
 
 这类似 `apply`，但在应用于任意参数时：
 
 ```
-(λ<name>.(<expression> <name>) <argument>)
-=> (<expression> <argument>)
+(λ<name>.(<expr> <name>) <arg>)
+=> (<expr> <arg>)
 ```
 
-也就是说，原表达式可以直接简化为 `<expression>`，这种简化过程称为 **η 归约**（Eta reduction）。
+也就是说，原表达式可以直接简化为 `<expr>`，这种简化过程称为 **η 归约**（Eta reduction）。
 
 ```
 // x 不在 M 中自由出现
@@ -491,29 +492,29 @@ function make_pair<F, S>(
 ### 语法规范
 
 ```
-<expression> ::= <name> | <function> | <application>
+<expr> ::= <name> | <func> | <appl>
 <name> ::= 非空字符序列
-<function> ::= λ<name>.<body>
-<body> ::= <expression>
-<application> ::= (<function expression> <argument expression>)
-<function expression> ::= <expression>
-<argument expression> ::= <expression>
+<func> ::= λ<name>.<body>
+<body> ::= <expr>
+<appl> ::= (<func expr> <arg expr>)
+<func expr> ::= <expr>
+<arg expr> ::= <expr>
 ```
 
 ### 自由变量规则
 
 - `<name>` 在 `<name>` 中是自由的
 - 在 `λ<name1>.<body>` 中，若 `<name1>` 不是 `<name>` 且 `<name>` 在 `<body>` 中是自由的，则 `<name>` 是自由的
-- 在 `(<function expression> <argument expression>)` 中，若 `<name>` 在函数表达式或参数表达式中是自由的，则 `<name>` 是自由的
+- 在 `(<func expr> <arg expr>)` 中，若 `<name>` 在函数表达式或参数表达式中是自由的，则 `<name>` 是自由的
 
 ### 绑定变量规则
 
 - 在 `λ<name1>.<body>` 中，若 `<name>` 是 `<name1>` 或 `<name>` 在 `<body>` 中是绑定的，则 `<name>` 是绑定的
-- 在 `(<function expression> <argument expression>)` 中，若 `<name>` 在函数表达式或参数表达式中是绑定的，则 `<name>` 是绑定的
+- 在 `(<func expr> <arg expr>)` 中，若 `<name>` 在函数表达式或参数表达式中是绑定的，则 `<name>` 是绑定的
 
 ### 正则序 β 归约规则
 
-对于不含自由变量的 `(<function expression> <argument expression>)`：
+对于不含自由变量的 `(<func expr> <arg expr>)`：
 
 1.  对函数表达式进行正则序 β 归约得到函数值
 2.  若函数值是 `λ<name>.<body>`，则用参数表达式替换 `<body>` 中所有自由出现的 `<name>`，并对新的 `<body>` 进行正则序 β 归约
@@ -523,7 +524,7 @@ function make_pair<F, S>(
 
 - `=>` 表示正则序 β 归约
 - `=> ... =>` 表示多步正则序 β 归约
-- `def <name> = <expression>` 定义替换规则
+- `def <name> = <expr>` 定义替换规则
 - `==` 表示定义名称替换
 - α 变换：在 `λ<name1>.<body>` 中重命名 `<name1>` 为 `<name2>`
-- η 归约：`(λ<name>.(<expression> <name>) <argument>) => (<expression> <argument>)`
+- η 归约：`(λ<name>.(<expr> <name>) <arg>) => (<expr> <arg>)`
