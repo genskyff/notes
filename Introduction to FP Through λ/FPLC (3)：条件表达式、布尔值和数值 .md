@@ -2,7 +2,7 @@
 
 ## 3.1 真值和条件表达式
 
-布尔逻辑的基础是 `true` 和 `false` 两个真值，以及 NOT、AND、OR 等逻辑运算。
+布尔逻辑的基础是 `true` 和 `false` 两个真值，以及 not、and、or 等逻辑运算。
 
 真值定义为：
 
@@ -14,10 +14,10 @@ def false = select_second
 条件表达式的形式为：
 
 ```
-<condition> ? <expression1> : <expression2>
+<cond> ? <expr1> : <expr2>
 ```
 
-当条件为 `true` 时选择 `expression1`，为 `false` 时选择 `expression2`。
+当条件为 `true` 时选择 `expr1`，为 `false` 时选择 `expr2`。
 
 这个条件表达式可以用 `make_pair` 的形式表示为：
 
@@ -33,12 +33,12 @@ def cond = λe1.λe2.λc.((c e1) e2)
 
 这些定义构成了实现逻辑运算的基础。
 
-## 3.2 NOT
+## 3.2 not
 
-NOT 是一元运算符：
+`not` 是一元运算符：
 
 ```
-not <operand>
+not <expr>
 ```
 
 用条件表达式来表达：
@@ -63,12 +63,12 @@ def not = λx.(((cond false) true) x)
 => true
 ```
 
-## 3.3 AND
+## 3.3 and
 
-AND 是二元运算符：
+`and` 是二元运算符：
 
 ```
-<operand> and <operand>
+<expr> and <expr>
 ```
 
 用条件表达式来表达：
@@ -94,12 +94,12 @@ def and = λx.λy.(((cond y) false) x)
 => false
 ```
 
-## 3.4 OR
+## 3.4 or
 
-OR 是二元运算符：
+`or` 是二元运算符：
 
 ```
-<operand> or <operand>
+<expr> or <expr>
 ```
 
 用条件表达式来表达：
@@ -145,7 +145,7 @@ def 3 = (succ (succ 1)) == (succ (succ (succ 0)))
 对于 `succ`，`n` 是一个接受选择器参数的函数，即数字：
 
 ```
-def 0 = identity
+def 0 = ident
 def succ = λn.λs.((s false) n)
 ```
 
@@ -241,13 +241,13 @@ def pred = λn.(((iszero n) 0) (n false))
 原始形式：
 
 ```
-(... ((<function> <argument1>) <argument2>) ... <argumentN>)
+(... ((<func> <arg1>) <arg2>) ... <argN>)
 ```
 
 简化形式：
 
 ```
-<function> <argument1> <argument2> ... <argumentN>
+<func> <arg1> <arg2> ... <argN>
 ```
 
 限制条件：
@@ -260,13 +260,13 @@ def pred = λn.(((iszero n) 0) (n false))
 原始形式：
 
 ```
-def <names> = λ<name>.<expression>
+def <names> = λ<name>.<expr>
 ```
 
 简化形式：
 
 ```
-def <names> <name> = <expression>
+def <names> <name> = <expr>
 ```
 
 ### 条件表达式简化
@@ -274,13 +274,13 @@ def <names> <name> = <expression>
 原始形式：
 
 ```
-def cond = <true choice> <false choice> <condition>
+def cond = <true choice> <false choice> <cond>
 ```
 
 简化形式：
 
 ```
-if <condition>
+if <cond>
 then <true choice>
 else <false choice>
 ```
@@ -290,7 +290,7 @@ else <false choice>
 简单函数：
 
 ```
-def identity x = x
+def ident x = x
 def self_apply s = s s
 def apply func arg = func arg
 ```
