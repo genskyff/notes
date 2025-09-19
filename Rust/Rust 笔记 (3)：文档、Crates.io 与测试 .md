@@ -159,11 +159,11 @@ cargo package --list
 
 ```shell
 cargo publish
+cargo publish -p <package>
+cargo publish --workspace
 ```
 
 同时，发布之后，包的文档也会自动发布到 [Docs.rs](https://docs.rs/)。当更新了版本后，可以修改 `version` 字段，然后再次发布。
-
-> 工作区中可能有多个 Crate，Cargo 并不支持一次性全部发布，都需要进入这些 Crate 目录中来单独发布。
 
 ## 撤回版本
 
