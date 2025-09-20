@@ -197,13 +197,13 @@ def false x y = y identity
 
 ```
 if true
-then λdummy.<expression1>
-else λdummy.<expression2>
+then λdummy.<expr1>
+else λdummy.<expr2>
 ```
 
 1.  `true` 选择第一个参数
 2.  应用 `identity`
-3.  最终只计算 `<expression1>`，而 `<expression2>` 完全不会被求值
+3.  最终只计算 `<expr1>`，而 `<expr2>` 完全不会被求值
 
 这种模式在现代编程中很常见：
 
@@ -386,8 +386,8 @@ SQUARES = (SQ 0)::1::4::(SQLIST (SUCC 2))
 
 (1) 为每个约束对编号
 
-(2) 要惰性求值 `(<function expression> <argument expression>)`
+(2) 要惰性求值 `(<func expression> <arg expression>)`
 
-- (a) 对 `<function expression>` 进行惰性求值得到 `<function value>`
-- (b) 若 `<function value>` 是 `λ<name>.<body>`，则用 `<argument expression>` 替换 `<body>` 中所有 `<name>` 的自由出现，并一致地重新编号所有周围的约束对，然后用新的 `<body>` 替换所有 `(<function expression> <argument expression>)_i` 的出现，并对新的 `<body>` 进行惰性求值
-- (c) 若 `<function value>` 不是函数，则对 `<argument expression>` 进行惰性求值得到 `<argument value>`，并用 `(<function value> <argument value>)` 替换所有 `(<function expression> <argument expression>)_i` 的出现，然后返回 `(<function value> <argument value>)`
+- (a) 对 `<func expression>` 进行惰性求值得到 `<func value>`
+- (b) 若 `<func value>` 是 `λ<name>.<body>`，则用 `<arg expression>` 替换 `<body>` 中所有 `<name>` 的自由出现，并一致地重新编号所有周围的约束对，然后用新的 `<body>` 替换所有 `(<func expression> <arg expression>)_i` 的出现，并对新的 `<body>` 进行惰性求值
+- (c) 若 `<func value>` 不是函数，则对 `<arg expression>` 进行惰性求值得到 `<arg value>`，并用 `(<func value> <arg value>)` 替换所有 `(<func expression> <arg expression>)_i` 的出现，然后返回 `(<func value> <arg value>)`

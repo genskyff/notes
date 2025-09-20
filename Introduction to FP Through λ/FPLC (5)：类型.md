@@ -512,12 +512,12 @@ a * b == * a b
 // 条件表达式方式（原始形式）
 def <name> <bound variable> =
   IF <bound variable>
-  THEN <expression1>
-  ELSE <expression2>
+  THEN <expr1>
+  ELSE <expr2>
 
 // 结构匹配方式（改进形式）
-def <name> <names1> = <expression1>
-  or <name> <names2> = <expression2>
+def <name> <names1> = <expr1>
+  or <name> <names2> = <expr2>
   or ...
 ```
 

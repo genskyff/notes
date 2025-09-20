@@ -21,8 +21,8 @@
 - 基于迭代结构
 - 通过改变共享内存中的变量实现
 - 典型结构：
-  - for ... in：有界迭代
-  - while：无界迭代
+  - `for-in`：有界迭代
+  - `while`：无界迭代
 
 函数式：
 
@@ -128,8 +128,8 @@ def add x y
 对于函数应用，这两种形式是等价的：
 
 ```
-(<function> <argument>)
-= (λf.(f <argument>) <function>)
+(<func> <arg>)
+= (λf.(f <arg>) <func>)
 ```
 
 由于表达式求值前，所有名称必须替换为其定义。而唯一求值的场景就是函数应用，要延迟这种求值，可以将表达式按上述方式进行转换。
@@ -332,7 +332,7 @@ Y 组合子实际上就是一个不动点组合子，可以在没有递归能力
 
 使用简化记法：
 
-- 形式：`rec <name> = <expression>`
+- 形式：`rec <name> = <expr>`
 - 作用：直接在定义中使用递归名称
 
 旧记法：
@@ -471,19 +471,18 @@ def <name> = <name1> <name1>
 
 ### 应用序 β 归约
 
-对于不含自由变量的 `(<function> <argument>)`：
+对于不含自由变量的 `(<func> <arg>)`：
 
-- 对 `<argument>` 进行应用序 β 归约得到 `<argument value>`
-- 对 `<function>` 进行应用序 β 归约得到 `<function value>`
-- 若 `<function value>` 是 `λ<name>.<body>`，则用 `<argument value>` 替换 `<body>` 中所有自由出现的 `<name>`，并对新的 `<body>` 进行应用序 β 归约
-- 若 `<function value>` 不是函数，则返回 `(<function value> <argument value>)`
+- 对 `<arg>` 进行应用序 β 归约得到 `<arg value>`
+- 对 `<func>` 进行应用序 β 归约得到 `<func value>`
+- 若 `<func value>` 是 `λ<name>.<body>`，则用 `<arg value>` 替换 `<body>` 中所有自由出现的 `<name>`，并对新的 `<body>` 进行应用序 β 归约
+- 若 `<func value>` 不是函数，则返回 `(<func value> <arg value>)`
 
 ### 应用序归约记法
 
-```
-->        -- 应用序 β 归约
--> ... -> -- 多次应用序 β 归约
-```
+-   `->`：应用序 β 归约
+
+-   `-> ... ->`：多次应用序 β 归约
 
 ### 递归函数
 
@@ -513,6 +512,6 @@ recursive <name1> => ... => <name1> (recursive <name1>)
 ### 递归记法
 
 ```
-rec <name> = <expression using '<name>'>
-== def <name> = recursive λf.<expression using 'f'>
+rec <name> = <expr using '<name>'>
+== def <name> = recursive λf.<expr using 'f'>
 ```

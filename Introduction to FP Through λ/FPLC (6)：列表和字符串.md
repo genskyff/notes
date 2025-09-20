@@ -203,7 +203,7 @@ CONS 1 (CONS 2 (CONS 3 (CONS 4 NIL)))
 用二元中缀运算符 `::` 替代 `CONS`：
 
 ```
-<expression1>::<expression2> == CONS <expression1> <expression2>
+<expr1>::<expr2> == CONS <expr1> <expr2>
 ```
 
 推导示例：
@@ -564,15 +564,15 @@ def STRING_VAL S = MAKE_NUMB (string_val zero S)
 ```
 rec <name> <bound variable> =
   IF ISNIL <bound variable>
-  THEN <expression1>
-  ELSE <expression2 using (HEAD <bound variable>) and (TAIL <bound variable>)>
+  THEN <expr1>
+  ELSE <expr2 using (HEAD <bound variable>) and (TAIL <bound variable>)>
 ```
 
 使用结构匹配的新写法：
 
 ```
-rec <name> [] = <expression1>
-  or <name> (<head>::<tail>) = <expression2 using <head> and <tail>>
+rec <name> [] = <expr1>
+  or <name> (<head>::<tail>) = <expr2 using <head> and <tail>>
 ```
 
 以计算列表长度函数为例：
@@ -790,14 +790,14 @@ def SUM2 = MAPCARS λX.λY.(X+Y)
 ### 列表记法
 
 ```
-<expression1 >::<expression2> ==
-  CONS <expression1><expression2>
-[<expression1 >, <expression2>] ==
-<expression1>::[<expression2>]
-[<expression>] == <expression>::NlL
+<expr1 >::<expr2> ==
+  CONS <expr1><expr2>
+[<expr1 >, <expr2>] ==
+<expr1>::[<expr2>]
+[<expr>] == <expr>::NlL
 [] == NIL
-<expression1>::(<expression2>::<expression3>) ==
-<expression1>::<expression2>::<expression3>
+<expr1>::(<expr2>::<expr3>) ==
+<expr1>::<expr2>::<expr3>
 ```
 
 ### 字符串记法
@@ -810,12 +810,12 @@ def SUM2 = MAPCARS λX.λY.(X+Y)
 ### 列表匹配定义
 
 ```
-rec <name> [] = <expression1>
+rec <name> [] = <expr1>
   or <name> (<head>::<tail>) =
-    <expression2 using '<head>' and '<tail>'> ==
+    <expr2 using '<head>' and '<tail>'> ==
 rec <name> <bound variable> =
   IF ISNIL <bound variable>
-  THEN <expression1>
-  ELSE <expression2 using “HEAD <bound variable>' and
+  THEN <expr1>
+  ELSE <expr2 using “HEAD <bound variable>' and
     'TAIL <bound variable>'>
 ```

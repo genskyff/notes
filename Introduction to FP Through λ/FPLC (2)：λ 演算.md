@@ -113,11 +113,11 @@ cost * items -> cost op items
 
 ```
 (λs.s E)
-=> s := E    // 替换 s
+=> s == E    // 替换 s
 => E         // 得到输入本身
 
 (λx.x λs.s)
-=> x := λs.s  // 第一个函数的 x 被替换为第二个函数
+=> x == λs.s  // 第一个函数的 x 被替换为第二个函数
 => λs.s       // 结果仍然是恒等函数
 ```
 
@@ -138,7 +138,7 @@ function ident<T>(x: T): T {
 
 ```
 (λx.(x x) λs.(s s))    // 应用于自身
-=> x := λs.(s s)
+=> x == λs.(s s)
 => (λx.(x x) λs.(s s)) // 得到原始表达式
 => ...
 ```
@@ -163,11 +163,11 @@ function self_apply(f: Fn) {
 
 ```
 ((λfunc.λarg.(func arg) λx.x) λs.(s s))
-=> func := λx.x
+=> func == λx.x
 => (λarg.(λx.x arg) λs.(s s))
-=> arg := λs.(s s)
+=> arg == λs.(s s)
 => (λx.x λs.(s s))
-=> x := λs.(s s)
+=> x == λs.(s s)
 => λs.(s s)
 ```
 
@@ -518,13 +518,13 @@ function make_pair<F, S>(
 
 1.  对函数表达式进行正则序 β 归约得到函数值
 2.  若函数值是 `λ<name>.<body>`，则用参数表达式替换 `<body>` 中所有自由出现的 `<name>`，并对新的 `<body>` 进行正则序 β 归约
-3.  若函数值不是函数，则对参数表达式进行正则序 β 归约得到参数值，返回 `(<function value> <argument value>)`
+3.  若函数值不是函数，则对参数表达式进行正则序 β 归约得到参数值，返回 `(<func value> <arg value>)`
 
 ### 记号约定
 
-- `=>` 表示正则序 β 归约
-- `=> ... =>` 表示多步正则序 β 归约
-- `def <name> = <expr>` 定义替换规则
-- `==` 表示定义名称替换
+- `=>`：正则序 β 归约
+- `=> ... =>`：多次正则序 β 归约
+- `def <name> = <expr>`：定义替换规则
+- `==`：定义名称替换
 - α 变换：在 `λ<name1>.<body>` 中重命名 `<name1>` 为 `<name2>`
 - η 归约：`(λ<name>.(<expr> <name>) <arg>) => (<expr> <arg>)`

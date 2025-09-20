@@ -191,17 +191,17 @@ rec PASS_LIST [] = []
 **局部定义**（Local definitions）是在表达式内部创建名称-值关联的机制，本质上是函数应用的一种形式。
 
 ```
-λ<name>.<body> <argument>
+λ<name>.<body> <arg>
 ```
 
-这种形式要求在计算 `<body>` 之前，将 `<body>` 中所有 `<name>` 的自由出现替换为 `<argument>`。可以认为 `<name>` 和 `<argument>` 在整个 `<body>` 的计算过程中是相关联的。
+这种形式要求在计算 `<body>` 之前，将 `<body>` 中所有 `<name>` 的自由出现替换为 `<arg>`。可以认为 `<name>` 和 `<arg>` 在整个 `<body>` 的计算过程中是相关联的。
 
 这可以用另外两种等价写法：
 
 - 自下而上（`let` 形式）
 
 ```
-let <name> = <argument>
+let <name> = <arg>
 in <body>
 ```
 
@@ -209,7 +209,7 @@ in <body>
 
 ```
 <body>
-where <name> = <argument>
+where <name> = <arg>
 ```
 
 在实践中，推荐使用 `let` 形式，因为符合**先定义后使用**的原则，这种形式清晰地展示了名称绑定和其作用域。
@@ -664,19 +664,19 @@ bool isbool(void* obj) {
 
 ```
 def <name> [<name1>,<name2>,<name3>...] =
-  <expression using '<name1>','<name2>','<name3>' ==
-def <name> <bound variable> = <expression using 'HEAD <bound variable>',
+  <expr using '<name1>','<name2>','<name3>' ==
+def <name> <bound variable> = <expr using 'HEAD <bound variable>',
   'HEAD (TAIL <bound variable>)','HEAD (TAIL (TAIL <bound variable>))'>
 ```
 
 ### 局部定义
 
 ```
-let <name> = <expression1>
-in <expression2> ==
-<expression2>
-where <name> = <expression1> ==
-λ<name>.<expression2> <expression1>
+let <name> = <expr1>
+in <expr2> ==
+<expr2>
+where <name> = <expr1> ==
+λ<name>.<expr2> <expr1>
 ```
 
 ### 柯里化与非柯里化函数

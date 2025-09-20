@@ -133,7 +133,7 @@ fn : <domain type> -> <range type>
 SML 的函数表达式遵循前缀表示法，按照应用序求值：
 
 ```
-<function expression> <argument expression>
+<func expression> <arg expression>
 ```
 
 部分二元函数可以用作中缀运算符，通过 `op` 前缀可将中缀运算符转换为前缀函数：
@@ -274,7 +274,7 @@ val it = true : bool
 基本语法结构：
 
 ```
-fn <bound variables> => <expression>
+fn <bound variables> => <expr>
 ```
 
 其中绑定变量必须符合标识符规则：`^[a-zA-z][a-zA-Z0-9_]*`。
@@ -321,7 +321,7 @@ fn (x:int, y:int) => x + y;
 
 ## 9.9 定义
 
-全局定义采用 `val <name> = <expression>` 的语法结构，定义完成后的名称可以在后续表达式或定义中被引用。
+全局定义采用 `val <name> = <expr>` 的语法结构，定义完成后的名称可以在后续表达式或定义中被引用。
 
 示例：
 
@@ -342,12 +342,12 @@ val it = 18 : int
 条件表达式遵循如下语法结构：
 
 ```
-if <expression1>
-then <expression2>
-else <expression3>
+if <expr1>
+then <expr2>
+else <expr3>
 ```
 
-其中 `<expression1>` 必须返回布尔值，两个分支的表达式必须具有相同的类型。SML 中的条件表达式按照正则序求值。
+其中 `<expr1>` 必须返回布尔值，两个分支的表达式必须具有相同的类型。SML 中的条件表达式按照正则序求值。
 
 示例：
 
@@ -384,10 +384,10 @@ val it = 3 : int
 
 ```
 // 完整形式
-val rec <name> = fn <bound variables> => <expression>
+val rec <name> = fn <bound variables> => <expr>
 
 // 简化形式
-fun <name> <bound variables> = <expression>
+fun <name> <bound variables> = <expr>
 ```
 
 完整形式的计算列表长度：
@@ -433,10 +433,10 @@ fun sname ((_,s:string),_,_) = s;         // 选择嵌套元组的第二个元�
 函数定义主要采用子句形式定义（Clausal form definitions）：
 
 ```
-fun <name> <pattern1> = <expression1> |
-    <name> <pattern2> = <expression2> |
+fun <name> <pattern1> = <expr1> |
+    <name> <pattern2> = <expr2> |
     ...
-    <name> <patternN> = <expressionN>
+    <name> <patternN> = <exprN>
 ```
 
 每个模式按顺序匹配，直到找到第一个成功的匹配，匹配成功后返回对应表达式的值。
@@ -497,16 +497,16 @@ SML中局部定义使用 `let in` 语法结构，主要有两种形式：
 - 值定义：
 
 ```
-let val <name> = <expression1>
-in <expression2>
+let val <name> = <expr1>
+in <expr2>
 end
 ```
 
 - 函数定义：
 
 ```
-let fun <name> <pattern> = <expression1>
-in <expression2>
+let fun <name> <pattern> = <expr1>
+in <expr2>
 end
 ```
 
