@@ -105,14 +105,14 @@ Lisp 的 Lambda 函数通常是非柯里化的，参数直接跟在函数后面�
 函数应用形式：
 
 ```
-(<function> <argument1> <argument2>)
+(<func> <arg1> <arg2>)
 ```
 
 示例：
 
 ```lisp
 * (lambda (x) (* x x))
-#<FUNCTION (LAMBDA (X)) {1000AEF03B}>
+#<func (LAMBDA (X)) {1000AEF03B}>
 * ((lambda (x) (* x x)) 2)
 4
 ```
@@ -176,10 +176,10 @@ Lisp 还提供了更简单的 `if` 原语：
 引用的原语是 `quote`，其作用是返回未经求值的参数：
 
 ```
-(quote <argument>) -> <argument>
+(quote <arg>) -> <arg>
 ```
 
-Lisp 提供了简写形式：`'<argument>`，等同于 `quote` 的使用。
+Lisp 提供了简写形式：`'<arg>`，等同于 `quote` 的使用。
 
 引用的本质是**延迟求值**（Delayed evaluation）的一种抽象机制。当一个符号被引用时，不会被其关联值替换，而是作为独立对象存在，这使得 Lisp 能够将代码本身作为数据来处理。
 
@@ -403,8 +403,8 @@ Lisp 中的函数值需要显式标识和应用，这与 λ 演算中的自由�
 - 函数标识：
 
 ```lisp
-; 简写形式：#'<function>
-(function <function>)
+; 简写形式：#'<func>
+(function <func>)
 ```
 
 这种形式创建函数值，并将自由变量与定义作用域中的约束变量关联。
@@ -412,7 +412,7 @@ Lisp 中的函数值需要显式标识和应用，这与 λ 演算中的自由�
 - 函数应用：
 
 ```lisp
-(funcall <function value> <argument1> <argument2> ...)
+(funcall <func value> <arg1> <arg2> ...)
 ```
 
 用于显式调用函数值。
@@ -482,9 +482,9 @@ Lisp 提供 `eval` 原语用于强制对引用形式进行求值，这使得能�
 语法定义：
 
 ```
-<expression> ::= <number> |
-                 (<expression> + <expression>) |
-                 (<expression> - <expression>) |
+<expr> ::= <number> |
+                 (<expr> + <expr>) |
+                 (<expr> - <expr>) |
                  ...
 ```
 
@@ -583,7 +583,7 @@ Scheme 是 Lisp 族语言，其关键特征：
 标准函数定义语法：
 
 ```
-(define (<name> <argument1> <argument2> ...) <body>)
+(define (<name> <arg1> <arg2> ...) <body>)
 ```
 
 自应用和函数应用的完整实现：
