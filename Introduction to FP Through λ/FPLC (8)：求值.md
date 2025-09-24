@@ -186,14 +186,14 @@ else λdummy.<e2>
 并重新定义布尔值：
 
 ```
-def true x y = x identity
-def false x y = y identity
+def true x y = x ident
+def false x y = y ident
 ```
 
 这个重定义通过函数封装实现了延迟计算：
 
-- `true` 接收两个函数作为参数，选择第一个函数并应用 `identity`
-- `false` 接收两个函数作为参数，选择第二个函数并应用 `identity`
+- `true` 接收两个函数作为参数，选择第一个函数并应用 `ident`
+- `false` 接收两个函数作为参数，选择第二个函数并应用 `ident`
 
 ```
 if true
@@ -202,7 +202,7 @@ else λdummy.<expr2>
 ```
 
 1.  `true` 选择第一个参数
-2.  应用 `identity`
+2.  应用 `ident`
 3.  最终只计算 `<expr1>`，而 `<expr2>` 完全不会被求值
 
 这种模式在现代编程中很常见：
@@ -384,10 +384,12 @@ SQUARES = (SQ 0)::1::4::(SQLIST (SUCC 2))
 
 ### 惰性求值步骤
 
-(1) 为每个约束对编号
+1.   为每个约束对编号
 
-(2) 要惰性求值 `(<func expression> <arg expression>)`
+2.   要惰性求值 `(<func expression> <arg expression>)`
 
-- (a) 对 `<func expression>` 进行惰性求值得到 `<func value>`
-- (b) 若 `<func value>` 是 `λ<name>.<body>`，则用 `<arg expression>` 替换 `<body>` 中所有 `<name>` 的自由出现，并一致地重新编号所有周围的约束对，然后用新的 `<body>` 替换所有 `(<func expression> <arg expression>)_i` 的出现，并对新的 `<body>` 进行惰性求值
-- (c) 若 `<func value>` 不是函数，则对 `<arg expression>` 进行惰性求值得到 `<arg value>`，并用 `(<func value> <arg value>)` 替换所有 `(<func expression> <arg expression>)_i` 的出现，然后返回 `(<func value> <arg value>)`
+     -   (a) 对 `<func expression>` 进行惰性求值得到 `<func value>`
+
+     - (b) 若 `<func value>` 是 `λ<name>.<body>`，则用 `<arg expression>` 替换 `<body>` 中所有 `<name>` 的自由出现，并一致地重新编号所有周围的约束对，然后用新的 `<body>` 替换所有 `(<func expression> <arg expression>)_i` 的出现，并对新的 `<body>` 进行惰性求值
+
+     - (c) 若 `<func value>` 不是函数，则对 `<arg expression>` 进行惰性求值得到 `<arg value>`，并用 `(<func value> <arg value>)` 替换所有 `(<func expression> <arg expression>)_i` 的出现，然后返回 `(<func value> <arg value>)`
