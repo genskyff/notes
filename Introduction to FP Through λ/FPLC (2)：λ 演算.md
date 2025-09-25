@@ -75,7 +75,7 @@ cost * items -> cost op items
 
 -   λ：引入抽象的符号
 
--   `<name>`：**绑定变量**（Bound variable）,，即**形式参数**，但函数本身无需名称
+-   `<name>`：**绑定变量**（Bound variable），即**形式参数**，但函数本身无需名称
 
 -   `.`：将名称与进行抽象的表达式分开
 
