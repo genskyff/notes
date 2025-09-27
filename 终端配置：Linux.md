@@ -28,13 +28,13 @@ pacman-key --populate
 ### Debian
 
 ```shell
-apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
+apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine kitty-terminfo lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
 ```
 
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom choose curl difftastic docker docker-buildx docker-compose duf dust fastfetch fd fish fzf git git-delta helix hyperfine lazygit less lsd mise mtr nushell openssh reflector ripgrep sd starship sudo tokei unzip usage wget zellij zoxide
+pacman -S --needed --noconfirm base-devel bat bottom choose curl difftastic docker docker-buildx docker-compose duf dust fastfetch fd fish fzf ghostty-terminfo git git-delta helix hyperfine kitty-terminfo lazygit less lsd mise mtr nushell openssh reflector ripgrep sd starship sudo tokei unzip usage wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：
