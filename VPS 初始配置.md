@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 ## 安装包
 
 ```shell
-apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
+apt install -y bat build-essential curl docker-buildx docker-compose docker.io du-dust duf fastfetch fd-find fish fzf git git-credential-oauth git-delta hyperfine kitty-terminfo lazygit less lsd mtr nftables openssh-client openssh-server ripgrep sd starship sudo tokei unzip vim wget zoxide
 ```
 
 # 3 登录设置
