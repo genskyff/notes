@@ -262,7 +262,7 @@ end
 
 ## 7.4 连接解释器
 
-`visit` 方法是 `Interpreter` 访问者的核心，但还需要封装一层，以方便与其它部分对接。通过创建一个 `Interpreter` 类作为执行的入口，`interpret` 方法执行 AST 然后返回结果。
+`visit` 方法是 `Interpreter` 访问者的核心，但还需要封装一层，以方便与其他部分对接。通过创建一个 `Interpreter` 类作为执行的入口，`interpret` 方法执行 AST 然后返回结果。
 
 ```ruby
 class Lox::Interpreter

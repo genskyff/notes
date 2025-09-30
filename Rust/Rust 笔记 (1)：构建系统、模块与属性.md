@@ -513,7 +513,7 @@ utils = { path = "utils", default-features = false, features = ["foo"] }
 
 默认 feature 可以使用 `default-features = false` 来禁用。
 
-若该包也同样是一个库 Crate，则还可以再添加 `[features]`，以 `package/feature` 格式来指定，这样这个包的 features 也可以给其它包用。
+若该包也同样是一个库 Crate，则还可以再添加 `[features]`，以 `package/feature` 格式来指定，这样这个包的 features 也可以给其他包用。
 
 ```toml
 # mypkg/Cargo.toml
@@ -527,9 +527,9 @@ foo = ["utils/foo"]
 
 > 更多关于 features 的信息，可参考 [Cargo Features](https://doc.rust-lang.org/cargo/reference/features.html)。
 
-### 其它配置字段
+### 其他配置字段
 
-除了以上字段外，还有许多其它常用字段。
+除了以上字段外，还有许多其他常用字段。
 
 ```toml
 [alias]
@@ -1152,7 +1152,7 @@ fn main() {
 
 ### pub use 重导出
 
-当使用 `use` 关键字将名称导入作用域时，在新作用域中可用的名称是私有的。通过结合 `pub` 和 `use` 进行**重导出**，将项引入作用域并同时使其可供其它代码引入自己的作用域。通过重导出，就可以新路径来使用项，能够方便的向外暴露 API。
+当使用 `use` 关键字将名称导入作用域时，在新作用域中可用的名称是私有的。通过结合 `pub` 和 `use` 进行**重导出**，将项引入作用域并同时使其可供其他代码引入自己的作用域。通过重导出，就可以新路径来使用项，能够方便的向外暴露 API。
 
 ```rust
 mod a {
@@ -1397,7 +1397,7 @@ mod a {}
 
 > 不是所有的属性都可以声明为外部或内部属性。
 
-属性由指向属性的路径和路径后跟的可选的带定界符的 Token 树组成。除了宏属性之外，其它属性的输入也允许使用 `=` 后跟表达式的格式。
+属性由指向属性的路径和路径后跟的可选的带定界符的 Token 树组成。除了宏属性之外，其他属性的输入也允许使用 `=` 后跟表达式的格式。
 
 ```rust
 #![no_std]
@@ -1472,7 +1472,7 @@ fn foo() {}
 - `cfg` 和 `cfg_attr` 属性是活跃的
 - `test` 属性在测试中是惰性的，否则是活跃的
 - 宏属性是活跃的
-- 所有其它属性都是惰性的
+- 所有其他属性都是惰性的
 
 这样的区分主要是为了明确哪些属性会影响编译过程，哪些属性会保留到运行时。
 
@@ -1534,7 +1534,7 @@ fn fuzz() {}
 ### 宏
 
 - `macro_export`：导出由 `macro_rules!` 创建的声明宏
-- `macro_use`：扩展宏可见性，或从其它 Crate 导入宏
+- `macro_use`：扩展宏可见性，或从其他 Crate 导入宏
 - `proc_macro`：定义类函数宏
 - `proc_macro_attribute`：定义属性宏
 - `proc_macro_derive`：定义派生宏
