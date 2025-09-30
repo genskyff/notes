@@ -24,7 +24,7 @@ pub trait Future {
 
 Rust 会把使用 `async`、`await` 的代码编译成等同于使用 `Future` 的代码，类似于 `for` 是 `Iterator` 的语法糖。
 
-Rust 本身只提供对异步的抽象，定义了一些最基础的数据结构和 trait。要实际运行异步任务，还需要异步运行时，这部分由第三方库负责。其中 [futures](https://github.com/rust-lang/futures-rs) crate 是 Rust 异步代码实现的官方仓库，也是 `Future` 最初设计的地方，并被很多其它异步运行时使用。目前最广泛使用的异步运行时的是 [tokio](https://github.com/tokio-rs/tokio)，此外还有 [async-std](https://github.com/async-rs/async-std) 和 [smol](https://github.com/smol-rs/smol)，这些都使用了 futures crate 提供的一些功能。
+Rust 本身只提供对异步的抽象，定义了一些最基础的数据结构和 trait。要实际运行异步任务，还需要异步运行时，这部分由第三方库负责。其中 [futures](https://github.com/rust-lang/futures-rs) crate 是 Rust 异步代码实现的官方仓库，也是 `Future` 最初设计的地方，并被很多其他异步运行时使用。目前最广泛使用的异步运行时的是 [tokio](https://github.com/tokio-rs/tokio)，此外还有 [async-std](https://github.com/async-rs/async-std) 和 [smol](https://github.com/smol-rs/smol)，这些都使用了 futures crate 提供的一些功能。
 
 ## 异步程序
 

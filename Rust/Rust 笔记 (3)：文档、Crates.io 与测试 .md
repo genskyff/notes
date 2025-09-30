@@ -56,7 +56,7 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 ### 常用文档注释项
 
-`Examples` 为示例代码标题，其它常用的有：
+`Examples` 为示例代码标题，其他常用的有：
 
 - **Panics**：函数可能会 `panic!` 的场景
 - **Errors**：若函数返回 `Result`，此部分描述可能会出现的错误以及什么情况会造成这些错误
@@ -299,7 +299,7 @@ fn test_div_by_0() {
 }
 ```
 
-可以给 `#[should_panic]` 增加一个可选的 `expected` 参数，测试会匹配 panic 发生时的信息是否包含 `expected` 参数所中的字符串，可以避免由其它情况导致的 panic。
+可以给 `#[should_panic]` 增加一个可选的 `expected` 参数，测试会匹配 panic 发生时的信息是否包含 `expected` 参数所中的字符串，可以避免由其他情况导致的 panic。
 
 ### 使用 Result
 

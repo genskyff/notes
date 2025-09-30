@@ -159,7 +159,7 @@ vim /home/wwwroot/域名/config.inc.php
 define('__TYPECHO_ADMIN_DIR__', '/admin/');
 ```
 
-把 `/admin/` 这个参数中的 `admin` 字符串改为其它的即可，然后把同目录下的 `admin` 文件夹重命名为相同的。
+把 `/admin/` 这个参数中的 `admin` 字符串改为其他的即可，然后把同目录下的 `admin` 文件夹重命名为相同的。
 
 ### 全站开启 HTTPS
 
@@ -187,11 +187,11 @@ $this->commentUrl()
 echo str_replace("http", "https", $this->commentUrl())
 ```
 
-# 4 其它配置
+# 4 其他配置
 
 ## 主题
 
-至此，Typecho 博客系统基本已经搭好，可以正常使用了，但是自带的主题太丑，于是我换成了付费主题 [handsome](https://www.ihewro.com/archives/489/)，也可以去找其它的免费的主题。
+至此，Typecho 博客系统基本已经搭好，可以正常使用了，但是自带的主题太丑，于是我换成了付费主题 [handsome](https://www.ihewro.com/archives/489/)，也可以去找其他的免费的主题。
 
 ## 插件
 
