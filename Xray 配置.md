@@ -85,7 +85,7 @@ xray uuid
 
 ## 配置 TLS
 
-有些配置方案需要使用 TLS，这就需要证书。[acme.sh](https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 提供的证书。
+有些配置方案需要使用 TLS，这就需要证书。[acme.sh](https://github.com/acmesh-official/acme.sh) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 提供的证书。
 
 ### 安装 acme.sh
 
@@ -99,15 +99,14 @@ curl https://get.acme.sh | bash -s email=<email>
 acme.sh --issue --standalone -d <domain> --httpport <port>
 ```
 
-`--test` 可以验证是否能成功申请，避免反复申请导致受限。
-
 ### 安装证书和密钥
 
 ```shell
 acme.sh --install-cert -d <domain> \
---cert-file                 <cert> \
---key-file                   <key> \
---fullchain-file       <fullchain> \
+--cert-file      /usr/local/etc/xray/cert.pem \
+--key-file       /usr/local/etc/xray/key.pem \
+--fullchain-file /usr/local/etc/xray/fullchain.pem \
+--reloadcmd "systemctl reload nginx"
 ```
 
 ### 查看已安装证书
@@ -146,27 +145,36 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name example.com;
+    http2 on;
 
     root /var/www/html;
-    index index.html index.nginx-debian.html;
+    index index.html;
 
-    ssl_certificate           /usr/local/etc/xray/xray.cer;
-    ssl_certificate_key       /usr/local/etc/xray/xray.key;
-    ssl_protocols             TLSv1.2 TLSv1.3;
-    ssl_ciphers               HIGH:!aNULL:!MD5;
+    ssl_certificate /usr/local/etc/xray/cert.pem;
+    ssl_certificate_key /usr/local/etc/xray/key.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    ssl_conf_command Ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
+    ssl_conf_command SignatureAlgorithms ECDSA+SHA256:ECDSA+SHA384;
+    ssl_conf_command ClientSignatureAlgorithms ECDSA+SHA256:ECDSA+SHA384;
+
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305;
     ssl_prefer_server_ciphers on;
-    ssl_session_cache         shared:SSL:10m;
-    ssl_session_timeout       10m;
+    ssl_ecdh_curve X25519;
+
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
 
     location / {
-        try_files $uri $uri/ =404;
+        return 204;
     }
 
-    location /random/path {
-        if ($http_upgrade != "websocket") {
+    location /5d762404-043d-41d9-a9b8-ff1af8e5857e {
+        if ($http_upgrade !~* "websocket") {
             return 444;
         }
-        proxy_redirect off;
         proxy_pass http://localhost:20000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -174,6 +182,8 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 86400;
+        proxy_buffering off;
     }
 }
 ```
