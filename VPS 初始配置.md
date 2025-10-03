@@ -194,38 +194,30 @@ nft list ruleset
 flush ruleset
 
 table inet filter {
-   set ct_limit_v4 {
-        type ipv4_addr
-        timeout 10m
-    }
-
-    set ct_limit_v6 {
-        type ipv6_addr
-        timeout 10m
-    }
-
     chain input {
         type filter hook input priority filter; policy drop;
 
+        ct state invalid counter drop
         ct state { established, related } accept
 
         iif lo accept
         iif != lo ip daddr 127.0.0.0/8 drop
         iif != lo ip6 daddr ::1 drop
 
-        ct state new add @ct_limit_v4 { ip saddr limit rate over 25/second } drop
-        ct state new add @ct_limit_v6 { ip6 saddr limit rate over 25/second } drop
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport { http, https } meter newconn_v4 { ip saddr limit rate 25/second burst 100 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport { http, https } meter newconn_v6 { ip6 saddr limit rate 25/second burst 100 packets } counter accept
 
-        tcp dport { http, https } accept
-        tcp dport ssh ct state new limit rate 10/minute accept
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport ssh meter ssh_v4 { ip saddr limit rate 10/minute burst 20 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport ssh meter ssh_v6 { ip6 saddr limit rate 10/minute burst 20 packets } counter accept
 
-        meta nfproto ipv4 icmp type echo-request limit rate 10/second burst 4 packets accept
-        meta nfproto ipv4 icmp type { echo-reply, destination-unreachable, time-exceeded, parameter-problem } accept
+        meta nfproto ipv4 icmp type echo-request limit rate 10/second burst 4 packets counter accept
+        meta nfproto ipv4 icmp type { echo-reply, destination-unreachable, time-exceeded, parameter-problem } counter accept
 
-        meta nfproto ipv6 icmpv6 type echo-request limit rate 10/second burst 4 packets accept
-        meta nfproto ipv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-reply, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, 148, 149 } accept
+        meta nfproto ipv6 icmpv6 type echo-request limit rate 10/second burst 4 packets counter accept
+        meta nfproto ipv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-reply, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, 148, 149 } counter accept
 
-        pkttype host log prefix "[nftables] host denied: " level warn drop
+        meta pkttype { broadcast, multicast } limit rate 5/second burst 20 packets log prefix "[nftables] b/m denied: " level notice counter drop
+        meta pkttype host log prefix "[nftables] host denied: " level warn counter drop
     }
 
     chain forward {
@@ -234,7 +226,6 @@ table inet filter {
         ct state { established, related } accept
 
         iifname "docker0" ct state new accept
-        oifname "docker0" ct state new accept
     }
 
     chain output {
