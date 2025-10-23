@@ -150,7 +150,7 @@ server {
     root /var/www/html;
     index index.html;
 
-    ssl_certificate /usr/local/etc/xray/cert.pem;
+    ssl_certificate /usr/local/etc/xray/fullchain.pem;
     ssl_certificate_key /usr/local/etc/xray/key.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
