@@ -649,10 +649,10 @@ git checkout --conflict=merge <file>
 
 ## 变基
 
-`rebase` 将当前分支变基到指定分支上：
+`rebase` 将指定分支（默认为 HEAD）变基到指定上游：
 
 ```shell
-git rebase <branch>
+git rebase <upstream> [branch]
 ```
 
 ### 解决冲突
@@ -668,6 +668,14 @@ git rebase <branch>
 
 ```shell
 git rebase -i <range>
+```
+
+### 转移基底
+
+使用 `--onto` 可以把一段提交从一个基底转移到另一个基底上。
+
+```shell
+git rebase --onto <newbase> <upstream> [branch]
 ```
 
 ### 合并 Vs. 变基
