@@ -1070,10 +1070,12 @@ git worktree unlock <dir>
 ### 使用 cherry-pick
 
 ```shell
-git cherry-pick <range>
+git cherry-pick [--no-commit] <range>
 ```
 
 指定的提交对应的更改就会应用到当前分支，并作为一个新的提交，这个新的提交是专门为当前分支创建的，与原始分支中的提交是分开的。
+
+`--no-commmit` 可以只应用变更但不提交。
 
 ### 适用场景
 
