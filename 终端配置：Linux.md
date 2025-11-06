@@ -43,16 +43,16 @@ pacman -S --needed --noconfirm base-devel bat bottom choose curl difftastic dock
 useradd -mG wheel <username> && passwd <username> && su - <username>
 ```
 
-要从 AUR 安装包，需要安装 AUR Helper，如 [yay](https://github.com/Jguer/yay?tab=readme-ov-file#installation)、[paru](https://github.com/Morganamilo/paru?tab=readme-ov-file#installation)，这里安装 yay：
+要从 AUR 安装包，需要安装 AUR Helper，如 [paru](https://github.com/Morganamilo/paru?tab=readme-ov-file#installation)、[yay](https://github.com/Jguer/yay?tab=readme-ov-file#installation)，这里安装 paru：
 
 ```shell
-git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm && cd ..
+git clone https://aur.archlinux.org/paru-bin.git && cd paru-bin && makepkg -si --noconfirm && cd ..
 ```
 
 然后从 AUR 安装包：
 
 ```shell
-yay -S --needed --noconfirm doggo-bin git-credential-oauth lazydocker-bin tlrc-bin
+paru -S --needed --noconfirm --color doggo-bin git-credential-oauth lazydocker-bin tlrc-bin
 ```
 
 若下载速度过慢，可能是源的问题。使用 reflector 自动选择最快的源：
