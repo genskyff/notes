@@ -10,63 +10,72 @@
 
 ## 语言标准
 
-C 语言最初并没有官方标准，最早是其创始人所著的 [《C 程序设计语言》](https://book.douban.com/subject/1139336/) 一书成为普遍接受的标准，被称为 **K&R C**。
+C 语言最初并没有官方标准，最早是其创始人所著的 [C 程序设计语言](https://book.douban.com/subject/1139336/) 一书成为普遍接受的标准，被称为 **K&R C**。
 
 ANSI 于 1989 年定义了 C 标准和标准库，称为 ANSI C。ISO 于 1990 年也采用了这个 C 标准，称为 ISO C，因此这两者是同一个标准，而 ANSI C / ISO C 标准的最终版本被称为 **C89 / C90**。
 
 1999 年发布的修订后的 C 标准被称为 **C99**，目前绝大多数编译器都已支持 C99 标准，目前最新标准为 **C23**。
 
+## 编译器安装
+
+### Windows
+
+Windows 上可以通过安装 [Visual Studio](https://visualstudio.microsoft.com/zh-hans/downloads/) 来直接使用 MSVC 编译器。
+
+若要使用 GCC，可以通过 [Scoop](https://scoop.sh/) 来安装 [mingw-winlibs-ucrt](https://github.com/brechtsanders/winlibs_mingw/releases)。
+
+## macOS / Linux
+
+这两个系统通常已经自带了，可以通过 `gcc` 命令直接使用。
+
 ## 编译指令
 
 ```shell
 # 编译成可执行文件
-gcc <source> -o <output>
+gcc <source>
 
 # 预处理
-gcc -E <source> -o <output>
+gcc -E <source>
 
 # 编译成汇编指令
-gcc -S <source> -o <output>
+gcc -S <source>
 
 # 编译成目标文件
-gcc -c <source> -o <output>
-
-# 链接生成可执行文件
-gcc <source> -o <output>
+gcc -c <source>
 
 # 保留中间文件
-gcc -save-temps <output>
+gcc -save-temps <source>
 ```
 
 ### 编译选项
 
 ```shell
 # 指定标准
-gcc -std=c23 <source> -o <output>
+gcc -std=c23 <source>
 
 # 指定架构
-gcc -m32 <source> -o <output>
+gcc -m64 <source>
 
 # 编译优化
-gcc -O2 <source> -o <output>
+gcc -O3 <source>
 
 # 开启所有警告
-gcc -Wall <source> -o <output>
+gcc -Wall <source>
 
 # 将警告视为错误
-gcc -Werror <source> -o <output>
+gcc -Werror <source>
 
 # 动态链接 libxxx.so
-gcc <source> -o <output> -lxxx
+gcc -lxxx <source>
 
 # 静态链接 libxxx.a
-gcc -static <source> -o <output> -lxxx
+gcc -static -lxxx <source>
 
 # 生成位置无关的代码
 gcc -c -fPIC <source>
 
 # 生成动态库
-gcc -shared <source> -o <output>
+gcc -shared <source>
 ```
 
 # 2 数据类型
@@ -86,9 +95,9 @@ gcc -shared <source> -o <output>
 
 C 的数据类型只做以下保证：
 
-- 整型字面量默认为 int，浮点型字面量默认为 double；
+- 整型字面量默认为 int，浮点型字面量默认为 double
 
-- short 和 int 至少 16 位，long 至少 32 位，long long 至少 64 位，且 short ≤ int ≤ long ≤ long long。
+- short 和 int 至少 16 位，long 至少 32 位，long long 至少 64 位，且 short ≤ int ≤ long ≤ long long
 
 通过前缀和后缀来表示不同的字面量。
 
@@ -117,7 +126,7 @@ C 的数据类型只做以下保证：
 const double PI = 3.14;
 ```
 
-使用宏和 `const` 定义的常量并不完全具有相同的性质。宏是替换机制，在预处理阶段处理，`const` 实际上定义的是一个只读变量，作用于编译期。
+使用宏和 `const` 定义的常量并不完全具有相同的性质。宏是替换机制，在预处理阶段处理，`const` 实际上定义的是一个只读变量。
 
 # 3 表达式和语句
 
@@ -139,7 +148,7 @@ i > 3
 
 ## 语句
 
-**语句会改变值或调用函数**。所有以 `;` 结尾的都是语句，一些语句不一 `;` 结尾，如控制语句，函数调用也是表达式，在表达式后加 `;` 就变成表达式语句。声明不是表达式也不是语句，因为没有产生之也没有改变值。
+**语句会改变值或调用函数**。所有以 `;` 结尾的都是语句，一些语句不以 `;` 结尾，如控制语句。函数调用也是表达式，在表达式后加 `;` 就变成表达式语句。声明不是表达式也不是语句，因为没有产生值也没有改变值。
 
 ```c
 3 + 4               // 表达式
@@ -258,11 +267,13 @@ switch (整型表达式)
 {
 case 常量 1:
     语句 1
+    break;
 case 常量 2:
     语句 2
-    // ...
+    break;
 case 常量 n:
     语句 n
+    break;
 default:
     语句 default
 }
@@ -294,7 +305,7 @@ default:
 
 ### goto
 
-goto 语句实际上并不是 C 所十分依赖的，且最好不要滥用 goto 语句，虽然 goto 语句很强大，但它十分容易导致代码结构变得混乱。在 C 中，能够使用 if 语句或 switch 语句时，尽量不要用 goto 语句。其通用形式为：
+goto 语句很强大，但它十分容易导致代码结构变得混乱，所以最好不要滥用，能够使用 if 语句或 switch 语句时，尽量不要用 goto 语句。其通用形式为：
 
 ```c
 goto 标签
