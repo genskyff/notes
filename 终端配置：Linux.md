@@ -34,7 +34,7 @@ apt install -y bat build-essential curl docker-buildx docker-compose docker.io d
 ### Arch
 
 ```shell
-pacman -S --needed --noconfirm base-devel bat bottom choose curl difftastic docker docker-buildx docker-compose duf dust fastfetch fd fish fzf ghostty-terminfo git git-delta helix hyperfine kitty-terminfo lazygit less lsd mise mtr nushell openssh reflector ripgrep sd starship sudo tokei unzip usage wget zellij zoxide
+pacman -S --needed --noconfirm base-devel bat binsider bottom choose curl difftastic docker docker-buildx docker-compose duf dust fastfetch fd fish fzf ghostty-terminfo git git-delta helix hyperfine kitty-terminfo lazygit less lsd mise mtr nushell openssh reflector ripgrep sd starship sudo tokei unzip usage wget zellij zoxide
 ```
 
 有些包官方源没有，需要从 [AUR](https://aur.archlinux.org/) 上装。需要以非 root 用户身份安装，若没有则创建：

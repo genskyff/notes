@@ -82,5 +82,5 @@ scoop install git
 scoop update
 scoop bucket add extras
 scoop bucket add versions
-scoop install 7zip bat delta difftastic fastfetch fd ffmpeg fzf git gsudo hyperfine lazydocker lazygit less llvm localsend lsd mingw-winlibs-ucrt mise msys2 nu pandoc piclist potplayer qbittorrent-enhanced qq-nt ripgrep snipaste starship tlrc tokei typora wechat xmake zoxide
+scoop install 7zip bat delta difftastic fastfetch fd ffmpeg fzf git gsudo hyperfine lazydocker lazygit less llvm localsend lsd mingw-winlibs-ucrt mise msys2 nu pandoc potplayer qbittorrent-enhanced qq-nt ripgrep snipaste starship tlrc tokei typora wechat xmake zoxide
 ```
