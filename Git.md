@@ -28,14 +28,14 @@ apt install -y git
 
 - `--system`：对所有用户都适用的配置
   - Windows：Git 安装目录下的 `etc/gitconfig`
-  - Linux： `/etc/gitconfig`
+  - Linux / macOS： `/etc/gitconfig`
 
 - `--global`：仅对当前用户适用的配置
 
-  - Windows、Linux：`~/.gitconfig`
+  - Windows / Linux / macOS：`~/.gitconfig`
 
 - `--local`：**默认选项**，仅对当前 Git 仓库适用的配置
-  - Windows、Linux：工作区中的 `.git/config`
+  - Windows / Linux / macOS：工作区中的 `.git/config`
 
 > `--system` 优先级**最低**，`--local` 优先级**最高**，高优先级会覆盖低优先级中的相同配置。这些配置仅在本地生效，不会推送到远程仓库中去。
 
@@ -70,12 +70,12 @@ git config --global user.name <name>
 # 凭证管理 - Windows
 git config --global credential.helper manager
 
-# 凭证管理 - macOS
-git config --global credential.helper osxkeychain
-
 # 凭证管理 - Linux (需要安装 git-credential-oauth)
 git config --global credential.helper "cache --timeout 21600"
 git config --global --add credential.helper "oauth -device"
+
+# 凭证管理 - macOS
+git config --global credential.helper osxkeychain
 
 # 取消指定配置
 git config --unset <key>
@@ -83,7 +83,7 @@ git config --unset <key>
 
 ## 按目录配置
 
-在 `.gitconfig` 中的配置默认全局生效，若想要针对指定目录单独应用配置，如设置不同的用户名，可以在配置文件中使用 `includeIf`：
+在 `.gitconfig` 中的配置默认全局生效，若想要针对指定目录单独应用配置，可在配置文件中使用 `includeIf`：
 
 ```
 # 其他配置...
@@ -107,7 +107,7 @@ git config --unset <key>
 
 ## 版本库
 
-即 `.git` 目录，又称**仓库**，是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，任何时刻都可以追踪历史，或在将来某个时刻还原。Git 的版本库中存了很多东西，其中最重要的就是暂存区，还有 Git 自动创建的第一个分支 `main`，以及指向 `main` 的指针 `HEAD`。
+即 `.git` 目录，又称**仓库**，是 Git 用来保存项目的元数据和对象数据库的地方。这个目录里面的所有文件都可以被 Git 管理起来，每个文件的创建、修改、删除等操作都能被跟踪，任何时刻都可以追踪历史，或在将来某个时刻还原。Git 的版本库中存了很多东西，如暂存区、Git 自动创建的第一个分支 `main`，以及指向 `main` 的指针 `HEAD`。
 
 ## 文件状态
 
@@ -239,7 +239,7 @@ git status -s
 # 忽略任何目录下名为 build 的目录
 build/
 
-# 忽略 doc/notes.txt，但不忽略 doc/server/arch.txt
+# 忽略 doc/a.txt，但不忽略 doc/a/a.txt
 doc/*.txt
 
 # 忽略 doc/ 目录及其所有子目录下的 .pdf 文件
@@ -262,7 +262,7 @@ git rm --cached <file>
 
 ### 双点
 
-`A..B` 语法可以指定在 B 分支中但不在 A 分支中的提交，即**差集**：
+`A..B` 语法可以指定在 B 分支中但不在 A 分支中的提交：
 
 ```shell
 git log A..B
@@ -270,7 +270,7 @@ git log A..B
 
 ### 三点
 
-`A...B` 语法可以指定被 A 或 B 包含但不同时包含的提交，即**对称差集**：
+`A...B` 语法可以指定被 A 或 B 包含但不同时包含的提交：
 
 ```shell
 git log A...B
@@ -555,33 +555,31 @@ Git 对合并有多种策略，其中常见的为：
 
 ```
 # 场景1：可以快进
-本地: A---B
-远程: A---B---C---D
+main: A---B
+feat:     \---C---D
 
-# 结果：快进到远程最新提交
-本地: A---B---C---D
+# 结果：快进到最新提交
+main: A---B---C---D
 
 # 场景2：不能快进
-本地: A---B---E
-远程: A---B---C---D
+main: A---B---E
+feat:     \---C---D
 
 # 结果：创建合并提交
-本地: A---B---E---M
-          \     /
-           C---D
+main: A---B---E--------M
+          \---C---D---/    
 ```
 
 `--no-ff`：总是创建合并提交，即使可以快进合并。
 
 ```
 # 即使可以快进，也会创建合并提交
-本地: A---B
-远程: A---B---C---D
+main: A---B
+feat:     \---C---D
 
 # 结果：创建合并提交
-本地: A---B-------M
-          \     /
-           C---D
+main: A---B------------M
+          \---C---D---/            
 ```
 
 用途：
@@ -594,15 +592,15 @@ Git 对合并有多种策略，其中常见的为：
 
 ```
 # 场景1：可以快进
-本地: A---B
-远程: A---B---C---D
+main: A---B
+feat:     \---C---D
 
 # 结果：成功快进
-本地: A---B---C---D
+main: A---B---C---D
 
 # 场景2：不能快进
-本地: A---B---E
-远程: A---B---C---D
+main: A---B---E
+feat:     \---C---D
 
 # 结果：拒绝合并，报错
 error: Not possible to fast-forward, aborting.
@@ -618,12 +616,12 @@ error: Not possible to fast-forward, aborting.
 
 ```
 # 合并前
-main:    A---B
-feature:      \---C---D---E
+main: A---B
+feat:     \---C---D---E
 
 # 合并后（历史中只有：A, B, F（C, D, E 被压缩到了 F 中）
-main:    A---B---F
-feature:      \---C---D---E
+main: A---B----------------F
+feat:     \---C---D---E---/
 ```
 
 ### 解决冲突
@@ -729,7 +727,7 @@ git remote show <remote>
 添加新的远程仓库，同时指定一个别名，可以使用别名来代替远程仓库的路径。
 
 ```shell
-git remote add <remote> <repo>
+git remote add <name> <url>
 ```
 
 > 当使用 `clone` 克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
@@ -739,7 +737,7 @@ git remote add <remote> <repo>
 若远程分支修改了名字，也需要在本地修改对应的 URL。
 
 ```shell
-git remote set-url <remote> <repo>
+git remote set-url <name> <newurl>
 ```
 
 ## 拉取

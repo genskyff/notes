@@ -24,7 +24,7 @@ Windows 上可以通过安装 [Visual Studio](https://visualstudio.microsoft.com
 
 若要使用 GCC，可以通过 [Scoop](https://scoop.sh/) 来安装 [mingw-winlibs-ucrt](https://github.com/brechtsanders/winlibs_mingw/releases)。
 
-## macOS / Linux
+## Linux / macOS
 
 这两个系统通常已经自带了，可以通过 `gcc` 命令直接使用。
 
