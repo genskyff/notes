@@ -732,6 +732,14 @@ git remote add <name> <url>
 
 > 当使用 `clone` 克隆了一个远程仓库时，会自动将其添加为远程仓库并默认以 `origin` 为别名。
 
+### 重命名
+
+修改远程仓库的别名：
+
+```shell
+git remote rename <old> <new> 
+```
+
 ## 修改
 
 若远程分支修改了名字，也需要在本地修改对应的 URL。
@@ -1226,6 +1234,24 @@ git bisect skip
 
 ```shell
 git bisect reset
+```
+
+## 裸仓库
+
+若一个仓库是被多人共享的，则可以在创建 Git 仓库时使用 `--bare` 来创建裸仓库。
+
+```shell
+git init --bare
+```
+
+裸仓库只包含 `.git` 中的版本数据，且无法直接在其中修改文件，也不能执行 `git add`、`git commit` 等操作。这通常作为中央仓库或远程仓库，供多人推送和拉取。
+
+裸仓库没有工作区，因为多人 push 时，若仓库是普通仓库且文件被 checkout 到工作区，可能引起冲突或破坏版本结构。裸仓库不会 checkout 文件，因此安全可靠。
+
+在一台机器上创建了裸仓库，在另一台机器上可以通过 SSH 来直接克隆，然后进行正常的 Git 操作。
+
+```shell
+git clone <host>:<path>
 ```
 
 # 9 使用 Github
