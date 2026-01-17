@@ -194,7 +194,7 @@ Cargo 支持从 Crates.io 下载源码并在本地编译安装和使用二进制
 cargo install <crate>
 
 # 使用 Cargo.lock 中的版本安装 Crate
-cargo install <crate> --locked
+cargo install --locked <crate>
 
 # 从本地 Crate 安装
 cargo install --path <path>
