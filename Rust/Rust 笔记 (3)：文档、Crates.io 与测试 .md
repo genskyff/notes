@@ -129,7 +129,7 @@ cargo login <token>
 name = "demo"
 version = "0.1.0"
 edition = "2024"
-description = "A demo crate."
+description = "A demo crate"
 license = "MIT"
 ```
 
@@ -142,7 +142,7 @@ license-file = "MY_LICENSE"
 可以通过 `OR` 来指定多个 license：
 
 ```toml
-license = "MIT OR LGPL-2.0"
+license = "MIT OR AGPL-3.0-or-later"
 ```
 
 ## 发布 Crate

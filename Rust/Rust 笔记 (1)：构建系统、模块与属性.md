@@ -211,6 +211,9 @@ cargo clean
 
 # 查看项目所有元数据
 cargo metadata
+
+# 本地化所有依赖项
+cargo vendor
 ```
 
 > 更多关于 Cargo 的信息，可参考 [The Cargo Book](https://doc.rust-lang.org/cargo/)。
