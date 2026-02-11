@@ -20,7 +20,7 @@
 
 编辑 Nginx 配置文件：
 
-```bash
+```shell
 vim /usr/local/nginx/conf/vhost/域名.conf
 ```
 
@@ -46,7 +46,7 @@ include enable-php-pathinfo.conf;
 
 最后重启 Nginx 服务：
 
-```bash
+```shell
 /etc/init.d/nginx restart
 ```
 
@@ -58,7 +58,7 @@ include enable-php-pathinfo.conf;
 
 编辑 MySQL 配置文件：
 
-```bash
+```shell
 vim /etc/my.cnf
 ```
 
@@ -114,7 +114,7 @@ alter table typecho_users convert to character set utf8mb4 collate utf8mb4_unico
 
 最后重启 MySQL 服务：
 
-```bash
+```shell
 /etc/init.d/mysql restart
 ```
 
@@ -124,7 +124,7 @@ alter table typecho_users convert to character set utf8mb4 collate utf8mb4_unico
 
 设网站目录在 `/home/wwwroot/域名`，依次执行：
 
-```bash
+```shell
 cd /home/wwwroot/域名
 wget https://github.com/typecho/typecho/releases/latest/download/typecho.zip
 unzip typecho.zip
@@ -139,7 +139,7 @@ rm -f typecho.zip
 
 编辑 Typecho 配置文件：
 
-```bash
+```shell
 vim /home/wwwroot/域名/config.inc.php
 ```
 
@@ -171,7 +171,7 @@ define('__TYPECHO_SECURE__', true);
 
 接着编辑 Typecho 主题配置文件：
 
-```bash
+```shell
 vim /home/wwwroot/域名/usr/themes/主题文件夹/component/comments.php
 ```
 
