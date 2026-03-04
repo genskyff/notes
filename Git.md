@@ -637,14 +637,6 @@ feat:     \---C---D---E---/
 
 在提交代码时，Git 会自动生成一条合并提交，该提交包含了本地分支修改和远程分支的修改。
 
-### 查看文件冲突时的信息
-
-当 `rerere.enabled` 为 `true` 时，合并时 Git 会使用缓存的解决方法，但有时也需要查看冲突信息。
-
-```shell
-git checkout --conflict=merge <file>
-```
-
 ## 变基
 
 `rebase` 将指定分支（默认为 HEAD）变基到指定上游：
