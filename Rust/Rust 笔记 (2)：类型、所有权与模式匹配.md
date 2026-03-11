@@ -1585,8 +1585,8 @@ fn pair(&(x, y): &(i32, i32)) {
 
 模式有两种形式：
 
-- 可反驳的：可能会匹配会失败的模式，如 `match` 分支、`if let` 和 `while let` 表达式
-- 不可反驳的：能匹配任意值的模式，如 `let` 语句、`for` 循环和函数参数
+- 可反驳的：可能会匹配会失败的模式，如 `match` 分支（除最后一个分支）、`if let`、`while let` 和 `let else` 表达式
+- 不可反驳的：能匹配任意值的模式，如 `match` 分支（最后一个分支）、`let` 语句、`for` 循环和函数参数
 
 ```rust
 // 错误
@@ -1596,7 +1596,17 @@ let Some(x) = value;
 因为 `let` 语句只接受不可反驳的模式，而 `value` 还有可能为 `None`，因此可能会失败，但可加上 `if` 来构成 `if let` 这种可反驳的表达式。
 
 ```rust
-if let Some(x) = value {}
+if let Some(x) = value {
+    println!("{x}");
+}
+```
+
+若在不可反驳的地方需要有一个可反驳模式，可以使用 `let else`。与 `if let` 的区别为，`else` 块的返回值必须是 `!` 类型，如 `return` 或 `panic!` 表达式。
+
+```rust
+let Some(x) = value else {
+    return;
+};
 ```
 
 ## 匹配项的所有权
