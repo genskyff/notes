@@ -23,13 +23,16 @@ dpkg-reconfigure tzdata
 > 参考：[Xray-install](https://github.com/XTLS/Xray-install)。
 
 ```shell
-# 安装和更新 Xray 和 dat 数据
+# 安装/更新 Xray 和 dat 数据
 curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- install
 
-# 只安装和更新 dat 数据
+# 只安装/更新 dat 数据
 curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- install-geodata
 
 # 删除 Xray 和 dat 数据
+curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- remove
+
+# 删除 Xray、dat 数据、日志和配置文件
 curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- remove --purge
 ```
 
@@ -96,28 +99,28 @@ curl https://get.acme.sh | bash -s email=<email>
 ### 证书生成
 
 ```shell
-acme.sh --issue --standalone -d <domain> --httpport <port>
+acme.sh --issue --standalone -d <domain> [--httpport <port>]
 ```
 
 ### 安装证书和密钥
 
 ```shell
 acme.sh --install-cert -d <domain> \
---cert-file      /usr/local/etc/xray/cert.pem \
---key-file       /usr/local/etc/xray/key.pem \
---fullchain-file /usr/local/etc/xray/fullchain.pem \
---reloadcmd "systemctl reload nginx"
+    --cert-file      /usr/local/etc/xray/cert.pem \
+    --key-file       /usr/local/etc/xray/key.pem \
+    --fullchain-file /usr/local/etc/xray/fullchain.pem \
+    --reloadcmd "systemctl reload nginx"
 ```
 
 ### 查看已安装证书
 
-```
+```shell
 acme.sh --info -d <domain>
 ```
 
 ## 配置 Nginx
 
-有些配置方案会使用 Nginx / Caddy 这种 Web 服务器实现反向代理。这里以 Nginx 为例，它是一个异步框架的 Web 服务器，用来实现 WebSocket 的反向代理，另外可以配合 CDN，如 [Cloudflare](https://www.cloudflare.com/) 来隐藏真实 IP。
+有些配置方案会使用 Nginx / Caddy 这种 Web 服务器实现反向代理，这里以 Nginx 为例。
 
 ### 安装 Nginx
 
@@ -128,10 +131,12 @@ apt install -y nginx
 Nginx 的配置文件位于 `/etc/nginx` 目录中，编辑：
 
 ```shell
-vim /etc/nginx/sites-available/default
+vim /etc/nginx/sites-available/xray
 ```
 
-### Nginx 配置
+### 配置示例
+
+WebSocket 反向代理：
 
 ```nginx
 server {
@@ -153,15 +158,10 @@ server {
     ssl_certificate /usr/local/etc/xray/fullchain.pem;
     ssl_certificate_key /usr/local/etc/xray/key.pem;
 
-    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_protocols TLSv1.3;
 
     ssl_conf_command Ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
-    ssl_conf_command SignatureAlgorithms ECDSA+SHA256:ECDSA+SHA384;
-    ssl_conf_command ClientSignatureAlgorithms ECDSA+SHA256:ECDSA+SHA384;
-
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305;
-    ssl_prefer_server_ciphers on;
-    ssl_ecdh_curve X25519;
+    ssl_ecdh_curve X25519MLKEM768:X25519;
 
     ssl_session_cache shared:SSL:50m;
     ssl_session_timeout 1d;
@@ -188,7 +188,13 @@ server {
 }
 ```
 
-修改完配置后需重新加载 Nginx 配置文件：
+在 `sites-available` 下的配置需要软链接到 `sites-enabled` 下才能生效：
+
+```shell
+ln -s /etc/nginx/sites-{available,enabled}/xray
+```
+
+重新加载 Nginx 配置文件：
 
 ```shell
 systemctl reload nginx
