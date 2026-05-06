@@ -204,17 +204,48 @@ table inet filter {
         iif != lo ip daddr 127.0.0.0/8 drop
         iif != lo ip6 daddr ::1 drop
 
-        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport { http, https } meter newconn_v4 { ip saddr limit rate 25/second burst 100 packets } counter accept
-        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport { http, https } meter newconn_v6 { ip6 saddr limit rate 25/second burst 100 packets } counter accept
+        # Custom: TCP/UDP 12345
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport 12345 meter custom_tcp_v4 { ip saddr limit rate 25/second burst 100 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport 12345 meter custom_tcp_v6 { ip6 saddr limit rate 25/second burst 100 packets } counter accept
 
-        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport ssh meter ssh_v4 { ip saddr limit rate 10/minute burst 20 packets } counter accept
-        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport ssh meter ssh_v6 { ip6 saddr limit rate 10/minute burst 20 packets } counter accept
+        meta nfproto ipv4 ct state new udp dport 12345 meter custom_udp_v4 { ip saddr limit rate 100/second burst 200 packets } counter accept
+        meta nfproto ipv6 ct state new udp dport 12345 meter custom_udp_v6 { ip6 saddr limit rate 100/second burst 200 packets } counter accept
 
+        # HTTP: TCP 80
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport 80 meter http_tcp_v4 { ip saddr limit rate 25/second burst 100 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport 80 meter http_tcp_v6 { ip6 saddr limit rate 25/second burst 100 packets } counter accept
+
+        # HTTPS: TCP 443
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport 443 meter https_tcp_v4 { ip saddr limit rate 25/second burst 100 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport 443 meter https_tcp_v6 { ip6 saddr limit rate 25/second burst 100 packets } counter accept
+
+        # QUIC: UDP 443
+        meta nfproto ipv4 ct state new udp dport 443 meter quic_udp_v4 { ip saddr limit rate 100/second burst 200 packets } counter accept
+        meta nfproto ipv6 ct state new udp dport 443 meter quic_udp_v6 { ip6 saddr limit rate 100/second burst 200 packets } counter accept
+
+        # SSH: TCP 22
+        meta nfproto ipv4 ct state new tcp flags & syn == syn tcp dport 22 meter ssh_tcp_v4 { ip saddr limit rate 10/minute burst 20 packets } counter accept
+        meta nfproto ipv6 ct state new tcp flags & syn == syn tcp dport 22 meter ssh_tcp_v6 { ip6 saddr limit rate 10/minute burst 20 packets } counter accept
+
+        # ICMP
         meta nfproto ipv4 icmp type echo-request limit rate 10/second burst 4 packets counter accept
         meta nfproto ipv4 icmp type { echo-reply, destination-unreachable, time-exceeded, parameter-problem } counter accept
 
+        # ICMPv6
         meta nfproto ipv6 icmpv6 type echo-request limit rate 10/second burst 4 packets counter accept
-        meta nfproto ipv6 icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-reply, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, 148, 149 } counter accept
+        meta nfproto ipv6 icmpv6 type {
+            destination-unreachable,
+            packet-too-big,
+            time-exceeded,
+            parameter-problem,
+            echo-reply,
+            nd-router-solicit,
+            nd-router-advert,
+            nd-neighbor-solicit,
+            nd-neighbor-advert,
+            148,
+            149
+        } counter accept
 
         meta pkttype { broadcast, multicast } limit rate 5/second burst 20 packets log prefix "[nftables] b/m denied: " level notice counter drop
         meta pkttype host log prefix "[nftables] host denied: " level warn counter drop

@@ -88,7 +88,7 @@ xray uuid
 
 ## 配置 TLS
 
-有些配置方案需要使用 TLS，这就需要证书。[acme.sh](https://github.com/acmesh-official/acme.sh) 是一个自动化申请并更新 TLS 证书的脚本，默认使用的是 [ZeroSSL](https://zerossl.com/) 提供的证书。
+有些配置方案需要使用 TLS，则可以使用 [acme.sh](https://github.com/acmesh-official/acme.sh) 来自动化申请并更新 TLS 证书。
 
 ### 安装 acme.sh
 
@@ -99,23 +99,28 @@ curl https://get.acme.sh | bash -s email=<email>
 ### 证书生成
 
 ```shell
-acme.sh --issue --standalone -d <domain> [--httpport <port>]
+# 方式一：域名
+acme.sh --issue --standalone --server letsencrypt -d <domain> [--httpport <port>]
+
+# 方式二：IP
+acme.sh --issue --standalone --server letsencrypt --cert-profile shortlived --days 5 -d <ip> [--httpport <port>]
 ```
 
 ### 安装证书和密钥
 
 ```shell
-acme.sh --install-cert -d <domain> \
+acme.sh --install-cert -d <domain|ip> \
     --cert-file      /usr/local/etc/xray/cert.pem \
     --key-file       /usr/local/etc/xray/key.pem \
     --fullchain-file /usr/local/etc/xray/fullchain.pem \
     --reloadcmd "systemctl reload nginx"
 ```
 
-### 查看已安装证书
+### 查看证书
 
 ```shell
-acme.sh --info -d <domain>
+acme.sh --info --list
+acme.sh --info -d <domain|ip>
 ```
 
 ## 配置 Nginx
